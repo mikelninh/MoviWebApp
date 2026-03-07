@@ -3,8 +3,12 @@ from models import db, User, Movie
 
 class DataManager:
     # USERS
+    # in DataManager
     def create_user(self, name):
-        user = User(name=name)
+        existing = User.query.filter_by(username=name).first()
+        if existing:
+            return existing  # or raise / ignore
+        user = User(username=name)
         db.session.add(user)
         db.session.commit()
         return user
@@ -17,12 +21,6 @@ class DataManager:
         return Movie.query.filter_by(user_id=user_id).all()
 
     def add_movie(self, movie):
-        """
-        Expects a Movie instance that already has
-        title, year, imdb_id, poster_url, user_id, etc. set.
-        If you prefer, you can change the signature to
-        add_movie(self, title, user_id, ...) and construct Movie here.
-        """
         db.session.add(movie)
         db.session.commit()
         return movie
