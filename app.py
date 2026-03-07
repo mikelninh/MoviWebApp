@@ -13,7 +13,6 @@ from models import Movie, User, db
 
 app = Flask(__name__)
 
-# --- configuration ---
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(basedir, 'data/movies.db')}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -33,7 +32,7 @@ def load_user(user_id):
 
 
 def migrate_db():
-    """Add any new columns to existing tables without destroying data."""
+    """Add new columns to existing tables without destroying data."""
     with db.engine.connect() as conn:
         existing_movie = {row[1] for row in conn.execute(text("PRAGMA table_info(movie)"))}
         for col, sql in {
@@ -42,6 +41,9 @@ def migrate_db():
             "director":   "ALTER TABLE movie ADD COLUMN director VARCHAR(120)",
             "plot":       "ALTER TABLE movie ADD COLUMN plot TEXT",
             "poster_url": "ALTER TABLE movie ADD COLUMN poster_url VARCHAR(300)",
+            "genre":      "ALTER TABLE movie ADD COLUMN genre VARCHAR(200)",
+            "status":     "ALTER TABLE movie ADD COLUMN status VARCHAR(20) DEFAULT 'watched'",
+            "date_added": "ALTER TABLE movie ADD COLUMN date_added DATETIME",
         }.items():
             if col not in existing_movie:
                 conn.execute(text(sql))
@@ -53,7 +55,7 @@ def migrate_db():
         conn.commit()
 
 
-# --- auth routes ---
+# ── AUTH ──────────────────────────────────────────────────────────────────────
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -104,13 +106,15 @@ def logout():
     return redirect(url_for("index"))
 
 
-# --- main routes ---
+# ── MAIN ──────────────────────────────────────────────────────────────────────
 
 @app.route("/")
 def index():
     users = data_manager.get_users()
     total_movies = Movie.query.count()
-    return render_template("index.html", users=users, total_movies=total_movies)
+    activity = data_manager.get_recent_activity(limit=8)
+    return render_template("index.html", users=users,
+                           total_movies=total_movies, activity=activity)
 
 
 @app.route("/users/<int:user_id>")
@@ -119,9 +123,48 @@ def get_movies(user_id):
     if user is None:
         flash("User not found.", "error")
         return redirect(url_for("index"))
-    sort = request.args.get("sort", "title")
-    movies = data_manager.get_movies(user_id, sort=sort)
-    return render_template("user_detail.html", user=user, favorites=movies, sort=sort)
+    sort          = request.args.get("sort", "title")
+    status_filter = request.args.get("status", "")
+    movies        = data_manager.get_movies(user_id, sort=sort, status=status_filter)
+    all_count       = Movie.query.filter_by(user_id=user_id).count()
+    watched_count   = Movie.query.filter(Movie.user_id == user_id,
+                                         Movie.status == "watched").count()
+    watchlist_count = Movie.query.filter(Movie.user_id == user_id,
+                                         Movie.status == "watchlist").count()
+    recommendations = []
+    if current_user.is_authenticated and current_user.id == user_id:
+        recommendations = data_manager.get_recommendations(user_id)
+    return render_template(
+        "user_detail.html",
+        user=user, favorites=movies, sort=sort, status_filter=status_filter,
+        all_count=all_count, watched_count=watched_count,
+        watchlist_count=watchlist_count, recommendations=recommendations,
+    )
+
+
+@app.route("/movies/<int:movie_id>")
+def movie_detail(movie_id):
+    movie = db.session.get(Movie, movie_id)
+    if not movie:
+        flash("Movie not found.", "error")
+        return redirect(url_for("index"))
+    all_instances    = Movie.query.filter_by(title=movie.title).all()
+    users_with_movie = [(db.session.get(User, m.user_id), m) for m in all_instances]
+    similar          = data_manager.get_similar_movies(movie_id)
+    return render_template("movie_detail.html", movie=movie,
+                           users_with_movie=users_with_movie, similar=similar)
+
+
+@app.route("/search")
+def search():
+    q = request.args.get("q", "").strip()
+    results = []
+    if q:
+        results = (Movie.query
+                   .filter(Movie.title.ilike(f"%{q}%"))
+                   .order_by(Movie.title)
+                   .all())
+    return render_template("search.html", q=q, results=results)
 
 
 @app.route("/users/<int:user_id>/add_movie", methods=["POST"])
@@ -130,8 +173,9 @@ def add_movie(user_id):
     if current_user.id != user_id:
         flash("You can only add movies to your own list.", "error")
         return redirect(url_for("get_movies", user_id=user_id))
-    title = request.form.get("title", "").strip()
+    title  = request.form.get("title", "").strip()
     rating = request.form.get("rating", type=int)
+    status = request.form.get("status", "watched")
     if not title:
         flash("Movie title cannot be empty.", "error")
         return redirect(url_for("get_movies", user_id=user_id))
@@ -140,17 +184,25 @@ def add_movie(user_id):
         return redirect(url_for("get_movies", user_id=user_id))
     meta = data_manager.fetch_omdb_data(title)
     movie = Movie(
-        title=title,
-        user_id=user_id,
-        rating=rating,
-        year=meta.get("year"),
-        director=meta.get("director"),
-        plot=meta.get("plot"),
-        poster_url=meta.get("poster_url"),
+        title=title, user_id=user_id, rating=rating,
+        status=status if status in ("watched", "watchlist") else "watched",
+        year=meta.get("year"), director=meta.get("director"),
+        plot=meta.get("plot"), poster_url=meta.get("poster_url"),
+        genre=meta.get("genre"),
     )
     data_manager.add_movie(movie)
     flash(f"'{title}' added.", "success")
     return redirect(url_for("get_movies", user_id=user_id))
+
+
+@app.route("/users/<int:user_id>/movies/<int:movie_id>/toggle", methods=["POST"])
+@login_required
+def toggle_status(user_id, movie_id):
+    if current_user.id != user_id:
+        flash("Not allowed.", "error")
+        return redirect(url_for("get_movies", user_id=user_id))
+    data_manager.toggle_status(movie_id)
+    return redirect(request.referrer or url_for("get_movies", user_id=user_id))
 
 
 @app.route("/users/<int:user_id>/movies/<int:movie_id>/edit", methods=["GET", "POST"])
@@ -164,12 +216,13 @@ def edit_movie(user_id, movie_id):
         flash("Movie not found.", "error")
         return redirect(url_for("get_movies", user_id=user_id))
     if request.method == "POST":
-        title = request.form.get("title", "").strip()
+        title  = request.form.get("title", "").strip()
         rating = request.form.get("rating", type=int)
+        status = request.form.get("status", "watched")
         if not title:
             flash("Title cannot be empty.", "error")
             return render_template("edit_movie.html", movie=movie, user_id=user_id)
-        data_manager.update_movie(movie.id, title, rating)
+        data_manager.update_movie(movie.id, title, rating, status)
         flash(f"'{title}' updated.", "success")
         return redirect(url_for("get_movies", user_id=user_id))
     return render_template("edit_movie.html", movie=movie, user_id=user_id)
@@ -198,7 +251,7 @@ def delete_user(user_id):
     return redirect(url_for("index"))
 
 
-# --- startup ---
+# ── STARTUP ──────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     if not os.path.exists(os.path.join(basedir, "data")):

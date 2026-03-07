@@ -1,22 +1,35 @@
 {% extends "base.html" %}
+{% block title %}Edit {{ movie.title }} · MoviWebApp{% endblock %}
 
 {% block content %}
-  <div class="auth-box mt-2">
+<div class="auth-box mt-2">
     <h2>Edit Movie</h2>
     <form action="{{ url_for('edit_movie', user_id=user_id, movie_id=movie.id) }}" method="post">
-      <label for="title">Title</label>
-      <input type="text" id="title" name="title" value="{{ movie.title }}" required maxlength="120" autofocus>
-      <label for="rating">Rating</label>
-      <select name="rating" id="rating">
-        <option value="">— none —</option>
-        {% for i in range(1, 6) %}
-          <option value="{{ i }}" {{ 'selected' if movie.rating == i }}>
-            {{ '★' * i }} {{ ['Poor', 'Fair', 'Good', 'Great', 'Excellent'][i - 1] }}
-          </option>
-        {% endfor %}
-      </select>
-      <input type="submit" value="Save changes">
+        <label for="title">Title</label>
+        <input type="text" id="title" name="title" value="{{ movie.title }}" required maxlength="120" autofocus>
+
+        <label for="rating">Rating</label>
+        <select name="rating" id="rating">
+            <option value="">— none —</option>
+            {% for i in range(1, 6) %}
+              <option value="{{ i }}" {{ 'selected' if movie.rating == i }}>
+                {{ '★' * i }} {{ ['Poor', 'Fair', 'Good', 'Great', 'Excellent'][i - 1] }}
+              </option>
+            {% endfor %}
+        </select>
+
+        <label>Status</label>
+        <div class="status-radio-group">
+            <label class="status-radio">
+                <input type="radio" name="status" value="watched" {{ 'checked' if (movie.status or 'watched') == 'watched' }}> ✓ Watched
+            </label>
+            <label class="status-radio">
+                <input type="radio" name="status" value="watchlist" {{ 'checked' if movie.status == 'watchlist' }}> ☐ Watchlist
+            </label>
+        </div>
+
+        <input type="submit" value="Save changes">
     </form>
     <a href="{{ url_for('get_movies', user_id=user_id) }}" class="back-link">← Back to list</a>
-  </div>
+</div>
 {% endblock %}

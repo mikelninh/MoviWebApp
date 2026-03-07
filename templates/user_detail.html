@@ -1,103 +1,178 @@
 {% extends "base.html" %}
+{% block title %}{{ user.username }}'s Movies · MoviWebApp{% endblock %}
 
 {% block content %}
-  <div class="page-header">
+<div class="page-header">
     <h2>{{ user.username }}'s movies</h2>
-    <div class="sort-search">
-      <input type="text" id="movie-search" placeholder="Search movies…">
-      <form method="get" class="sort-form">
-        <label for="sort">Sort:</label>
-        <select name="sort" id="sort" onchange="this.form.submit()">
-          <option value="title"  {{ 'selected' if sort == 'title' }}>A–Z</option>
-          <option value="rating" {{ 'selected' if sort == 'rating' }}>Rating</option>
-          <option value="year"   {{ 'selected' if sort == 'year' }}>Year</option>
-        </select>
-      </form>
-    </div>
-  </div>
-
-  {% if current_user.is_authenticated and current_user.id == user.id %}
-    <div class="add-movie-form mt-2">
-      <form action="{{ url_for('add_movie', user_id=user.id) }}" method="post">
-        <div class="form-row">
-          <div class="form-group">
-            <label for="title">Movie title</label>
-            <input type="text" id="title" name="title" placeholder="e.g. Inception" required maxlength="120">
-          </div>
-          <div class="form-group">
-            <label for="rating">Rating</label>
-            <select name="rating" id="rating">
-              <option value="">— none —</option>
-              <option value="1">★ Poor</option>
-              <option value="2">★★ Fair</option>
-              <option value="3">★★★ Good</option>
-              <option value="4">★★★★ Great</option>
-              <option value="5">★★★★★ Excellent</option>
+    <div class="header-controls">
+        <input type="text" id="movie-search" placeholder="Filter…" autocomplete="off">
+        <form method="get" class="sort-form">
+            {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
+            <select name="sort" onchange="this.form.submit()" title="Sort by">
+                <option value="title"  {{ 'selected' if sort == 'title' }}>A–Z</option>
+                <option value="rating" {{ 'selected' if sort == 'rating' }}>Rating</option>
+                <option value="year"   {{ 'selected' if sort == 'year' }}>Year</option>
             </select>
-          </div>
-          <input type="submit" value="Add movie" class="btn-submit">
-        </div>
-      </form>
+        </form>
     </div>
-  {% endif %}
+</div>
 
-  {% if favorites %}
-    <ul class="card-list mt-2" id="movie-grid">
-      {% for movie in favorites %}
-        <li class="card movie-card" data-title="{{ movie.title }}">
-          {% if movie.poster_url %}
-            <img src="{{ movie.poster_url }}" alt="{{ movie.title }} poster" class="movie-poster">
-          {% else %}
-            <div class="movie-poster-placeholder">🎬</div>
-          {% endif %}
+<!-- Status tabs -->
+<div class="tab-bar mt-1">
+    <a href="{{ url_for('get_movies', user_id=user.id, sort=sort) }}"
+       class="tab {{ 'active' if not status_filter }}">
+        All <span class="tab-count">{{ all_count }}</span>
+    </a>
+    <a href="{{ url_for('get_movies', user_id=user.id, sort=sort, status='watched') }}"
+       class="tab {{ 'active' if status_filter == 'watched' }}">
+        ✓ Watched <span class="tab-count">{{ watched_count }}</span>
+    </a>
+    <a href="{{ url_for('get_movies', user_id=user.id, sort=sort, status='watchlist') }}"
+       class="tab {{ 'active' if status_filter == 'watchlist' }}">
+        ☐ Watchlist <span class="tab-count">{{ watchlist_count }}</span>
+    </a>
+</div>
 
-          <div class="card-body">
-            <div class="card-title">
-              {{ movie.title }}
-              {% if movie.year %}<span class="card-year">({{ movie.year }})</span>{% endif %}
+<!-- Add movie form (owner only) -->
+{% if current_user.is_authenticated and current_user.id == user.id %}
+<div class="add-movie-form mt-2">
+    <form action="{{ url_for('add_movie', user_id=user.id) }}" method="post">
+        <div class="form-row">
+            <div class="form-group" style="flex:2">
+                <label for="title">Movie title</label>
+                <input type="text" id="title" name="title" placeholder="e.g. Blade Runner 2049" required maxlength="120">
             </div>
+            <div class="form-group">
+                <label for="rating">Rating</label>
+                <select name="rating" id="rating">
+                    <option value="">— none —</option>
+                    <option value="1">★ Poor</option>
+                    <option value="2">★★ Fair</option>
+                    <option value="3">★★★ Good</option>
+                    <option value="4">★★★★ Great</option>
+                    <option value="5">★★★★★ Excellent</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <div class="status-radio-group">
+                    <label class="status-radio"><input type="radio" name="status" value="watched" checked> Watched</label>
+                    <label class="status-radio"><input type="radio" name="status" value="watchlist"> Watchlist</label>
+                </div>
+            </div>
+            <input type="submit" value="Add">
+        </div>
+    </form>
+</div>
+{% endif %}
+
+<!-- Movie grid -->
+{% if favorites %}
+<ul class="movie-grid mt-2" id="movie-grid">
+    {% for movie in favorites %}
+    <li class="movie-card {{ movie.status or 'watched' }}" data-title="{{ movie.title }}">
+        <a href="{{ url_for('movie_detail', movie_id=movie.id) }}" class="card-poster-link">
+            {% if movie.poster_url %}
+                <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="card-poster">
+            {% else %}
+                <div class="card-poster card-poster-empty">🎬</div>
+            {% endif %}
+            <div class="card-poster-overlay">
+                {% if movie.plot %}
+                    <p class="overlay-plot">{{ movie.plot | truncate(120) }}</p>
+                {% endif %}
+            </div>
+        </a>
+
+        <div class="card-body">
+            <div class="card-title-row">
+                <span class="card-title">{{ movie.title }}</span>
+                {% if movie.year %}<span class="card-year">{{ movie.year }}</span>{% endif %}
+            </div>
+
             {% if movie.director %}
-              <div class="card-meta">Dir. {{ movie.director }}</div>
+            <div class="card-director">{{ movie.director }}</div>
             {% endif %}
-            {% if movie.rating %}
-              <div class="stars">
-                {% for i in range(1, 6) %}
-                  <span class="star {{ 'filled' if i <= movie.rating else '' }}">★</span>
+
+            {% if movie.genre %}
+            <div class="genre-tags">
+                {% for g in movie.genre.split(', ')[:3] %}
+                    <span class="genre-tag" data-genre="{{ g }}">{{ g }}</span>
                 {% endfor %}
-              </div>
+            </div>
             {% endif %}
-            {% if movie.plot %}
-              <p class="card-plot">{{ movie.plot | truncate(100) }}</p>
+
+            {% if movie.rating %}
+            <div class="stars">
+                {% for i in range(1, 6) %}
+                    <span class="star {{ 'filled' if i <= movie.rating else '' }}">★</span>
+                {% endfor %}
+            </div>
             {% endif %}
 
             {% if current_user.is_authenticated and current_user.id == user.id %}
-              <div class="card-actions">
+            <div class="card-actions">
+                <form action="{{ url_for('toggle_status', user_id=user.id, movie_id=movie.id) }}" method="post">
+                    {% if (movie.status or 'watched') == 'watched' %}
+                        <button type="submit" class="btn btn-sm btn-status-watched" title="Move to Watchlist">✓ Watched</button>
+                    {% else %}
+                        <button type="submit" class="btn btn-sm btn-status-watchlist" title="Mark as Watched">☐ Watchlist</button>
+                    {% endif %}
+                </form>
                 <a href="{{ url_for('edit_movie', user_id=user.id, movie_id=movie.id) }}" class="btn btn-sm">Edit</a>
                 <form action="{{ url_for('delete_movie', user_id=user.id, movie_id=movie.id) }}" method="post"
-                      onsubmit="return confirm('Remove {{ movie.title | replace("'", "\\'") }}?')">
-                  <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                      onsubmit="return confirm('Remove this movie?')">
+                    <button type="submit" class="btn btn-sm btn-danger">✕</button>
                 </form>
-              </div>
+            </div>
             {% endif %}
-          </div>
-        </li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p class="mt-2 text-muted">
-      No movies yet.
-      {% if current_user.is_authenticated and current_user.id == user.id %}Add one above!{% endif %}
+        </div>
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<div class="empty-state mt-3">
+    <p>
+        {% if status_filter == 'watchlist' %}No movies on your watchlist yet.
+        {% elif status_filter == 'watched' %}No watched movies yet.
+        {% else %}No movies yet.{% if current_user.is_authenticated and current_user.id == user.id %} Add one above!{% endif %}
+        {% endif %}
     </p>
-  {% endif %}
+</div>
+{% endif %}
 
-  <script>
-    const searchInput = document.getElementById('movie-search');
-    const cards = document.querySelectorAll('.movie-card');
-    searchInput.addEventListener('input', function () {
-      const q = this.value.toLowerCase();
-      cards.forEach(card => {
-        card.style.display = card.dataset.title.toLowerCase().includes(q) ? '' : 'none';
-      });
+<!-- Recommendations (owner only) -->
+{% if recommendations %}
+<section class="recommendations mt-3">
+    <h3 class="section-title">You might also enjoy</h3>
+    <ul class="rec-grid">
+        {% for movie in recommendations %}
+        <li class="rec-card">
+            <a href="{{ url_for('movie_detail', movie_id=movie.id) }}">
+                {% if movie.poster_url %}
+                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="rec-poster">
+                {% else %}
+                    <div class="rec-poster rec-poster-empty">🎬</div>
+                {% endif %}
+                <div class="rec-title">{{ movie.title }}</div>
+                {% if movie.year %}<div class="rec-year">{{ movie.year }}</div>{% endif %}
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+
+<script>
+const searchInput = document.getElementById('movie-search');
+document.querySelectorAll('.movie-card').forEach(card => {
+    card._title = card.dataset.title.toLowerCase();
+});
+searchInput.addEventListener('input', function () {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('.movie-card').forEach(card => {
+        card.style.display = card._title.includes(q) ? '' : 'none';
     });
-  </script>
+});
+</script>
 {% endblock %}

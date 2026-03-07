@@ -1,52 +1,107 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <div class="stats-bar">
+<div class="stats-bar">
     <span>👥 {{ users | length }} users</span>
     <span class="stats-sep">·</span>
     <span>🎬 {{ total_movies }} movies</span>
     {% if not current_user.is_authenticated %}
-      <span class="stats-sep">·</span>
-      <span><a href="{{ url_for('register') }}">Join now</a> to build your list</span>
+        <span class="stats-sep">·</span>
+        <a href="{{ url_for('register') }}">Join to build your list →</a>
     {% endif %}
-  </div>
+</div>
 
-  <ul class="user-grid mt-2">
-    {% for user in users %}
-      <li class="user-card">
-        <div class="user-card-header">
-          <div class="avatar avatar-{{ loop.index0 % 8 }}">{{ user.username[0].upper() }}</div>
-          <div class="user-card-info">
-            <a href="{{ url_for('get_movies', user_id=user.id) }}" class="user-card-name">
-              {{ user.username }}
-            </a>
-            <span class="movie-count">{{ user.movies | length }} movie{{ 's' if user.movies | length != 1 }}</span>
-          </div>
-          {% if current_user.is_authenticated and current_user.id == user.id %}
-            <form action="{{ url_for('delete_user', user_id=user.id) }}" method="post"
-                  onsubmit="return confirm('Delete your account and all your movies? This cannot be undone.')">
-              <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-            </form>
-          {% endif %}
-        </div>
+<div class="home-layout mt-2">
 
-        {% set posters = user.movies | selectattr('poster_url') | list %}
-        {% if posters %}
-          <a href="{{ url_for('get_movies', user_id=user.id) }}" class="poster-strip">
-            {% for movie in posters[:4] %}
-              <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="poster-thumb" title="{{ movie.title }}">
+    <!-- User grid -->
+    <section class="user-section">
+        <h2 class="section-title">Members</h2>
+        <ul class="user-grid">
+            {% for user in users %}
+            <li class="user-card">
+                <div class="user-card-header">
+                    <div class="avatar avatar-{{ loop.index0 % 8 }}">{{ user.username[0].upper() }}</div>
+                    <div class="user-card-info">
+                        <a href="{{ url_for('get_movies', user_id=user.id) }}" class="user-card-name">
+                            {{ user.username }}
+                        </a>
+                        <span class="movie-count">{{ user.movies | length }} movie{{ 's' if user.movies | length != 1 }}</span>
+                    </div>
+                    {% if current_user.is_authenticated and current_user.id == user.id %}
+                    <form action="{{ url_for('delete_user', user_id=user.id) }}" method="post"
+                          onsubmit="return confirm('Delete your account and all movies? This cannot be undone.')">
+                        <button type="submit" class="btn btn-danger btn-xs">✕</button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% set posters = user.movies[:4] %}
+                {% if posters %}
+                <a href="{{ url_for('get_movies', user_id=user.id) }}" class="poster-strip">
+                    {% for movie in posters %}
+                        {% if movie.poster_url %}
+                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="poster-thumb" title="{{ movie.title }}">
+                        {% else %}
+                            <div class="poster-thumb poster-placeholder-sm" title="{{ movie.title }}">🎬</div>
+                        {% endif %}
+                    {% endfor %}
+                </a>
+                {% else %}
+                <a href="{{ url_for('get_movies', user_id=user.id) }}" class="poster-strip poster-strip-empty">
+                    <span>No movies yet</span>
+                </a>
+                {% endif %}
+            </li>
+            {% else %}
+            <li class="user-card-empty">No users yet. <a href="{{ url_for('register') }}">Be the first!</a></li>
             {% endfor %}
-          </a>
+        </ul>
+    </section>
+
+    <!-- Activity feed -->
+    <section class="activity-section">
+        <h2 class="section-title">Recently Added</h2>
+        {% if activity %}
+        <ul class="activity-feed">
+            {% for movie in activity %}
+            <li class="activity-item">
+                <a href="{{ url_for('movie_detail', movie_id=movie.id) }}" class="activity-poster-link">
+                    {% if movie.poster_url %}
+                        <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="activity-poster">
+                    {% else %}
+                        <div class="activity-poster activity-poster-empty">🎬</div>
+                    {% endif %}
+                </a>
+                <div class="activity-info">
+                    <a href="{{ url_for('movie_detail', movie_id=movie.id) }}" class="activity-title">
+                        {{ movie.title }}
+                    </a>
+                    {% if movie.year %}<span class="activity-year">{{ movie.year }}</span>{% endif %}
+                    {% if movie.genre %}
+                    <div class="genre-tags">
+                        {% for g in movie.genre.split(', ')[:2] %}
+                            <span class="genre-tag" data-genre="{{ g }}">{{ g }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <span class="activity-user">
+                        added by
+                        <a href="{{ url_for('get_movies', user_id=movie.user.id) }}">{{ movie.user.username }}</a>
+                    </span>
+                </div>
+                {% if movie.rating %}
+                <div class="activity-rating">
+                    {% for i in range(1, 6) %}
+                        <span class="star {{ 'filled' if i <= movie.rating else '' }}">★</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
         {% else %}
-          <a href="{{ url_for('get_movies', user_id=user.id) }}" class="poster-strip poster-strip-empty">
-            <span>No movies yet</span>
-          </a>
+        <p class="empty-state">No activity yet.</p>
         {% endif %}
-      </li>
-    {% else %}
-      <li class="user-card user-card-empty">
-        No users yet. <a href="{{ url_for('register') }}">Be the first!</a>
-      </li>
-    {% endfor %}
-  </ul>
+    </section>
+
+</div>
 {% endblock %}

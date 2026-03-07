@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}{{ movie.title }} · MoviWebApp{% endblock %}
+
+{% block content %}
+<div class="movie-detail">
+    <div class="detail-poster-col">
+        {% if movie.poster_url %}
+            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="detail-poster">
+        {% else %}
+            <div class="detail-poster detail-poster-empty">🎬</div>
+        {% endif %}
+    </div>
+
+    <div class="detail-info-col">
+        <h1 class="detail-title">
+            {{ movie.title }}
+            {% if movie.year %}<span class="detail-year">{{ movie.year }}</span>{% endif %}
+        </h1>
+
+        {% if movie.director %}
+        <p class="detail-director">Directed by <strong>{{ movie.director }}</strong></p>
+        {% endif %}
+
+        {% if movie.genre %}
+        <div class="genre-tags mt-1">
+            {% for g in movie.genre.split(', ') %}
+                <span class="genre-tag" data-genre="{{ g }}">{{ g }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if movie.plot %}
+        <p class="detail-plot mt-1">{{ movie.plot }}</p>
+        {% endif %}
+
+        <!-- Average rating across all instances -->
+        {% set rated = users_with_movie | selectattr('1.rating') | list %}
+        {% if rated %}
+        {% set avg = (rated | map(attribute='1') | map(attribute='rating') | sum) / rated | length %}
+        <div class="detail-rating mt-1">
+            <div class="stars">
+                {% for i in range(1, 6) %}
+                    <span class="star {{ 'filled' if i <= avg | round else '' }}">★</span>
+                {% endfor %}
+            </div>
+            <span class="detail-rating-text">{{ "%.1f"|format(avg) }} avg · {{ rated | length }} rating{{ 's' if rated | length != 1 }}</span>
+        </div>
+        {% endif %}
+
+        <!-- Users who have it -->
+        <div class="detail-in-lists mt-2">
+            <h3 class="section-title-sm">In {{ users_with_movie | length }} list{{ 's' if users_with_movie | length != 1 }}</h3>
+            <div class="list-users">
+                {% for user, instance in users_with_movie %}
+                <a href="{{ url_for('get_movies', user_id=user.id) }}" class="list-user-chip">
+                    <span class="chip-avatar avatar-{{ loop.index0 % 8 }}">{{ user.username[0].upper() }}</span>
+                    {{ user.username }}
+                    {% if instance.rating %}
+                    <span class="chip-rating">{{ '★' * instance.rating }}</span>
+                    {% endif %}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if current_user.is_authenticated %}
+        {% set already_have = users_with_movie | selectattr('0.id', 'equalto', current_user.id) | list %}
+        {% if not already_have %}
+        <form action="{{ url_for('add_movie', user_id=current_user.id) }}" method="post" class="detail-add-form mt-2">
+            <input type="hidden" name="title" value="{{ movie.title }}">
+            <select name="rating">
+                <option value="">No rating</option>
+                <option value="1">★ Poor</option>
+                <option value="2">★★ Fair</option>
+                <option value="3">★★★ Good</option>
+                <option value="4">★★★★ Great</option>
+                <option value="5">★★★★★ Excellent</option>
+            </select>
+            <select name="status">
+                <option value="watched">✓ Watched</option>
+                <option value="watchlist">☐ Watchlist</option>
+            </select>
+            <button type="submit" class="btn">+ Add to my list</button>
+        </form>
+        {% else %}
+        <p class="already-in-list mt-2">✓ Already in your list</p>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+{% if similar %}
+<section class="recommendations mt-3">
+    <h3 class="section-title">People who have this also enjoy</h3>
+    <ul class="rec-grid">
+        {% for m in similar %}
+        <li class="rec-card">
+            <a href="{{ url_for('movie_detail', movie_id=m.id) }}">
+                {% if m.poster_url %}
+                    <img src="{{ m.poster_url }}" alt="{{ m.title }}" class="rec-poster">
+                {% else %}
+                    <div class="rec-poster rec-poster-empty">🎬</div>
+                {% endif %}
+                <div class="rec-title">{{ m.title }}</div>
+                {% if m.year %}<div class="rec-year">{{ m.year }}</div>{% endif %}
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+{% endblock %}

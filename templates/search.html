@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Results for "' + q + '"' if q else 'Search' }} · MoviWebApp{% endblock %}
+
+{% block content %}
+<div class="search-header">
+    <h2>{{ 'Results for "' + q + '"' if q else 'Search' }}</h2>
+    <form action="{{ url_for('search') }}" method="get" class="search-form-big">
+        <input type="search" name="q" value="{{ q }}" placeholder="Search movies…" autofocus>
+        <button type="submit" class="btn">Search</button>
+    </form>
+</div>
+
+{% if q %}
+    {% if results %}
+    <p class="search-count mt-1">{{ results | length }} result{{ 's' if results | length != 1 }} found</p>
+    <ul class="movie-grid mt-2">
+        {% for movie in results %}
+        <li class="movie-card">
+            <a href="{{ url_for('movie_detail', movie_id=movie.id) }}" class="card-poster-link">
+                {% if movie.poster_url %}
+                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="card-poster">
+                {% else %}
+                    <div class="card-poster card-poster-empty">🎬</div>
+                {% endif %}
+                <div class="card-poster-overlay">
+                    {% if movie.plot %}
+                        <p class="overlay-plot">{{ movie.plot | truncate(120) }}</p>
+                    {% endif %}
+                </div>
+            </a>
+            <div class="card-body">
+                <div class="card-title-row">
+                    <span class="card-title">{{ movie.title }}</span>
+                    {% if movie.year %}<span class="card-year">{{ movie.year }}</span>{% endif %}
+                </div>
+                {% if movie.director %}
+                <div class="card-director">{{ movie.director }}</div>
+                {% endif %}
+                {% if movie.genre %}
+                <div class="genre-tags">
+                    {% for g in movie.genre.split(', ')[:3] %}
+                        <span class="genre-tag" data-genre="{{ g }}">{{ g }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% if movie.rating %}
+                <div class="stars">
+                    {% for i in range(1, 6) %}
+                        <span class="star {{ 'filled' if i <= movie.rating else '' }}">★</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <div class="search-result-user">
+                    in <a href="{{ url_for('get_movies', user_id=movie.user.id) }}">{{ movie.user.username }}</a>'s list
+                </div>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state mt-3">
+        <p>No movies found for "<strong>{{ q }}</strong>".</p>
+        <p class="text-muted">Try a different title, or check the spelling.</p>
+    </div>
+    {% endif %}
+{% else %}
+<div class="empty-state mt-3">
+    <p class="text-muted">Enter a movie title to search across all lists.</p>
+</div>
+{% endif %}
+{% endblock %}
