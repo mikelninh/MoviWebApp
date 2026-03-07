@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Movie Night Inspiration — MoviWebApp{% endblock %}
+
+{% block content %}
+<div class="inspiration-hero">
+    <h1 class="inspiration-title">Movie Night Inspiration</h1>
+    <p class="inspiration-sub">Curated lists to set the mood. Pick a vibe, gather your people, press play.</p>
+</div>
+
+<div class="inspiration-grid">
+
+    {% for lst in lists %}
+    <div class="inspo-card">
+        <div class="inspo-card-header">
+            <span class="inspo-icon">{{ lst.icon }}</span>
+            <div>
+                <h2 class="inspo-name">{{ lst.name }}</h2>
+                <p class="inspo-tagline">{{ lst.tagline }}</p>
+            </div>
+        </div>
+        <ol class="inspo-movies">
+            {% for movie in lst.movies %}
+            <li class="inspo-movie-item">
+                <span class="inspo-num">{{ loop.index }}</span>
+                <div class="inspo-movie-info">
+                    <span class="inspo-movie-title">{{ movie.title }}</span>
+                    <span class="inspo-movie-year">{{ movie.year }}</span>
+                </div>
+            </li>
+            {% endfor %}
+        </ol>
+        <a href="{{ url_for('search') }}?q={{ lst.movies[0].title | urlencode }}"
+           class="inspo-search-link">Search on MoviWebApp &rarr;</a>
+    </div>
+    {% endfor %}
+
+</div>
+{% endblock %}

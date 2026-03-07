@@ -155,6 +155,132 @@ def movie_detail(movie_id):
                            users_with_movie=users_with_movie, similar=similar)
 
 
+@app.route("/inspiration")
+def inspiration():
+    lists = [
+        {
+            "name": "Doomed Romance",
+            "icon": "♥",
+            "tagline": "Love that burns bright and ends in ashes.",
+            "movies": [
+                {"title": "In the Mood for Love", "year": "2000"},
+                {"title": "Eternal Sunshine of the Spotless Mind", "year": "2004"},
+                {"title": "Blue Valentine", "year": "2010"},
+                {"title": "Atonement", "year": "2007"},
+                {"title": "Brief Encounter", "year": "1945"},
+                {"title": "Brokeback Mountain", "year": "2005"},
+                {"title": "Portrait of a Lady on Fire", "year": "2019"},
+                {"title": "Lost in Translation", "year": "2003"},
+                {"title": "Normal People", "year": "2020"},
+                {"title": "The Remains of the Day", "year": "1993"},
+            ],
+        },
+        {
+            "name": "Mind the Gap",
+            "icon": "⧗",
+            "tagline": "Time travel, fractured memory, and nonlinear minds.",
+            "movies": [
+                {"title": "Memento", "year": "2000"},
+                {"title": "Arrival", "year": "2016"},
+                {"title": "The Butterfly Effect", "year": "2004"},
+                {"title": "Primer", "year": "2004"},
+                {"title": "Coherence", "year": "2013"},
+                {"title": "Predestination", "year": "2014"},
+                {"title": "Looper", "year": "2012"},
+                {"title": "12 Monkeys", "year": "1995"},
+                {"title": "Source Code", "year": "2011"},
+                {"title": "Timecrimes", "year": "2007"},
+            ],
+        },
+        {
+            "name": "Last Night on Earth",
+            "icon": "◎",
+            "tagline": "Apocalypse, survival, and the end of everything.",
+            "movies": [
+                {"title": "Melancholia", "year": "2011"},
+                {"title": "Take Shelter", "year": "2011"},
+                {"title": "Beasts of the Southern Wild", "year": "2012"},
+                {"title": "Children of Men", "year": "2006"},
+                {"title": "The Road", "year": "2009"},
+                {"title": "4:44 Last Day on Earth", "year": "2011"},
+                {"title": "Seeking a Friend for the End of the World", "year": "2012"},
+                {"title": "Annihilation", "year": "2018"},
+                {"title": "I Am Legend", "year": "2007"},
+                {"title": "28 Days Later", "year": "2002"},
+            ],
+        },
+        {
+            "name": "Ugly Beautiful",
+            "icon": "◈",
+            "tagline": "Gritty realism, raw humanity, stories that hurt and heal.",
+            "movies": [
+                {"title": "Requiem for a Dream", "year": "2000"},
+                {"title": "Moonlight", "year": "2016"},
+                {"title": "City of God", "year": "2002"},
+                {"title": "Shoplifters", "year": "2018"},
+                {"title": "Parasite", "year": "2019"},
+                {"title": "The Florida Project", "year": "2017"},
+                {"title": "Beasts of No Nation", "year": "2015"},
+                {"title": "Tangerines", "year": "2013"},
+                {"title": "The Wrestler", "year": "2008"},
+                {"title": "Roma", "year": "2018"},
+            ],
+        },
+        {
+            "name": "Men on the Edge",
+            "icon": "△",
+            "tagline": "Lone male protagonists slowly, magnificently unraveling.",
+            "movies": [
+                {"title": "Taxi Driver", "year": "1976"},
+                {"title": "There Will Be Blood", "year": "2007"},
+                {"title": "Whiplash", "year": "2014"},
+                {"title": "The Lighthouse", "year": "2019"},
+                {"title": "Uncut Gems", "year": "2019"},
+                {"title": "Nightcrawler", "year": "2014"},
+                {"title": "Falling Down", "year": "1993"},
+                {"title": "Black Swan", "year": "2010"},
+                {"title": "Pi", "year": "1998"},
+                {"title": "A Beautiful Mind", "year": "2001"},
+            ],
+        },
+        {
+            "name": "Girls Who Run",
+            "icon": "→",
+            "tagline": "Female escape, reinvention, and hitting the open road.",
+            "movies": [
+                {"title": "Thelma & Louise", "year": "1991"},
+                {"title": "Wild", "year": "2014"},
+                {"title": "Promising Young Woman", "year": "2020"},
+                {"title": "Lady Bird", "year": "2017"},
+                {"title": "Mona Lisa Smile", "year": "2003"},
+                {"title": "Mustang", "year": "2015"},
+                {"title": "Fish Tank", "year": "2009"},
+                {"title": "The Favourite", "year": "2018"},
+                {"title": "Whale Rider", "year": "2002"},
+                {"title": "Persepolis", "year": "2007"},
+            ],
+        },
+        {
+            "name": "Invisible Wars",
+            "icon": "◇",
+            "tagline": "Cold war, double agents, and the paranoia of loyalty.",
+            "movies": [
+                {"title": "Tinker Tailor Soldier Spy", "year": "2011"},
+                {"title": "Bridge of Spies", "year": "2015"},
+                {"title": "The Lives of Others", "year": "2006"},
+                {"title": "Munich", "year": "2005"},
+                {"title": "A Most Wanted Man", "year": "2014"},
+                {"title": "The Spy Who Came in from the Cold", "year": "1965"},
+                {"title": "Three Days of the Condor", "year": "1975"},
+                {"title": "Syriana", "year": "2005"},
+                {"title": "Zero Dark Thirty", "year": "2012"},
+                {"title": "The Conversation", "year": "1974"},
+            ],
+        },
+    ]
+    return render_template("inspiration.html", lists=lists)
+
+
 @app.route("/search")
 def search():
     q = request.args.get("q", "").strip()
