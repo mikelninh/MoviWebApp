@@ -12,11 +12,20 @@
         </div>
         <nav class="main-nav">
             <a href="{{ url_for('index') }}">Home</a>
-            <a href="{{ url_for('index') }}">Movies</a>
         </nav>
     </header>
 
     <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-messages">
+              {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
         {% block content %}{% endblock %}
     </main>
 </body>

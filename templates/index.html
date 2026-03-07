@@ -5,16 +5,14 @@
 
   <form action="{{ url_for('create_user') }}" method="post" class="mt-2">
     <label for="name">New user name</label>
-    <input type="text" id="name" name="name" required>
+    <input type="text" id="name" name="name" required maxlength="80">
     <input type="submit" value="Add user">
   </form>
 
   <ul class="mt-2">
     {% for user in users %}
       <li>
-        {{ user.username }}
-        <!-- later you can link to movies: -->
-        <!-- <a href="{{ url_for('get_movies', user_id=user.id) }}">View favorites</a> -->
+        <a href="{{ url_for('get_movies', user_id=user.id) }}">{{ user.username }}</a>
       </li>
     {% else %}
       <li>No users yet.</li>

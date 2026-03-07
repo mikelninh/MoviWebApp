@@ -1,17 +1,17 @@
-from models import db, User, Movie
+from models import Movie, User, db
 
 
 class DataManager:
     # USERS
-    # in DataManager
     def create_user(self, name):
+        """Return (user, created) — created is False if the username already existed."""
         existing = User.query.filter_by(username=name).first()
         if existing:
-            return existing  # or raise / ignore
+            return existing, False
         user = User(username=name)
         db.session.add(user)
         db.session.commit()
-        return user
+        return user, True
 
     def get_users(self):
         return User.query.all()
@@ -26,7 +26,7 @@ class DataManager:
         return movie
 
     def update_movie(self, movie_id, new_title):
-        movie = Movie.query.get(movie_id)
+        movie = db.session.get(Movie, movie_id)
         if not movie:
             return None
         movie.title = new_title
@@ -34,7 +34,7 @@ class DataManager:
         return movie
 
     def delete_movie(self, movie_id):
-        movie = Movie.query.get(movie_id)
+        movie = db.session.get(Movie, movie_id)
         if not movie:
             return False
         db.session.delete(movie)

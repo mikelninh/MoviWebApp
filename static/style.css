@@ -143,6 +143,33 @@ input[type="submit"]:hover {
     filter: brightness(1.05);
 }
 
+/* Flash messages */
+.flash-messages {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.flash {
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.flash-success {
+    background-color: rgba(0, 210, 120, 0.15);
+    border: 1px solid rgba(0, 210, 120, 0.4);
+    color: #00d278;
+}
+
+.flash-error {
+    background-color: rgba(255, 71, 87, 0.15);
+    border: 1px solid rgba(255, 71, 87, 0.4);
+    color: #ff4757;
+}
+
 /* Utility */
 .text-center {
     text-align: center;
