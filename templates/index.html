@@ -11,6 +11,40 @@
     {% endif %}
 </div>
 
+<section class="inspo-section mt-2">
+    <div class="inspo-section-header">
+        <h2 class="inspo-section-title">Movie Night Inspiration</h2>
+        <p class="inspo-section-sub">Curated lists to set the mood — pick a vibe, press play.</p>
+    </div>
+
+    {% for lst in inspiration %}
+    <div class="inspo-row">
+        <div class="inspo-row-meta">
+            <span class="inspo-row-icon">{{ lst.icon }}</span>
+            <div>
+                <h3 class="inspo-row-name">{{ lst.name }}</h3>
+                <p class="inspo-row-tagline">{{ lst.tagline }}</p>
+            </div>
+        </div>
+        <ul class="inspo-scroll">
+            {% for movie in lst.movies %}
+            <li class="inspo-poster-card">
+                <a href="{{ url_for('search', q=movie.title) }}">
+                    {% if movie.poster_url %}
+                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="inspo-poster-img" loading="lazy">
+                    {% else %}
+                    <div class="inspo-poster-empty">🎬</div>
+                    {% endif %}
+                    <span class="inspo-poster-title">{{ movie.title }}</span>
+                    <span class="inspo-poster-year">{{ movie.year }}</span>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endfor %}
+</section>
+
 <div class="home-layout mt-2">
 
     <!-- User grid -->
