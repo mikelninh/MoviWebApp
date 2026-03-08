@@ -103,12 +103,12 @@ Open `http://127.0.0.1:5000`
 
 | Table | Count |
 |-------|-------|
-| Users | 23 |
-| Films | ~360 |
-| Movies (user entries) | ~420 |
-| Reviews | ~87 |
-| Follows | ~67 |
-| Review likes | ~84 |
+| Users | 24 (23 seeded + 1 real) |
+| Films | ~503 |
+| Movies (user entries) | ~1 100 |
+| Reviews | ~215 |
+| Follows | ~90 |
+| Review likes | ~706 |
 
 ---
 
@@ -174,7 +174,9 @@ MoviWebApp/
 
 ## Contributing
 
-Pull requests welcome. Open an issue first for big changes.
+Pull requests welcome — this is a real deployed app with real users. See **[CONTRIBUTING.md](CONTRIBUTING.md)** for the full guide, good first issues, and stack notes.
+
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 ## Support
 
