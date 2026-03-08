@@ -481,15 +481,18 @@ def get_inspiration_with_posters():
         try:
             with open(cache_path) as f:
                 lists = json.load(f)
-            # Enrich any missing film_ids from the live DB (cheap lookup)
+            # Enrich missing film_ids and poster_urls from the live DB
             with app.app_context():
                 for lst in lists:
                     for movie in lst['movies']:
-                        if not movie.get('film_id'):
+                        if not movie.get('film_id') or not movie.get('poster_url'):
                             film = Film.query.filter(
                                 db.func.lower(Film.title) == movie['title'].lower()
                             ).first()
-                            movie['film_id'] = film.id if film else None
+                            if film:
+                                movie['film_id'] = film.id
+                                if not movie.get('poster_url') and film.poster_url:
+                                    movie['poster_url'] = film.poster_url
             return lists
         except Exception:
             pass
@@ -510,9 +513,9 @@ def get_inspiration_with_posters():
 
 _news_cache = {"data": [], "fetched_at": None}
 _NEWS_SOURCES = [
-    ("IndieWire",      "https://www.indiewire.com/feed/"),
+    ("The Guardian",   "https://www.theguardian.com/film/rss"),
+    ("Variety",        "https://variety.com/feed/"),
     ("The Film Stage", "https://thefilmstage.com/feed/"),
-    ("Roger Ebert",    "https://www.rogerebert.com/feed"),
 ]
 
 
@@ -545,13 +548,40 @@ def fetch_film_news(limit=18):
                 desc     = re.sub(r"<[^>]+>", "", desc_raw)[:200].strip()
                 pub      = (item.findtext("pubDate")     or "").strip()[:16]
                 img = None
-                media_thumb = item.find("media:thumbnail", ns)
-                if media_thumb is not None:
-                    img = media_thumb.get("url")
+                MEDIA = "http://search.yahoo.com/mrss/"
+                # 1. Pick largest media:content by width
+                best_w, best_url = 0, None
+                for mc in item.findall(f"{{{MEDIA}}}content"):
+                    try:
+                        w = int(mc.get("width") or 0)
+                    except ValueError:
+                        w = 0
+                    url_mc = mc.get("url") or ""
+                    if url_mc and w > best_w:
+                        best_w, best_url = w, url_mc
+                if best_url:
+                    img = best_url
+                # 2. media:thumbnail
+                if not img:
+                    mt = item.find(f"{{{MEDIA}}}thumbnail")
+                    if mt is not None:
+                        img = mt.get("url")
+                # 3. enclosure
                 if not img:
                     enc = item.find("enclosure")
                     if enc is not None and "image" in (enc.get("type") or ""):
                         img = enc.get("url")
+                # 4. first <img src="..."> in content:encoded or description
+                if not img:
+                    CE_NS = "http://purl.org/rss/1.0/modules/content/"
+                    for raw_html in (
+                        item.findtext(f"{{{CE_NS}}}encoded") or "",
+                        item.findtext("description") or "",
+                    ):
+                        m = re.search(r'<img[^>]+src=["\']([^"\']+)["\']', raw_html)
+                        if m:
+                            img = m.group(1)
+                            break
                 if title and link:
                     articles.append({
                         "source": source_name,
@@ -857,14 +887,20 @@ def index():
     total_movies = Movie.query.count()
     activity = data_manager.get_recent_activity(limit=8)
     inspiration = get_inspiration_with_posters()
-    # Pick a hero film: 5-star, has poster, watched — rotate by day
-    import datetime
-    hero_pool = (Movie.query
-                 .filter(Movie.rating == 5, Movie.poster_url.isnot(None),
-                         Movie.status == 'watched', Movie.film_id.isnot(None))
-                 .all())
-    hero = hero_pool[datetime.date.today().toordinal() % len(hero_pool)] if hero_pool else None
-    hero_film = Film.query.get(hero.film_id) if hero and hero.film_id else None
+    # Hero carousel: top 6 films by community rating, with poster
+    from sqlalchemy import func as sqlfunc
+    hero_films = (
+        db.session.query(Film, sqlfunc.avg(Movie.rating).label('avg_rating'),
+                         sqlfunc.count(Movie.id).label('count'))
+        .join(Movie, Movie.film_id == Film.id)
+        .filter(Film.poster_url.isnot(None), Movie.rating.isnot(None))
+        .group_by(Film.id)
+        .having(sqlfunc.count(Movie.id) >= 2)
+        .order_by(sqlfunc.avg(Movie.rating).desc())
+        .limit(6)
+        .all()
+    )
+    hero_slides = [{"film": f, "avg_rating": round(avg, 1)} for f, avg, _ in hero_films]
     # Recent reviews enriched with film data
     raw_reviews = (Review.query
                    .order_by(Review.created_at.desc())
@@ -882,7 +918,7 @@ def index():
         })
     return render_template("index.html",
                            total_movies=total_movies, activity=activity,
-                           inspiration=inspiration, hero=hero, hero_film=hero_film,
+                           inspiration=inspiration, hero_slides=hero_slides,
                            recent_reviews=recent_reviews)
 
 

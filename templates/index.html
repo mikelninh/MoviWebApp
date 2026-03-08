@@ -2,43 +2,56 @@
 {% from "_macros.html" import stars %}
 
 {% block content %}
-{% if hero %}
-<div class="hero-breakout">
-<div class="hero-section" style="--poster: url('{{ hero.poster_url }}')">
-    <div class="hero-backdrop"></div>
-    <div class="hero-content">
-        <div class="hero-poster-wrap">
-            <img src="{{ hero.poster_url }}" alt="{{ hero.title }}" class="hero-poster">
-        </div>
-        <div class="hero-info">
-            <div class="hero-eyebrow">Loved by the community</div>
-            <h1 class="hero-title">{{ hero.title }}</h1>
-            {% if hero.year or hero.director %}
-            <p class="hero-meta">
-                {% if hero.year %}{{ hero.year }}{% endif %}
-                {% if hero.year and hero.director %} · {% endif %}
-                {% if hero.director %}{{ hero.director }}{% endif %}
-            </p>
-            {% endif %}
-            {% if hero.genre %}
-            <div class="genre-tags hero-genres">
-                {% for g in hero.genre.split(', ')[:3] %}
-                    <a href="{{ url_for('genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
-                {% endfor %}
-            </div>
-            {% endif %}
-            {% if hero.plot %}
-            <p class="hero-plot">{{ hero.plot | truncate(180) }}</p>
-            {% endif %}
-            <div class="hero-actions">
-                <a href="{{ url_for('film_detail', film_id=hero_film.id) if hero_film else url_for('movie_detail', movie_id=hero.id) }}" class="btn hero-btn">View Film</a>
-                {% if current_user.is_authenticated and hero_film %}
-                <a href="{{ url_for('film_detail', film_id=hero_film.id) }}" class="btn btn-ghost">+ Add to list</a>
-                {% endif %}
+{% if hero_slides %}
+<div class="hero-carousel" id="heroCarousel">
+    {% for slide in hero_slides %}
+    {% set film = slide.film %}
+    <div class="hero-slide{% if loop.first %} active{% endif %}" data-index="{{ loop.index0 }}">
+        <div class="hero-section" style="--poster: url('{{ film.poster_url }}')">
+            <div class="hero-backdrop"></div>
+            <div class="hero-content">
+                <div class="hero-poster-wrap">
+                    <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="hero-poster">
+                </div>
+                <div class="hero-info">
+                    <div class="hero-eyebrow">{{ slide.avg_rating }}★ community rating</div>
+                    <h1 class="hero-title">{{ film.title }}</h1>
+                    {% if film.year or film.director %}
+                    <p class="hero-meta">
+                        {% if film.year %}{{ film.year }}{% endif %}
+                        {% if film.year and film.director %} · {% endif %}
+                        {% if film.director %}{{ film.director }}{% endif %}
+                    </p>
+                    {% endif %}
+                    {% if film.genre %}
+                    <div class="genre-tags hero-genres">
+                        {% for g in film.genre.split(', ')[:3] %}
+                            <a href="{{ url_for('genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% if film.plot %}
+                    <p class="hero-plot">{{ film.plot | truncate(180) }}</p>
+                    {% endif %}
+                    <div class="hero-actions">
+                        <a href="{{ url_for('film_detail', film_id=film.id) }}" class="btn hero-btn">View Film</a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
+    {% endfor %}
+
+    <!-- Dot navigation -->
+    <div class="hero-dots">
+        {% for slide in hero_slides %}
+        <button class="hero-dot{% if loop.first %} active{% endif %}" data-index="{{ loop.index0 }}" aria-label="Slide {{ loop.index }}"></button>
+        {% endfor %}
+    </div>
+
+    <!-- Prev / Next arrows -->
+    <button class="hero-arrow hero-arrow-prev" aria-label="Previous">&#8249;</button>
+    <button class="hero-arrow hero-arrow-next" aria-label="Next">&#8250;</button>
 </div>
 {% endif %}
 
@@ -188,4 +201,42 @@
     </section>
 
 </div>
+
+<script>
+(function() {
+    var carousel = document.getElementById('heroCarousel');
+    if (!carousel) return;
+    var slides = carousel.querySelectorAll('.hero-slide');
+    var dots   = carousel.querySelectorAll('.hero-dot');
+    var cur = 0, timer, paused = false;
+
+    function goTo(n) {
+        slides[cur].classList.remove('active');
+        dots[cur].classList.remove('active');
+        cur = (n + slides.length) % slides.length;
+        slides[cur].classList.add('active');
+        dots[cur].classList.add('active');
+    }
+
+    function next() { if (!paused) goTo(cur + 1); }
+
+    function startTimer() { timer = setInterval(next, 5000); }
+    function stopTimer()  { clearInterval(timer); }
+
+    carousel.addEventListener('mouseenter', function() { paused = true;  stopTimer(); });
+    carousel.addEventListener('mouseleave', function() { paused = false; startTimer(); });
+
+    carousel.querySelector('.hero-arrow-prev').addEventListener('click', function() { goTo(cur - 1); stopTimer(); startTimer(); });
+    carousel.querySelector('.hero-arrow-next').addEventListener('click', function() { goTo(cur + 1); stopTimer(); startTimer(); });
+
+    dots.forEach(function(dot) {
+        dot.addEventListener('click', function() {
+            goTo(parseInt(this.dataset.index));
+            stopTimer(); startTimer();
+        });
+    });
+
+    startTimer();
+})();
+</script>
 {% endblock %}
