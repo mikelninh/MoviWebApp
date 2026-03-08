@@ -1,64 +1,41 @@
 {% extends "base.html" %}
+{% from "_macros.html" import stars %}
 {% block title %}Trending · MoviWebApp{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div>
-        <h2 style="font-size:1.5rem; font-weight:800; color:#fff">Trending</h2>
-        <p style="font-size:0.82rem; color:var(--text-muted); margin-top:0.2rem">Most logged in the last two weeks</p>
-    </div>
-    <input type="text" id="trending-filter" placeholder="Filter by genre…" autocomplete="off" class="filter-input">
-</div>
+<div class="trending-page">
 
-{% if films %}
-<ul class="trending-list mt-2" id="trending-list">
-    {% for film, count in films %}
-    <li class="trending-item" data-genres="{{ film.genre or '' }}">
-        <span class="trending-rank">{{ loop.index }}</span>
-        <a href="{{ url_for('film_detail', film_id=film.id) }}" class="trending-poster-link">
+    <div class="trending-header">
+        <h1 class="trending-title">Trending</h1>
+        <p class="trending-sub">What the community is watching right now.</p>
+    </div>
+
+    {% if films %}
+    <div class="trending-grid">
+        {% for film, count, avg_rating in films %}
+        <a href="{{ url_for('film_detail', film_id=film.id) }}" class="trending-card">
+            <div class="trending-rank">{{ loop.index }}</div>
             {% if film.poster_url %}
-                <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="trending-poster">
+                <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="trending-poster" loading="lazy">
             {% else %}
                 <div class="trending-poster trending-poster-empty">🎬</div>
             {% endif %}
+            <div class="trending-overlay">
+                <span class="trending-card-title">{{ film.title }}</span>
+                {% if film.year %}<span class="trending-card-year">{{ film.year }}</span>{% endif %}
+                <div class="trending-card-meta">
+                    <span class="trending-watchers">{{ count }} watcher{{ 's' if count != 1 }}</span>
+                    {% if avg_rating %}<span class="trending-avg">{{ "%.1f"|format(avg_rating) }}★</span>{% endif %}
+                </div>
+            </div>
         </a>
-        <div class="trending-info">
-            <a href="{{ url_for('film_detail', film_id=film.id) }}" class="trending-title">{{ film.title }}</a>
-            <div class="trending-meta">
-                {% if film.year %}<span>{{ film.year }}</span>{% endif %}
-                {% if film.director %}<span>{{ film.director }}</span>{% endif %}
-            </div>
-            {% if film.genre %}
-            <div class="genre-tags">
-                {% for g in film.genre.split(', ')[:3] %}
-                    <a href="{{ url_for('genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
-                {% endfor %}
-            </div>
-            {% endif %}
-        </div>
-        <div class="trending-count">
-            <span class="trending-count-num">{{ count }}</span>
-            <span class="trending-count-label">log{{ 's' if count != 1 }}</span>
-        </div>
-    </li>
-    {% endfor %}
-</ul>
-{% else %}
-<div class="empty-state mt-3">
-    <p>No recent activity yet.</p>
-</div>
-{% endif %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state mt-3">
+        <p>No trending films yet — add some movies to get started.</p>
+    </div>
+    {% endif %}
 
-<script>
-const tf = document.getElementById('trending-filter');
-if (tf) {
-    tf.addEventListener('input', function() {
-        const q = this.value.toLowerCase();
-        document.querySelectorAll('#trending-list .trending-item').forEach(item => {
-            const genres = item.dataset.genres || '';
-            item.style.display = (!q || genres.toLowerCase().includes(q)) ? '' : 'none';
-        });
-    });
-}
-</script>
+</div>
 {% endblock %}

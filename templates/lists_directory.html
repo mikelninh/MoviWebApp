@@ -1,53 +1,56 @@
 {% extends "base.html" %}
-{% block title %}Community Lists · MoviWebApp{% endblock %}
+{% block title %}Lists · MoviWebApp{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div>
-        <h2 style="font-size:1.5rem; font-weight:800; color:#fff">Community Lists</h2>
-        <p style="font-size:0.82rem; color:var(--text-muted); margin-top:0.2rem">{{ lists | length }} curated list{{ 's' if lists | length != 1 }}</p>
-    </div>
-</div>
+<div class="lists-dir-page">
 
-{% if lists %}
-<ul class="lists-dir-grid mt-2">
-    {% for lst, count in lists %}
-    <li class="lists-dir-card">
-        <a href="{{ url_for('view_list', list_id=lst.id) }}" class="lists-dir-link">
-            <!-- poster strip from first 4 items -->
-            <div class="lists-dir-posters">
-                {% for item in lst.items[:4] %}
-                    {% if item.poster_url %}
-                    <img src="{{ item.poster_url }}" alt="{{ item.movie_title }}" class="lists-dir-poster">
-                    {% else %}
-                    <div class="lists-dir-poster lists-dir-poster-empty">🎬</div>
+    <div class="lists-dir-header">
+        <h1 class="lists-dir-title">Community Lists</h1>
+        <p class="lists-dir-sub">Curated collections from the MoviWebApp community.</p>
+    </div>
+
+    {% if all_lists %}
+    <div class="lists-dir-grid">
+        {% for lst in all_lists %}
+        {% if lst.items | length > 0 %}
+        <a href="{{ url_for('view_list', list_id=lst.id) }}" class="list-dir-card">
+            <!-- Poster mosaic: up to 4 -->
+            <div class="list-dir-mosaic">
+                {% set posters = [] %}
+                {% for item in lst.items %}
+                    {% if item.poster_url and posters | length < 4 %}
+                        {% set _ = posters.append(item.poster_url) %}
                     {% endif %}
                 {% endfor %}
-                {% if lst.items | length == 0 %}
-                <div class="lists-dir-poster lists-dir-poster-empty">🎬</div>
+                {% if posters | length == 0 %}
+                <div class="list-dir-mosaic-empty">🎬</div>
+                {% elif posters | length == 1 %}
+                <img src="{{ posters[0] }}" class="list-dir-mosaic-single" alt="">
+                {% else %}
+                <div class="list-dir-mosaic-grid list-dir-mosaic-{{ posters | length }}">
+                    {% for p in posters %}
+                    <img src="{{ p }}" alt="" loading="lazy">
+                    {% endfor %}
+                </div>
                 {% endif %}
             </div>
-            <div class="lists-dir-info">
-                <span class="lists-dir-name">{{ lst.name }}</span>
-                <div class="lists-dir-meta">
-                    <img src="{{ avatar_url(lst.user.username) }}" class="chip-avatar" alt="{{ lst.user.username }}">
-                    <span>{{ lst.user.username }}</span>
-                    <span class="stats-sep">·</span>
-                    <span>{{ count }} film{{ 's' if count != 1 }}</span>
+            <div class="list-dir-info">
+                <span class="list-dir-name">{{ lst.name }}</span>
+                <div class="list-dir-meta">
+                    <img src="{{ avatar_url(lst.user.username) }}" class="list-dir-avatar" alt="{{ lst.user.username }}">
+                    <span class="list-dir-owner">{{ lst.user.username }}</span>
+                    <span class="list-dir-count">{{ lst.items | length }} film{{ 's' if lst.items | length != 1 }}</span>
                 </div>
             </div>
         </a>
-    </li>
-    {% endfor %}
-</ul>
-{% else %}
-<div class="empty-state mt-3">
-    <p>No lists yet.</p>
-    {% if current_user.is_authenticated %}
-    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.4rem">
-        Create one from <a href="{{ url_for('user_profile', username=current_user.username) }}" style="color:var(--accent)">your profile</a>.
-    </p>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state mt-3">
+        <p>No lists yet. <a href="{{ url_for('register') }}">Join and create the first one →</a></p>
+    </div>
     {% endif %}
+
 </div>
-{% endif %}
 {% endblock %}

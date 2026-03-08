@@ -1210,17 +1210,19 @@ def notifications():
 def trending():
     from datetime import datetime as dt, timedelta
     from sqlalchemy import func
-    cutoff = dt.utcnow() - timedelta(days=14)
-    rows = (db.session.query(Movie.title, func.count(Movie.id).label("c"))
+    cutoff = dt.utcnow() - timedelta(days=30)
+    rows = (db.session.query(Movie.title,
+                             func.count(Movie.id).label("c"),
+                             func.avg(Movie.rating).label("avg_r"))
             .filter(Movie.date_added >= cutoff, Movie.status == "watched")
             .group_by(Movie.title)
             .order_by(func.count(Movie.id).desc())
-            .limit(30).all())
+            .limit(20).all())
     films = []
     for row in rows:
         f = Film.query.filter_by(title=row.title).first()
         if f:
-            films.append((f, row.c))
+            films.append((f, row.c, row.avg_r))
     return render_template("trending.html", films=films)
 
 
@@ -1261,14 +1263,12 @@ def genre_page(genre):
 
 @app.route("/lists")
 def lists_directory():
-    lists = (UserList.query
-             .order_by(UserList.created_at.desc())
-             .all())
-    lists_with_counts = sorted(
-        [(lst, len(lst.items)) for lst in lists],
-        key=lambda x: x[1], reverse=True
-    )
-    return render_template("lists_directory.html", lists=lists_with_counts)
+    all_lists = (UserList.query
+                 .join(User, UserList.user_id == User.id)
+                 .all())
+    # Sort by item count descending
+    all_lists = sorted(all_lists, key=lambda l: len(l.items), reverse=True)
+    return render_template("lists_directory.html", all_lists=all_lists)
 
 
 @app.route("/movies/<int:movie_id>/review", methods=["POST"])

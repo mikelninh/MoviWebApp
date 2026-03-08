@@ -73,6 +73,7 @@
             <a href="{{ url_for('movie_nights') }}" class="{{ 'active' if request.endpoint in ('movie_nights','movie_night_detail') }}">{{ _('Nights') }}</a>
             <a href="{{ url_for('cinemas') }}" class="{{ 'active' if request.endpoint in ('cinemas','cinema_detail') }}">{{ _('Cinemas') }}</a>
             <a href="{{ url_for('news') }}" class="{{ 'active' if request.endpoint == 'news' }}">{{ _('News') }}</a>
+            <a href="{{ url_for('lists_directory') }}" class="{{ 'active' if request.endpoint == 'lists_directory' }}">{{ _('Lists') }}</a>
 
             {% if current_user.is_authenticated %}
                 <span class="nav-divider"></span>
