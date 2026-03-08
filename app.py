@@ -321,12 +321,26 @@ def movie_detail(movie_id):
 def search():
     q = request.args.get("q", "").strip()
     results = []
+    omdb_fallback = None
     if q:
-        results = (Movie.query
-                   .filter(Movie.title.ilike(f"%{q}%"))
-                   .order_by(Movie.title)
-                   .all())
-    return render_template("search.html", q=q, results=results)
+        raw = (Movie.query
+               .filter(Movie.title.ilike(f"%{q}%"))
+               .order_by(Movie.title)
+               .all())
+        # Deduplicate by title — keep best (prefer entry with poster/plot)
+        seen, counts = {}, {}
+        for m in raw:
+            key = m.title.lower()
+            counts[key] = counts.get(key, 0) + 1
+            if key not in seen or (not seen[key].poster_url and m.poster_url):
+                seen[key] = m
+        results = sorted(
+            [(m, counts[m.title.lower()]) for m in seen.values()],
+            key=lambda x: x[0].title.lower()
+        )
+        if not raw:
+            omdb_fallback = data_manager.fetch_omdb_data(q)
+    return render_template("search.html", q=q, results=results, omdb_fallback=omdb_fallback)
 
 
 @app.route("/users/<int:user_id>/add_movie", methods=["POST"])

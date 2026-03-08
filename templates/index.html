@@ -18,7 +18,7 @@
     </div>
 
     {% for lst in inspiration %}
-    <div class="inspo-row">
+    <div class="inspo-row{% if loop.index > 2 %} inspo-row-hidden{% endif %}">
         <div class="inspo-row-meta">
             <span class="inspo-row-icon">{{ lst.icon }}</span>
             <div>
@@ -47,6 +47,21 @@
         </ul>
     </div>
     {% endfor %}
+
+    <button class="inspo-more-btn" id="inspoToggle" onclick="toggleInspo()">
+        Show 5 more lists ↓
+    </button>
+    <script>
+    function toggleInspo() {
+        const btn = document.getElementById('inspoToggle');
+        const hidden = document.querySelectorAll('.inspo-row-hidden');
+        const open = btn.dataset.open === 'true';
+        hidden.forEach(r => r.style.display = open ? '' : 'none');
+        btn.dataset.open = open ? 'false' : 'true';
+        btn.textContent = open ? 'Show 5 more lists ↓' : 'Show less ↑';
+        if (open) btn.style.display = '';
+    }
+    </script>
 </section>
 
 <div class="home-layout mt-2">

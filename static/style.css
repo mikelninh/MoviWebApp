@@ -832,6 +832,46 @@ input:focus, textarea:focus, select:focus {
     display: block;
 }
 
+.inspo-row-hidden { display: none; }
+
+.inspo-more-btn {
+    display: block;
+    margin: 0.25rem 0 1.25rem;
+    background: none;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 999px;
+    color: #6b7a99;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.3rem 1rem;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+.inspo-more-btn:hover { border-color: #3b82f6; color: #60a5fa; }
+
+/* OMDb fallback on search page */
+.omdb-result {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    background: #111827;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
+    padding: 1.25rem;
+    max-width: 560px;
+}
+.omdb-poster {
+    width: 120px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    display: block;
+}
+.omdb-info { display: flex; flex-direction: column; gap: 0.4rem; }
+.omdb-title { font-size: 1.15rem; font-weight: 700; color: #fff; }
+.omdb-year { font-size: 0.82rem; color: #6b7a99; }
+.omdb-director { font-size: 0.82rem; color: #9ca3af; }
+.omdb-plot { font-size: 0.85rem; color: #9ca3af; line-height: 1.55; }
+
 /* ============================================================
    EMPTY STATE
    ============================================================ */
