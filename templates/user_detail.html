@@ -81,6 +81,7 @@
 <!-- Add movie form (owner only) -->
 {% if current_user.is_authenticated and current_user.id == user.id %}
 <div class="add-movie-form mt-2">
+    <a href="{{ url_for('import_letterboxd') }}" class="import-shortcut">📥 Import from Letterboxd</a>
     <form action="{{ url_for('add_movie', user_id=user.id) }}" method="post">
         <div class="form-row">
             <div class="form-group" style="flex:2">

@@ -48,6 +48,7 @@
                     <img src="{{ avatar_url(current_user.username) }}" class="nav-avatar" alt="{{ current_user.username }}">
                     {{ current_user.username }}
                 </a>
+                <a href="{{ url_for('import_letterboxd') }}" class="{{ 'active' if request.endpoint == 'import_letterboxd' }}" title="Import from Letterboxd">Import</a>
                 <a href="{{ url_for('logout') }}" class="nav-logout">Logout</a>
             {% else %}
                 <a href="{{ url_for('login') }}" class="{{ 'active' if request.endpoint == 'login' }}">Login</a>

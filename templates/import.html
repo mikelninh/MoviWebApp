@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Import from Letterboxd · MoviWebApp{% endblock %}
+
+{% block content %}
+<div class="import-page">
+
+    <div class="import-hero">
+        <div class="import-hero-icon">📥</div>
+        <h1 class="import-title">Bring your Letterboxd history</h1>
+        <p class="import-sub">Your ratings, watched films, and watchlist — imported in seconds. Your data, your way.</p>
+    </div>
+
+    <div class="import-card">
+        <form action="{{ url_for('import_letterboxd') }}" method="post" enctype="multipart/form-data" id="import-form">
+            <div class="drop-zone" id="drop-zone">
+                <div class="drop-zone-inner">
+                    <div class="drop-icon">🎬</div>
+                    <p class="drop-label">Drop your Letterboxd <strong>.zip</strong> here</p>
+                    <p class="drop-sub">or</p>
+                    <label for="file-input" class="btn btn-sm">Browse file</label>
+                    <input type="file" id="file-input" name="file" accept=".zip,.csv" hidden>
+                    <p class="drop-filename" id="drop-filename"></p>
+                </div>
+            </div>
+
+            <button type="submit" class="btn import-submit-btn" id="submit-btn" disabled>
+                Import my films →
+            </button>
+        </form>
+
+        <div class="import-what">
+            <h3 class="import-what-title">What gets imported</h3>
+            <ul class="import-what-list">
+                <li><span class="import-check">✓</span> All films you've watched</li>
+                <li><span class="import-check">✓</span> Your star ratings (half-stars rounded)</li>
+                <li><span class="import-check">✓</span> Your watchlist</li>
+                <li><span class="import-skip">–</span> Reviews (coming soon)</li>
+                <li><span class="import-skip">–</span> Diary entries (coming soon)</li>
+            </ul>
+            <p class="import-note">Already in your list? Duplicates are skipped automatically.</p>
+        </div>
+    </div>
+
+    <div class="import-howto">
+        <h3 class="import-howto-title">How to export from Letterboxd</h3>
+        <ol class="import-howto-steps">
+            <li>Go to <strong>letterboxd.com</strong> and log in</li>
+            <li>Click your avatar → <strong>Settings</strong></li>
+            <li>Scroll to <strong>Import & Export</strong></li>
+            <li>Click <strong>Export Your Data</strong> — you'll get a .zip file</li>
+            <li>Upload it above ↑</li>
+        </ol>
+    </div>
+
+</div>
+
+<script>
+const dropZone   = document.getElementById('drop-zone');
+const fileInput  = document.getElementById('file-input');
+const submitBtn  = document.getElementById('submit-btn');
+const fileLabel  = document.getElementById('drop-filename');
+
+function setFile(file) {
+    fileLabel.textContent = file.name;
+    submitBtn.disabled = false;
+    dropZone.classList.add('drop-zone-ready');
+}
+
+fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) setFile(fileInput.files[0]);
+});
+
+dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropZone.classList.add('drop-zone-over');
+});
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drop-zone-over'));
+dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drop-zone-over');
+    const file = e.dataTransfer.files[0];
+    if (file) {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        fileInput.files = dt.files;
+        setFile(file);
+    }
+});
+
+document.getElementById('import-form').addEventListener('submit', () => {
+    submitBtn.textContent = 'Importing…';
+    submitBtn.disabled = true;
+});
+</script>
+{% endblock %}

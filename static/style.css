@@ -2291,3 +2291,75 @@ input:focus, textarea:focus, select:focus {
     transition: opacity 0.15s;
 }
 .footer-kofi:hover { opacity: 0.8; }
+
+/* ============================================================
+   LETTERBOXD IMPORT PAGE
+   ============================================================ */
+.import-page { max-width: 600px; margin: 0 auto; padding-bottom: 3rem; }
+
+.import-hero { text-align: center; padding: 2rem 0 1.5rem; }
+.import-hero-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+.import-title { font-size: 1.8rem; font-weight: 900; color: #fff; margin-bottom: 0.5rem; }
+.import-sub { font-size: 0.9rem; color: #6b7a99; line-height: 1.6; max-width: 420px; margin: 0 auto; }
+
+.import-card {
+    background: #0f172a;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    padding: 2rem;
+    display: flex; flex-direction: column; gap: 1.5rem;
+}
+
+.drop-zone {
+    border: 2px dashed rgba(59,130,246,0.3);
+    border-radius: 12px;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    background: rgba(59,130,246,0.03);
+}
+.drop-zone:hover, .drop-zone-over {
+    border-color: rgba(59,130,246,0.7);
+    background: rgba(59,130,246,0.06);
+}
+.drop-zone-ready { border-color: rgba(52,211,153,0.5); background: rgba(52,211,153,0.04); }
+.drop-zone-inner { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+.drop-icon { font-size: 2rem; }
+.drop-label { font-size: 0.95rem; color: #c5cde0; margin: 0; }
+.drop-sub { font-size: 0.8rem; color: #3a4460; margin: 0; }
+.drop-filename { font-size: 0.82rem; color: #34d399; margin-top: 0.25rem; font-weight: 600; min-height: 1.2em; }
+
+.import-submit-btn {
+    width: 100%; padding: 0.75rem;
+    font-size: 1rem; font-weight: 700;
+    opacity: 1; transition: opacity 0.15s;
+}
+.import-submit-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.import-what { border-top: 1px solid rgba(255,255,255,0.06); padding-top: 1.25rem; }
+.import-what-title { font-size: 0.82rem; font-weight: 700; color: #4a5a80; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.75rem; }
+.import-what-list { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
+.import-what-list li { font-size: 0.88rem; color: #6b7a99; display: flex; align-items: center; gap: 0.5rem; }
+.import-check { color: #34d399; font-weight: 700; }
+.import-skip  { color: #2a3450; font-weight: 700; }
+.import-note  { font-size: 0.78rem; color: #3a4460; margin-top: 0.75rem; }
+
+.import-howto {
+    margin-top: 2rem;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+.import-howto-title { font-size: 0.88rem; font-weight: 700; color: #4a5a80; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem; }
+.import-howto-steps { padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.import-howto-steps li { font-size: 0.88rem; color: #6b7a99; line-height: 1.5; }
+.import-howto-steps strong { color: #c5cde0; }
+
+.import-shortcut {
+    font-size: 0.78rem; color: #4a5a80;
+    text-decoration: none; float: right;
+    transition: color 0.15s;
+}
+.import-shortcut:hover { color: #60a5fa; }

@@ -1,7 +1,10 @@
 import copy
+import csv
+import io
 import json
 import os
 import threading
+import zipfile
 from collections import Counter
 
 from dotenv import load_dotenv
@@ -1232,6 +1235,127 @@ def challenges():
     review_count = Review.query.filter_by(user_id=current_user.id).count()
     all_challenges = compute_challenges(movies, review_count)
     return render_template("challenges.html", challenges=all_challenges)
+
+
+@app.route("/import", methods=["GET", "POST"])
+@login_required
+def import_letterboxd():
+    if request.method == "GET":
+        return render_template("import.html")
+
+    file = request.files.get("file")
+    if not file or not file.filename:
+        flash("Please select a file.", "error")
+        return render_template("import.html")
+
+    filename = file.filename.lower()
+    watched_rows, watchlist_rows, ratings_map = [], [], {}
+
+    def parse_rating(raw):
+        try:
+            return max(1, min(5, int(float(raw) + 0.5)))
+        except (ValueError, TypeError):
+            return None
+
+    try:
+        if filename.endswith(".zip"):
+            with zipfile.ZipFile(file) as z:
+                names = z.namelist()
+                if "watched.csv" in names:
+                    with z.open("watched.csv") as f:
+                        watched_rows = list(csv.DictReader(io.TextIOWrapper(f, encoding="utf-8")))
+                if "ratings.csv" in names:
+                    with z.open("ratings.csv") as f:
+                        for row in csv.DictReader(io.TextIOWrapper(f, encoding="utf-8")):
+                            key = (row["Name"].strip(), row.get("Year", "").strip())
+                            r = parse_rating(row.get("Rating"))
+                            if r:
+                                ratings_map[key] = r
+                if "watchlist.csv" in names:
+                    with z.open("watchlist.csv") as f:
+                        watchlist_rows = list(csv.DictReader(io.TextIOWrapper(f, encoding="utf-8")))
+        elif filename.endswith(".csv"):
+            content = file.read().decode("utf-8")
+            rows = list(csv.DictReader(io.StringIO(content)))
+            if rows and "Rating" in (rows[0] if rows else {}):
+                for row in rows:
+                    key = (row["Name"].strip(), row.get("Year", "").strip())
+                    r = parse_rating(row.get("Rating"))
+                    if r:
+                        ratings_map[key] = r
+            else:
+                watched_rows = rows
+        else:
+            flash("Please upload the .zip file from Letterboxd.", "error")
+            return render_template("import.html")
+    except Exception as e:
+        flash(f"Could not read file: {e}", "error")
+        return render_template("import.html")
+
+    # Build set of already-owned titles for deduplication
+    existing = {
+        (m.title.lower(), m.year or "")
+        for m in Movie.query.filter_by(user_id=current_user.id).all()
+    }
+
+    # Build Film lookup cache
+    film_cache = {f.title.lower(): f for f in Film.query.all()}
+
+    def get_or_create_film_fast(title, year):
+        key = title.lower()
+        if key in film_cache:
+            return film_cache[key]
+        film = Film(title=title, year=year)
+        db.session.add(film)
+        db.session.flush()
+        film_cache[key] = film
+        return film
+
+    watched_imported = skipped_watched = 0
+    watchlist_imported = skipped_watchlist = 0
+
+    for row in watched_rows:
+        title = row.get("Name", "").strip()
+        year  = row.get("Year", "").strip()
+        if not title:
+            continue
+        if (title.lower(), year) in existing:
+            skipped_watched += 1
+            continue
+        rating = ratings_map.get((title, year))
+        film   = get_or_create_film_fast(title, year)
+        db.session.add(Movie(
+            title=title, user_id=current_user.id, film_id=film.id,
+            rating=rating, status="watched", year=year,
+        ))
+        existing.add((title.lower(), year))
+        watched_imported += 1
+
+    for row in watchlist_rows:
+        title = row.get("Name", "").strip()
+        year  = row.get("Year", "").strip()
+        if not title:
+            continue
+        if (title.lower(), year) in existing:
+            skipped_watchlist += 1
+            continue
+        film = get_or_create_film_fast(title, year)
+        db.session.add(Movie(
+            title=title, user_id=current_user.id, film_id=film.id,
+            rating=None, status="watchlist", year=year,
+        ))
+        existing.add((title.lower(), year))
+        watchlist_imported += 1
+
+    db.session.commit()
+
+    parts = []
+    if watched_imported:   parts.append(f"{watched_imported} watched")
+    if watchlist_imported: parts.append(f"{watchlist_imported} watchlist")
+    skipped = skipped_watched + skipped_watchlist
+    if skipped:            parts.append(f"{skipped} already in your list")
+    flash("Import complete! " + " · ".join(parts) + ".", "success")
+    return redirect(url_for("user_profile", username=current_user.username))
 
 
 @app.route("/users/<int:user_id>/add_movie", methods=["POST"])
