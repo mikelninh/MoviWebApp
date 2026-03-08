@@ -1293,28 +1293,55 @@ def delete_user(user_id):
 @app.errorhandler(404)
 def not_found(e):
     return render_template("error.html", code=404,
-                           title="Scene Missing",
-                           message="We looked everywhere. This page got cut from the final edit.",
-                           quote="\"I don't know what you're talking about. There's no scene here.\"",
-                           quote_attr="— Every director ever"), 404
+                           badge="SCENE MISSING",
+                           title="This Page Got Cut",
+                           message="The editor removed it. The director's cut never existed. "
+                                   "The intern deleted it. Nobody knows. It's gone.",
+                           quote="\u201cI don\u2019t think we\u2019re in Kansas anymore.\u201d",
+                           quote_attr="\u2014 Dorothy, The Wizard of Oz (1939)",
+                           suggested_films=[
+                               "Lost Highway (1997)",
+                               "Gone with the Wind (1939)",
+                               "The Missing (2003)",
+                               "Somewhere (2010)",
+                               "Into the Void (2009)",
+                           ]), 404
 
 
 @app.errorhandler(500)
 def server_error(e):
     return render_template("error.html", code=500,
-                           title="The Projector Broke",
-                           message="Something went wrong in the booth. We're rewinding the reel.",
-                           quote="\"All right, Mr. DeMille, I'm ready for my close-up.\"",
-                           quote_attr="— Norma Desmond, Sunset Blvd."), 500
+                           badge="TECHNICAL DIFFICULTIES",
+                           title="The Projector Exploded",
+                           message="Something caught fire in the booth. Our best grip is on it. "
+                                   "Please stand by — intermission music playing.",
+                           quote="\u201cAll right, Mr. DeMille, I\u2019m ready for my close-up.\u201d",
+                           quote_attr="\u2014 Norma Desmond, Sunset Blvd. (1950)",
+                           suggested_films=[
+                               "Meltdown (1995)",
+                               "The Core (2003)",
+                               "Catastrophe (2015)",
+                               "Chaos (2005)",
+                               "Burn After Reading (2008)",
+                           ]), 500
 
 
 @app.errorhandler(403)
 def forbidden(e):
     return render_template("error.html", code=403,
-                           title="Restricted Section",
-                           message="You don't have a ticket for this screening.",
-                           quote="\"You shall not pass.\"",
-                           quote_attr="— Gandalf (wrong franchise, still applies)"), 403
+                           badge="PRIVATE SCREENING",
+                           title="Members Only",
+                           message="This screening is invitation-only. "
+                                   "Your name isn\u2019t on the list. Neither is your plus-one.",
+                           quote="\u201cYou\u2019re not supposed to be here.\u201d",
+                           quote_attr="\u2014 Clerks (1994)",
+                           suggested_films=[
+                               "Forbidden Planet (1956)",
+                               "The Uninvited (1944)",
+                               "No Trespassing (1922)",
+                               "Eyes Wide Shut (1999)",
+                               "The Insider (1999)",
+                           ]), 403
 
 
 # ── STARTUP ──────────────────────────────────────────────────────────────────

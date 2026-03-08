@@ -4,12 +4,28 @@
 {% block content %}
 <div class="error-page">
 
+    <!-- Film strip top -->
     <div class="error-film-strip">
-        {% for i in range(8) %}<div class="film-hole"></div>{% endfor %}
+        {% for i in range(14) %}<div class="film-hole"></div>{% endfor %}
     </div>
 
+    <!-- Main card -->
     <div class="error-body">
+        <div class="error-scanlines"></div>
+
+        <div class="error-reel" aria-hidden="true">
+            <div class="reel-outer">
+                <div class="reel-inner">
+                    <div class="reel-spoke"></div>
+                    <div class="reel-spoke"></div>
+                    <div class="reel-spoke"></div>
+                </div>
+            </div>
+        </div>
+
         <div class="error-code">{{ code }}</div>
+        {% if badge %}<div class="error-badge">{{ badge }}</div>{% endif %}
+
         <h1 class="error-title">{{ title }}</h1>
         <p class="error-message">{{ message }}</p>
 
@@ -18,14 +34,26 @@
             <cite>{{ quote_attr }}</cite>
         </blockquote>
 
+        {% if suggested_films %}
+        <div class="error-suggestions">
+            <p class="error-suggestions-label">While you're here, might we suggest…</p>
+            <div class="error-fake-films">
+                {% for film in suggested_films %}
+                <span class="error-fake-film">{{ film }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
         <div class="error-actions">
-            <a href="{{ url_for('index') }}" class="btn">Back to the lobby</a>
-            <a href="javascript:history.back()" class="btn btn-ghost">Go back</a>
+            <a href="{{ url_for('index') }}" class="btn">← Back to the lobby</a>
+            <a href="javascript:history.back()" class="btn btn-ghost">Previous scene</a>
         </div>
     </div>
 
+    <!-- Film strip bottom -->
     <div class="error-film-strip error-film-strip-bottom">
-        {% for i in range(8) %}<div class="film-hole"></div>{% endfor %}
+        {% for i in range(14) %}<div class="film-hole"></div>{% endfor %}
     </div>
 
 </div>
