@@ -10,6 +10,10 @@ __pycache__/
 # Database (use seed.py to recreate)
 data/movies.db
 
+# Personal data exports
+data/*.zip
+data/letterboxd-*.csv
+
 # Generated cache
 data/inspiration_posters.json
 
