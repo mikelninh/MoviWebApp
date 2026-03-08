@@ -45,6 +45,9 @@
                 <div class="night-meta">
                     <span class="night-by">by {{ night.creator.username }}</span>
                     <span class="night-films">{{ night.films | length }} film{{ 's' if night.films | length != 1 }}</span>
+                    {% if night.winner_film_id %}
+                    <span class="night-winner-badge">🏆 {{ night.winner.movie_title }}</span>
+                    {% endif %}
                 </div>
             </a>
         </li>

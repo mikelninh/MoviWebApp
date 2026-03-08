@@ -53,15 +53,20 @@ class UserListItem(db.Model):
 
 
 class MovieNight(db.Model):
-    id          = db.Column(db.Integer, primary_key=True)
-    creator_id  = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    name        = db.Column(db.String(120), nullable=False)
-    date        = db.Column(db.String(20), nullable=True)
-    description = db.Column(db.Text, nullable=True)
-    created_at  = db.Column(db.DateTime, default=datetime.utcnow)
-    creator     = db.relationship("User", backref="movie_nights")
-    films       = db.relationship("MovieNightFilm", backref="night",
-                                  cascade="all, delete-orphan", lazy=True)
+    id             = db.Column(db.Integer, primary_key=True)
+    creator_id     = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    name           = db.Column(db.String(120), nullable=False)
+    date           = db.Column(db.String(20), nullable=True)
+    description    = db.Column(db.Text, nullable=True)
+    invite_token   = db.Column(db.String(32), nullable=True, unique=True, index=True)
+    winner_film_id = db.Column(db.Integer, db.ForeignKey("movie_night_film.id"), nullable=True)
+    created_at     = db.Column(db.DateTime, default=datetime.utcnow)
+    creator        = db.relationship("User", backref="movie_nights")
+    films          = db.relationship("MovieNightFilm", backref="night",
+                                     cascade="all, delete-orphan", lazy=True,
+                                     foreign_keys="MovieNightFilm.night_id")
+    winner         = db.relationship("MovieNightFilm", foreign_keys=[winner_film_id],
+                                     post_update=True)
 
 
 class MovieNightFilm(db.Model):

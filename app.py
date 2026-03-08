@@ -3,6 +3,7 @@ import csv
 import io
 import json
 import os
+import secrets
 import threading
 import zipfile
 from collections import Counter
@@ -1132,7 +1133,8 @@ def create_movie_night():
         flash("Movie night needs a name.", "error")
         return redirect(url_for("movie_nights"))
     night = MovieNight(creator_id=current_user.id, name=name,
-                       date=date or None, description=desc or None)
+                       date=date or None, description=desc or None,
+                       invite_token=secrets.token_hex(16))
     db.session.add(night)
     db.session.commit()
     flash(f"'{name}' created!", "success")
@@ -1221,6 +1223,45 @@ def vote_film(night_id, film_id):
         return render_template("_vote_btn.html", film=film,
                                user_voted=user_voted, vote_count=vote_count,
                                night_id=night_id)
+    return redirect(url_for("movie_night_detail", night_id=night_id))
+
+
+@app.route("/nights/join/<token>")
+def join_night(token):
+    night = MovieNight.query.filter_by(invite_token=token).first()
+    if not night:
+        flash("Invalid invite link.", "error")
+        return redirect(url_for("movie_nights"))
+    flash(f"You've been invited to '{night.name}'! Suggest a film or vote below.", "info")
+    return redirect(url_for("movie_night_detail", night_id=night.id))
+
+
+@app.route("/movie-nights/<int:night_id>/declare-winner/<int:film_id>", methods=["POST"])
+@login_required
+def declare_winner(night_id, film_id):
+    night = db.session.get(MovieNight, night_id)
+    if not night or night.creator_id != current_user.id:
+        flash("Only the creator can declare a winner.", "error")
+        return redirect(url_for("movie_night_detail", night_id=night_id))
+    film = db.session.get(MovieNightFilm, film_id)
+    if not film or film.night_id != night_id:
+        flash("Film not found.", "error")
+        return redirect(url_for("movie_night_detail", night_id=night_id))
+    night.winner_film_id = film_id
+    db.session.commit()
+    flash(f"🏆 '{film.movie_title}' declared the winner!", "success")
+    return redirect(url_for("movie_night_detail", night_id=night_id))
+
+
+@app.route("/movie-nights/<int:night_id>/clear-winner", methods=["POST"])
+@login_required
+def clear_winner(night_id):
+    night = db.session.get(MovieNight, night_id)
+    if not night or night.creator_id != current_user.id:
+        flash("Only the creator can change the winner.", "error")
+        return redirect(url_for("movie_night_detail", night_id=night_id))
+    night.winner_film_id = None
+    db.session.commit()
     return redirect(url_for("movie_night_detail", night_id=night_id))
 
 

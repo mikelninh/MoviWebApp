@@ -2563,3 +2563,148 @@ input:focus, textarea:focus, select:focus {
     white-space: nowrap;
 }
 .loggedout-login-link:hover { color: #93c5fd; }
+
+/* ============================================================
+   MOVIE NIGHTS v2 — INVITE / WINNER / RESULT
+   ============================================================ */
+
+/* Invite bar */
+.night-invite-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    background: rgba(59,130,246,0.07);
+    border: 1px solid rgba(59,130,246,0.18);
+    border-radius: 10px;
+    padding: 0.6rem 1rem;
+    font-size: 0.82rem;
+}
+.night-invite-label { color: #7a88aa; font-weight: 600; }
+.night-invite-link {
+    color: #93c5fd;
+    background: rgba(0,0,0,0.25);
+    border-radius: 5px;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.78rem;
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.night-copy-btn {
+    background: rgba(59,130,246,0.15);
+    border: 1px solid rgba(59,130,246,0.3);
+    color: #93c5fd;
+    border-radius: 6px;
+    padding: 0.2rem 0.7rem;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+}
+.night-copy-btn:hover { background: rgba(59,130,246,0.28); }
+
+/* Declare winner button */
+.btn-winner {
+    background: rgba(251,191,36,0.12);
+    border: 1px solid rgba(251,191,36,0.3);
+    color: #fbbf24;
+    border-radius: 6px;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.btn-winner:hover { background: rgba(251,191,36,0.25); }
+
+/* Winner banner */
+@keyframes winner-glow {
+    0%, 100% { box-shadow: 0 0 24px rgba(251,191,36,0.2); }
+    50%       { box-shadow: 0 0 48px rgba(251,191,36,0.45); }
+}
+
+.winner-banner {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    border: 1px solid rgba(251,191,36,0.4);
+    background: linear-gradient(135deg,
+        rgba(251,191,36,0.08) 0%,
+        rgba(251,191,36,0.03) 100%);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    animation: winner-glow 3s ease-in-out infinite;
+}
+
+.winner-inner {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+}
+
+.winner-poster {
+    width: 80px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    flex-shrink: 0;
+}
+
+.winner-text { flex: 1; min-width: 160px; }
+
+.winner-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fbbf24;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.3rem;
+}
+.winner-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #f9fafb;
+    line-height: 1.2;
+    margin-bottom: 0.3rem;
+}
+.winner-votes { font-size: 0.82rem; color: #7a88aa; }
+
+.winner-share {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+/* Winner badge in list view */
+.night-winner-badge {
+    font-size: 0.75rem;
+    color: #fbbf24;
+    font-weight: 600;
+}
+
+/* Winning card highlight */
+.night-film-card.is-winner {
+    border-color: rgba(251,191,36,0.5);
+    background: rgba(251,191,36,0.05);
+}
+
+/* Confetti (pure CSS, subtle) */
+.winner-confetti {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+        radial-gradient(circle, #fbbf24 1px, transparent 1px),
+        radial-gradient(circle, #60a5fa 1px, transparent 1px),
+        radial-gradient(circle, #a78bfa 1px, transparent 1px);
+    background-size: 60px 60px, 80px 80px, 100px 100px;
+    background-position: 10px 10px, 30px 30px, 50px 15px;
+    opacity: 0.18;
+}

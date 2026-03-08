@@ -1,7 +1,40 @@
 {% extends "base.html" %}
 {% block title %}{{ night.name }} · MoviWebApp{% endblock %}
 
+{% block og_tags %}
+<meta property="og:title"       content="{{ night.name }} · Movie Night on MoviWebApp">
+<meta property="og:description" content="{% if night.winner %}Tonight's pick: {{ night.winner.movie_title }}!{% else %}Vote for the film for {{ night.name }}{% if night.date %} on {{ night.date }}{% endif %}.{% endif %}">
+{% if night.winner and night.winner.poster_url %}<meta property="og:image" content="{{ night.winner.poster_url }}">{% endif %}
+<meta property="og:url" content="{{ request.url }}">
+{% endblock %}
+
 {% block content %}
+
+<!-- Winner banner -->
+{% if night.winner %}
+<div class="winner-banner">
+    <div class="winner-confetti"></div>
+    <div class="winner-inner">
+        {% if night.winner.poster_url %}
+        <img src="{{ night.winner.poster_url }}" alt="{{ night.winner.movie_title }}" class="winner-poster">
+        {% endif %}
+        <div class="winner-text">
+            <div class="winner-label">🏆 Tonight's Pick</div>
+            <div class="winner-title">{{ night.winner.movie_title }}</div>
+            <div class="winner-votes">{{ night.winner.votes | length }} vote{{ 's' if night.winner.votes | length != 1 }} · {{ night.name }}</div>
+        </div>
+        <div class="winner-share">
+            <button class="btn btn-sm" onclick="copyLink('{{ request.url }}')">📋 Share result</button>
+            {% if current_user.is_authenticated and current_user.id == night.creator_id %}
+            <form action="{{ url_for('clear_winner', night_id=night.id) }}" method="post" style="display:inline">
+                <button type="submit" class="btn btn-sm btn-ghost" title="Change winner">↩ Undo</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="night-detail-header">
     <div>
         <h2>{{ night.name }}</h2>
@@ -12,8 +45,17 @@
     <a href="{{ url_for('movie_nights') }}" class="btn btn-sm btn-ghost">← All nights</a>
 </div>
 
+<!-- Invite link -->
+{% if night.invite_token %}
+<div class="night-invite-bar mt-2">
+    <span class="night-invite-label">🔗 Invite friends:</span>
+    <code class="night-invite-link" id="invite-link">{{ request.host_url }}nights/join/{{ night.invite_token }}</code>
+    <button class="btn btn-xs night-copy-btn" onclick="copyInvite()">Copy link</button>
+</div>
+{% endif %}
+
 <!-- Suggest a film -->
-{% if current_user.is_authenticated %}
+{% if current_user.is_authenticated and not night.winner %}
 <div class="suggest-form mt-2">
     <form action="{{ url_for('suggest_film', night_id=night.id) }}" method="post" class="form-row">
         <div class="form-group" style="flex:2">
@@ -29,15 +71,18 @@
     {% if sorted_films %}
     {% set top_votes = sorted_films[0].votes | length if sorted_films else 0 %}
     <p class="night-vote-hint text-muted">
-        {% if current_user.is_authenticated %}Vote for the film you want to watch — one vote per person.{% else %}<a href="{{ url_for('login') }}">Log in</a> to vote.{% endif %}
+        {% if night.winner %}The votes are in — winner declared above.
+        {% elif current_user.is_authenticated %}Vote for the film you want to watch — one vote per person.
+        {% else %}<a href="{{ url_for('login') }}">Log in</a> to vote.{% endif %}
     </p>
     <ul class="night-films-list mt-1">
         {% for film in sorted_films %}
         {% set vote_count = film.votes | length %}
         {% set user_voted = current_user.is_authenticated and film.votes | selectattr('user_id','equalto',current_user.id) | list | length > 0 %}
-        {% set is_leading = top_votes > 0 and vote_count == top_votes %}
-        <li class="night-film-card {{ 'user-voted' if user_voted }} {{ 'leading' if is_leading }}">
-            {% if is_leading and top_votes > 0 %}
+        {% set is_leading = not night.winner and top_votes > 0 and vote_count == top_votes %}
+        {% set is_winner = night.winner and night.winner.id == film.id %}
+        <li class="night-film-card {{ 'user-voted' if user_voted }} {{ 'leading' if is_leading }} {{ 'is-winner' if is_winner }}">
+            {% if is_leading and not night.winner %}
             <div class="night-leading-badge">🏆 Leading</div>
             {% endif %}
             {% if film.poster_url %}
@@ -59,14 +104,19 @@
                 {% endif %}
             </div>
             <div class="night-film-votes">
-                {% if current_user.is_authenticated %}
+                {% if current_user.is_authenticated and not night.winner %}
                 {% set night_id = night.id %}
                 {% include "_vote_btn.html" with context %}
                 {% else %}
                 <span class="vote-count">▲ {{ vote_count }}</span>
                 {% endif %}
             </div>
-            {% if current_user.is_authenticated and (film.suggested_by == current_user.id or night.creator_id == current_user.id) %}
+            {% if current_user.is_authenticated and night.creator_id == current_user.id and not night.winner %}
+            <form action="{{ url_for('declare_winner', night_id=night.id, film_id=film.id) }}" method="post" style="display:inline">
+                <button type="submit" class="btn btn-xs btn-winner" title="Declare this the winner">🏆</button>
+            </form>
+            {% endif %}
+            {% if current_user.is_authenticated and (film.suggested_by == current_user.id or night.creator_id == current_user.id) and not night.winner %}
             <form action="{{ url_for('delete_suggestion', night_id=night.id, film_id=film.id) }}" method="post"
                   onsubmit="return confirm('Remove this suggestion?')">
                 <button type="submit" class="btn btn-xs btn-danger night-delete-btn" title="Remove suggestion">✕</button>
@@ -81,4 +131,18 @@
     </div>
     {% endif %}
 </section>
+
+<script>
+function copyInvite() {
+    const link = document.getElementById('invite-link').textContent;
+    navigator.clipboard.writeText(link).then(() => {
+        const btn = document.querySelector('.night-copy-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy link', 2000);
+    });
+}
+function copyLink(url) {
+    navigator.clipboard.writeText(url).then(() => alert('Link copied!'));
+}
+</script>
 {% endblock %}
