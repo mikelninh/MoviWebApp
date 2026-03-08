@@ -128,7 +128,7 @@ class Movie(db.Model):
     title      = db.Column(db.String(120), nullable=False)
     user_id    = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     film_id    = db.Column(db.Integer, db.ForeignKey("film.id"), nullable=True)
-    rating     = db.Column(db.Integer, nullable=True)
+    rating     = db.Column(db.Float, nullable=True)
     year       = db.Column(db.String(10), nullable=True)
     director   = db.Column(db.String(120), nullable=True)
     plot       = db.Column(db.Text, nullable=True)

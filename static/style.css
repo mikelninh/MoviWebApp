@@ -2564,6 +2564,14 @@ input:focus, textarea:focus, select:focus {
 }
 .loggedout-login-link:hover { color: #93c5fd; }
 
+/* Half-star rating display */
+.star.half {
+    background: linear-gradient(to right, #f59e0b 50%, #2a3050 50%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
 /* ============================================================
    ABOUT PAGE
    ============================================================ */

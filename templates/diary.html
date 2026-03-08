@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_macros.html" import stars %}
 {% block title %}{{ user.username }}'s Diary · MoviWebApp{% endblock %}
 
 {% block content %}
@@ -34,11 +35,7 @@
                 {% endif %}
             </div>
             {% if movie.rating %}
-            <div class="diary-rating">
-                {% for i in range(1, 6) %}
-                    <span class="star {{ 'filled' if i <= movie.rating else '' }}">★</span>
-                {% endfor %}
-            </div>
+            <div class="diary-rating">{{ stars(movie.rating) }}</div>
             {% endif %}
         </li>
         {% endfor %}

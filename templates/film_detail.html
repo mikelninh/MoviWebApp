@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_macros.html" import stars %}
 {% block title %}{{ film.title }} · MoviWebApp{% endblock %}
 
 {% block og_tags %}
@@ -56,11 +57,7 @@
         {% if rated %}
         {% set avg = (rated | map(attribute='1') | map(attribute='rating') | sum) / rated | length %}
         <div class="detail-rating mt-1">
-            <div class="stars">
-                {% for i in range(1, 6) %}
-                    <span class="star {{ 'filled' if i <= avg | round else '' }}">★</span>
-                {% endfor %}
-            </div>
+            {{ stars(avg) }}
             <span class="detail-rating-text">{{ "%.1f"|format(avg) }} avg · {{ rated | length }} rating{{ 's' if rated | length != 1 }}</span>
         </div>
         {% endif %}
@@ -126,9 +123,7 @@
         <div class="already-in-list mt-2">
             <span class="already-check">✓ In your list</span>
             {% if my_instance.rating %}
-            <span class="already-rating">
-                {% for i in range(1, 6) %}<span class="star {{ 'filled' if i <= my_instance.rating }}">★</span>{% endfor %}
-            </span>
+            <span class="already-rating">{{ stars(my_instance.rating) }}</span>
             {% endif %}
             <a href="{{ url_for('edit_movie', user_id=current_user.id, movie_id=my_instance.id) }}" class="btn btn-sm btn-ghost">Edit</a>
         </div>

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_macros.html" import stars, rating_select %}
 {% block title %}{{ user.username }}'s Movies · MoviWebApp{% endblock %}
 
 {% block og_tags %}
@@ -112,14 +113,7 @@
             </div>
             <div class="form-group">
                 <label for="rating">Rating</label>
-                <select name="rating" id="rating">
-                    <option value="">— none —</option>
-                    <option value="1">★ Poor</option>
-                    <option value="2">★★ Fair</option>
-                    <option value="3">★★★ Good</option>
-                    <option value="4">★★★★ Great</option>
-                    <option value="5">★★★★★ Excellent</option>
-                </select>
+                {{ rating_select() }}
             </div>
             <div class="form-group">
                 <label>Status</label>
@@ -171,11 +165,7 @@
             {% endif %}
 
             {% if movie.rating %}
-            <div class="stars">
-                {% for i in range(1, 6) %}
-                    <span class="star {{ 'filled' if i <= movie.rating else '' }}">★</span>
-                {% endfor %}
-            </div>
+            <div class="stars">{{ stars(movie.rating) }}</div>
             {% endif %}
 
             {% if current_user.is_authenticated and current_user.id == user.id %}
