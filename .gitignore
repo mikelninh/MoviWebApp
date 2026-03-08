@@ -1,6 +1,21 @@
+# Environment
 .env
+
+# Python
 .venv/
 __pycache__/
 *.pyc
+*.pyo
+
+# Database (use seed.py to recreate)
 data/movies.db
+
+# Generated cache
+data/inspiration_posters.json
+
+# IDE
 .idea/
+.vscode/
+
+# Claude Code
+.claude/
