@@ -49,7 +49,7 @@
         <ul class="activity-feed">
             {% for movie in movies %}
             <li class="activity-item">
-                <a href="{{ url_for('movie_detail', movie_id=movie.id) }}" class="activity-poster-link">
+                <a href="{{ url_for('film_detail', film_id=movie.film_id) if movie.film_id else url_for('movie_detail', movie_id=movie.id) }}" class="activity-poster-link">
                     {% if movie.poster_url %}
                         <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="activity-poster">
                     {% else %}
@@ -57,7 +57,7 @@
                     {% endif %}
                 </a>
                 <div class="activity-info">
-                    <a href="{{ url_for('movie_detail', movie_id=movie.id) }}" class="activity-title">{{ movie.title }}</a>
+                    <a href="{{ url_for('film_detail', film_id=movie.film_id) if movie.film_id else url_for('movie_detail', movie_id=movie.id) }}" class="activity-title">{{ movie.title }}</a>
                     {% if movie.year %}<span class="activity-year">{{ movie.year }}</span>{% endif %}
                     {% if movie.genre %}
                     <div class="genre-tags">

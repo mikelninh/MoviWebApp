@@ -3997,6 +3997,174 @@ html[data-theme='light'] .flash-error   { background: rgba(200,50,50,0.06); colo
     .news-title { font-size: 1.6rem; }
 }
 
+/* ── Diary page ────────────────────────────────────────────── */
+.diary-page { padding-bottom: 4rem; }
+
+.diary-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 2rem;
+    padding: 2rem 0 1.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.diary-header-left { display: flex; flex-direction: column; gap: 0.3rem; }
+
+.diary-back {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+}
+.diary-back:hover { color: var(--accent); }
+
+.diary-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.diary-stats {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.diary-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+}
+
+.diary-stat-value {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+}
+
+.diary-stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+}
+
+.diary-month {
+    margin-bottom: 2.5rem;
+}
+
+.diary-month-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 0.9rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.diary-month-label {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.diary-month-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.diary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.5rem;
+}
+
+.diary-card {
+    position: relative;
+    aspect-ratio: 2/3;
+    border-radius: 5px;
+    overflow: hidden;
+    background: var(--surface);
+    display: block;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.diary-card:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    z-index: 2;
+}
+
+.diary-card-poster {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    display: block;
+    transition: transform 0.3s ease;
+}
+.diary-card:hover .diary-card-poster { transform: scale(1.05); }
+
+.diary-card-empty {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: var(--text-dim);
+    background: var(--surface2);
+}
+
+.diary-card-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 45%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 0.5rem 0.4rem;
+    gap: 0.15rem;
+}
+.diary-card:hover .diary-card-overlay { opacity: 1; }
+
+.diary-card-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.25;
+    display: block;
+}
+
+.diary-card-rating { font-size: 0.62rem; display: block; }
+
+.diary-card-date {
+    font-size: 0.6rem;
+    color: rgba(255,255,255,0.5);
+    font-family: 'DM Mono', monospace;
+    display: block;
+}
+
+@media (max-width: 640px) {
+    .diary-header { flex-direction: column; gap: 1rem; }
+    .diary-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
+    .diary-title { font-size: 1.5rem; }
+}
+
 /* ── Mobile: reduce grain animation on low-power ───────────── */
 @media (prefers-reduced-motion: reduce) {
   .grain-overlay { animation: none; }

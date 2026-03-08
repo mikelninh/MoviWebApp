@@ -92,14 +92,14 @@
             {% if first_film.poster_url %}
             <img src="{{ first_film.poster_url }}" alt="{{ first_film.title }}" class="yir-bookend-poster" loading="lazy">
             {% endif %}
-            <a href="{{ url_for('movie_detail', movie_id=first_film.id) }}" class="yir-bookend-title">{{ first_film.title }}</a>
+            <a href="{{ url_for('film_detail', film_id=first_film.film_id) if first_film.film_id else url_for('movie_detail', movie_id=first_film.id) }}" class="yir-bookend-title">{{ first_film.title }}</a>
         </div>
         <div class="yir-bookend">
             <div class="yir-bookend-label">Last watch of {{ year }}</div>
             {% if last_film.poster_url %}
             <img src="{{ last_film.poster_url }}" alt="{{ last_film.title }}" class="yir-bookend-poster" loading="lazy">
             {% endif %}
-            <a href="{{ url_for('movie_detail', movie_id=last_film.id) }}" class="yir-bookend-title">{{ last_film.title }}</a>
+            <a href="{{ url_for('film_detail', film_id=last_film.film_id) if last_film.film_id else url_for('movie_detail', movie_id=last_film.id) }}" class="yir-bookend-title">{{ last_film.title }}</a>
         </div>
     </div>
 

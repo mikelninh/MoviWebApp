@@ -1616,7 +1616,7 @@ def remove_from_list(list_id, item_id):
 
 # ── DIARY ─────────────────────────────────────────────────────────────────────
 
-@app.route("/users/<int:user_id>/diary")
+@app.route("/diary/<int:user_id>")
 def diary(user_id):
     user = db.session.get(User, user_id)
     if not user:
@@ -1626,16 +1626,32 @@ def diary(user_id):
               .filter_by(user_id=user_id, status="watched")
               .order_by(Movie.date_added.desc())
               .all())
-    # Group by month
     from collections import defaultdict
     grouped = defaultdict(list)
     for m in movies:
-        if m.date_added:
-            key = m.date_added.strftime("%B %Y")
-        else:
-            key = "Earlier"
+        key = m.date_added.strftime("%B %Y") if m.date_added else "Earlier"
         grouped[key].append(m)
-    return render_template("diary.html", user=user, grouped=dict(grouped))
+
+    # Stats
+    total = len(movies)
+    rated = [m for m in movies if m.rating]
+    avg_rating = round(sum(m.rating for m in rated) / len(rated), 1) if rated else None
+    # Top genre
+    from collections import Counter
+    genre_counts = Counter()
+    for m in movies:
+        if m.genre:
+            for g in m.genre.split(', '):
+                genre_counts[g] += 1
+    top_genre = genre_counts.most_common(1)[0][0] if genre_counts else None
+    # This year's count
+    import datetime
+    this_year = datetime.date.today().year
+    this_year_count = sum(1 for m in movies if m.date_added and m.date_added.year == this_year)
+
+    return render_template("diary.html", user=user, grouped=dict(grouped),
+                           total=total, avg_rating=avg_rating, top_genre=top_genre,
+                           this_year=this_year, this_year_count=this_year_count)
 
 
 # ── CHALLENGES ────────────────────────────────────────────────────────────────

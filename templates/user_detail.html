@@ -147,7 +147,7 @@
 <ul class="movie-grid mt-2" id="movie-grid">
     {% for movie in favorites %}
     <li class="movie-card {{ movie.status or 'watched' }}" data-title="{{ movie.title }}">
-        <a href="{{ url_for('movie_detail', movie_id=movie.id) }}" class="card-poster-link">
+        <a href="{{ url_for('film_detail', film_id=movie.film_id) if movie.film_id else url_for('movie_detail', movie_id=movie.id) }}" class="card-poster-link">
             {% if movie.poster_url %}
                 <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="card-poster">
             {% else %}
@@ -232,7 +232,7 @@
     <ul class="rec-grid">
         {% for movie in recommendations %}
         <li class="rec-card">
-            <a href="{{ url_for('movie_detail', movie_id=movie.id) }}">
+            <a href="{{ url_for('film_detail', film_id=movie.film_id) if movie.film_id else url_for('movie_detail', movie_id=movie.id) }}">
                 {% if movie.poster_url %}
                     <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="rec-poster">
                 {% else %}

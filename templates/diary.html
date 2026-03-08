@@ -2,49 +2,82 @@
 {% from "_macros.html" import stars %}
 {% block title %}{{ user.username }}'s Diary · MoviWebApp{% endblock %}
 
-{% block content %}
-<div class="page-header">
-    <h2>{{ user.username }}'s Diary</h2>
-    <a href="{{ url_for('user_profile', username=user.username) }}" class="btn btn-sm">All movies</a>
-</div>
+{% block og_tags %}
+<meta property="og:title" content="{{ user.username }}'s Film Diary · MoviWebApp">
+<meta property="og:description" content="{{ total }} films watched{% if avg_rating %} · {{ avg_rating }}★ avg{% endif %}{% if top_genre %} · loves {{ top_genre }}{% endif %}">
+{% endblock %}
 
-{% if grouped %}
-{% for month, movies in grouped.items() %}
-<section class="diary-month mt-3">
-    <h3 class="diary-month-label">{{ month }}</h3>
-    <ul class="diary-list">
-        {% for movie in movies %}
-        <li class="diary-item">
-            <a href="{{ url_for('film_detail', film_id=movie.film_id) if movie.film_id else url_for('movie_detail', movie_id=movie.id) }}" class="diary-poster-link">
-                {% if movie.poster_url %}
-                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="diary-poster">
-                {% else %}
-                    <div class="diary-poster diary-poster-empty">🎬</div>
-                {% endif %}
-            </a>
-            <div class="diary-info">
-                <a href="{{ url_for('film_detail', film_id=movie.film_id) if movie.film_id else url_for('movie_detail', movie_id=movie.id) }}" class="diary-title">{{ movie.title }}</a>
-                {% if movie.year %}<span class="activity-year">{{ movie.year }}</span>{% endif %}
-                {% if movie.director %}<div class="card-director">{{ movie.director }}</div>{% endif %}
-                {% if movie.genre %}
-                <div class="genre-tags">
-                    {% for g in movie.genre.split(', ')[:2] %}
-                        <span class="genre-tag" data-genre="{{ g }}">{{ g }}</span>
-                    {% endfor %}
-                </div>
-                {% endif %}
+{% block content %}
+<div class="diary-page">
+
+    <!-- Header -->
+    <div class="diary-header">
+        <div class="diary-header-left">
+            <a href="{{ url_for('user_profile', username=user.username) }}" class="diary-back">← {{ user.username }}</a>
+            <h1 class="diary-title">Film Diary</h1>
+        </div>
+        <div class="diary-stats">
+            <div class="diary-stat">
+                <span class="diary-stat-value">{{ total }}</span>
+                <span class="diary-stat-label">watched</span>
             </div>
-            {% if movie.rating %}
-            <div class="diary-rating">{{ stars(movie.rating) }}</div>
+            {% if avg_rating %}
+            <div class="diary-stat">
+                <span class="diary-stat-value">{{ avg_rating }}★</span>
+                <span class="diary-stat-label">avg rating</span>
+            </div>
             {% endif %}
-        </li>
-        {% endfor %}
-    </ul>
-</section>
-{% endfor %}
-{% else %}
-<div class="empty-state mt-3">
-    <p>No watched movies yet.</p>
+            {% if this_year_count %}
+            <div class="diary-stat">
+                <span class="diary-stat-value">{{ this_year_count }}</span>
+                <span class="diary-stat-label">in {{ this_year }}</span>
+            </div>
+            {% endif %}
+            {% if top_genre %}
+            <div class="diary-stat">
+                <span class="diary-stat-value">{{ top_genre }}</span>
+                <span class="diary-stat-label">top genre</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if grouped %}
+    {% for month, movies in grouped.items() %}
+    <section class="diary-month">
+        <div class="diary-month-header">
+            <h2 class="diary-month-label">{{ month }}</h2>
+            <span class="diary-month-count">{{ movies | length }} film{{ 's' if movies | length != 1 }}</span>
+        </div>
+        <div class="diary-grid">
+            {% for movie in movies %}
+            <a href="{{ url_for('film_detail', film_id=movie.film_id) if movie.film_id else url_for('movie_detail', movie_id=movie.id) }}"
+               class="diary-card" title="{{ movie.title }}{% if movie.year %} ({{ movie.year }}){% endif %}">
+                {% if movie.poster_url %}
+                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="diary-card-poster" loading="lazy">
+                {% else %}
+                    <div class="diary-card-poster diary-card-empty">🎬</div>
+                {% endif %}
+                <div class="diary-card-overlay">
+                    <span class="diary-card-title">{{ movie.title }}</span>
+                    {% if movie.rating %}
+                    <span class="diary-card-rating">{{ stars(movie.rating) }}</span>
+                    {% endif %}
+                    {% if movie.date_added %}
+                    <span class="diary-card-date">{{ movie.date_added.strftime('%d %b') }}</span>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state mt-3">
+        <p>No watched films yet.</p>
+        <a href="{{ url_for('browse') }}" class="btn mt-1">Browse films →</a>
+    </div>
+    {% endif %}
+
 </div>
-{% endif %}
 {% endblock %}
