@@ -2,14 +2,39 @@
 {% block title %}Feed · MoviWebApp{% endblock %}
 
 {% block content %}
-<h2 class="section-title">Following Feed</h2>
+<h2 class="section-title">Your Feed</h2>
+
+{% if suggested %}
+<section class="suggest-section mt-2">
+    <h3 class="section-title-sm">
+        {% if following_count == 0 %}
+        People to follow — find your people
+        {% else %}
+        You might also enjoy
+        {% endif %}
+    </h3>
+    <ul class="suggest-grid">
+        {% for u in suggested %}
+        <li class="suggest-card">
+            <a href="{{ url_for('get_movies', user_id=u.id) }}" class="suggest-avatar-link">
+                <img src="{{ avatar_url(u.username) }}" class="suggest-avatar" alt="{{ u.username }}">
+            </a>
+            <div class="suggest-info">
+                <a href="{{ url_for('get_movies', user_id=u.id) }}" class="suggest-name">{{ u.username }}</a>
+                <span class="suggest-count">{{ u.movies | length }} films</span>
+            </div>
+            <form action="{{ url_for('follow_user', user_id=u.id) }}" method="post">
+                <button type="submit" class="btn btn-sm">+ Follow</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
 
 {% if following_count == 0 %}
-<div class="empty-state mt-3">
-    <p>You're not following anyone yet.</p>
-    <p style="margin-top:0.5rem; font-size:0.88rem; color:#5c6680">
-        Browse <a href="{{ url_for('index') }}" style="color:#3b82f6">members</a> and hit Follow to see their activity here.
-    </p>
+<div class="empty-state mt-3" style="text-align:left; padding: 1.5rem 0;">
+    <p style="color:#5c6680; font-size:0.9rem">Follow someone above and their movies and reviews will show up here.</p>
 </div>
 {% elif not movies and not reviews %}
 <div class="empty-state mt-3">

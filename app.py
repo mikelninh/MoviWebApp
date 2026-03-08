@@ -346,8 +346,8 @@ def register():
             flash("Username already taken.", "error")
             return render_template("register.html")
         login_user(user)
-        flash(f"Welcome, {user.username}!", "success")
-        return redirect(url_for("get_movies", user_id=user.id))
+        flash(f"Welcome to MoviWebApp, {user.username}! Follow some members to fill your feed.", "success")
+        return redirect(url_for("feed"))
     return render_template("register.html")
 
 
@@ -512,12 +512,13 @@ def follow_user(user_id):
         return redirect(url_for("get_movies", user_id=user_id))
     existing = Follow.query.filter_by(
         follower_id=current_user.id, followed_id=user_id).first()
+    target = db.session.get(User, user_id)
     if existing:
         db.session.delete(existing)
-        flash("Unfollowed.", "success")
+        flash(f"Unfollowed {target.username}.", "success")
     else:
         db.session.add(Follow(follower_id=current_user.id, followed_id=user_id))
-        flash("Following!", "success")
+        flash(f"You're now following {target.username}! Their activity will appear in your feed.", "success")
     db.session.commit()
     return redirect(url_for("get_movies", user_id=user_id))
 
@@ -535,6 +536,8 @@ def like_review(review_id):
         db.session.delete(existing)
     else:
         db.session.add(ReviewLike(user_id=current_user.id, review_id=review_id))
+        if review.user_id != current_user.id:
+            flash(f"You liked {review.user.username}'s review of \"{review.movie_title}\".", "success")
     db.session.commit()
     return redirect(request.referrer or url_for("index"))
 
@@ -543,21 +546,26 @@ def like_review(review_id):
 @login_required
 def feed():
     followed_ids = [f.followed_id for f in current_user.following]
-    if not followed_ids:
-        movies = []
-    else:
+    movies, reviews = [], []
+    if followed_ids:
         movies = (Movie.query
                   .filter(Movie.user_id.in_(followed_ids))
                   .order_by(Movie.date_added.desc())
                   .limit(30).all())
-    reviews = []
-    if followed_ids:
         reviews = (Review.query
                    .filter(Review.user_id.in_(followed_ids))
                    .order_by(Review.created_at.desc())
                    .limit(20).all())
+    # Suggest users to follow when feed is sparse or empty
+    suggested = []
+    if len(movies) < 5:
+        exclude = set(followed_ids) | {current_user.id}
+        candidates = User.query.filter(User.id.notin_(exclude)).all()
+        # Sort by movie count descending, take top 8
+        candidates.sort(key=lambda u: len(u.movies), reverse=True)
+        suggested = candidates[:8]
     return render_template("feed.html", movies=movies, reviews=reviews,
-                           following_count=len(followed_ids))
+                           following_count=len(followed_ids), suggested=suggested)
 
 
 # ── MOVIE NIGHTS ─────────────────────────────────────────────────────────────
