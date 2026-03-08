@@ -33,10 +33,10 @@
     'Biography':   '#0f766e',
     'Family':      '#0284c7'
 } %}
-{% set accent = '#3b82f6' %}
+{% set accent = '#e8b84b' %}
 {% if film.genre %}
   {% for g in film.genre.split(', ') %}
-    {% if g in genre_colors and accent == '#3b82f6' %}{% set accent = genre_colors[g] %}{% endif %}
+    {% if g in genre_colors and accent == '#e8b84b' %}{% set accent = genre_colors[g] %}{% endif %}
   {% endfor %}
 {% endif %}
 <style>:root { --accent: {{ accent }}; --accent-dim: {{ accent }}26; --accent-glow: {{ accent }}59; }</style>

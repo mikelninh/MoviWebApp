@@ -153,13 +153,14 @@
             {% else %}
                 <div class="card-poster card-poster-empty">🎬</div>
             {% endif %}
-            <div class="card-poster-overlay">
-                {% if movie.plot %}
-                    <p class="overlay-plot">{{ movie.plot | truncate(120) }}</p>
-                {% endif %}
-            </div>
         </a>
 
+        <!-- Always-visible title strip -->
+        <div class="card-always-visible">
+            <span class="card-title">{{ movie.title }}</span>
+        </div>
+
+        <!-- Hover overlay with full info -->
         <div class="card-body">
             <div class="card-title-row">
                 <span class="card-title">{{ movie.title }}</span>
@@ -172,7 +173,7 @@
 
             {% if movie.genre %}
             <div class="genre-tags">
-                {% for g in movie.genre.split(', ')[:3] %}
+                {% for g in movie.genre.split(', ')[:2] %}
                     <a href="{{ url_for('genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
                 {% endfor %}
             </div>
@@ -186,9 +187,9 @@
             <div class="card-actions">
                 <form action="{{ url_for('toggle_status', user_id=user.id, movie_id=movie.id) }}" method="post">
                     {% if (movie.status or 'watched') == 'watched' %}
-                        <button type="submit" class="btn btn-sm btn-status-watched" title="Move to Watchlist">✓ Watched</button>
+                        <button type="submit" class="btn btn-sm btn-status-watched" title="Move to Watchlist">✓</button>
                     {% else %}
-                        <button type="submit" class="btn btn-sm btn-status-watchlist" title="Mark as Watched">☐ Watchlist</button>
+                        <button type="submit" class="btn btn-sm btn-status-watchlist" title="Mark as Watched">☐</button>
                     {% endif %}
                 </form>
                 <a href="{{ url_for('edit_movie', user_id=user.id, movie_id=movie.id) }}" class="btn btn-sm">Edit</a>

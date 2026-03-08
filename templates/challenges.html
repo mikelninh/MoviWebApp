@@ -3,7 +3,7 @@
 
 {% block content %}
 <h2 class="section-title">Your Challenges</h2>
-<p style="color:#5c6680; font-size:0.88rem; margin-top:0.25rem;">Track your progress as a film lover.</p>
+<p style="color:var(--text-muted); font-size:0.88rem; margin-top:0.25rem;">Track your progress as a film lover.</p>
 
 <ul class="challenges-list mt-3">
     {% for c in challenges %}
@@ -19,7 +19,7 @@
             </div>
         </div>
         <div class="challenge-progress">
-            {{ c.progress }}<span style="color:#5c6680">/{{ c.target }}</span>
+            {{ c.progress }}<span style="color:var(--text-muted)">/{{ c.target }}</span>
             {% if done %}<span class="challenge-check">✓</span>{% endif %}
         </div>
     </li>

@@ -35,7 +35,7 @@
 
 {% if following_count == 0 %}
 <div class="empty-state mt-3" style="text-align:left; padding: 1.5rem 0;">
-    <p style="color:#5c6680; font-size:0.9rem">Follow someone above and their movies and reviews will show up here.</p>
+    <p style="color:var(--text-muted); font-size:0.9rem">Follow someone above and their movies and reviews will show up here.</p>
 </div>
 {% elif not movies and not reviews %}
 <div class="empty-state mt-3">
@@ -97,7 +97,7 @@
                 </div>
                 <p class="review-movie-link">
                     {% set fid = film_map.get(review.movie_title) %}
-                    <a href="{{ url_for('film_detail', film_id=fid) if fid else url_for('search', q=review.movie_title) }}" style="color:#3b82f6">{{ review.movie_title }}</a>
+                    <a href="{{ url_for('film_detail', film_id=fid) if fid else url_for('search', q=review.movie_title) }}" style="color:var(--accent)">{{ review.movie_title }}</a>
                 </p>
                 <p class="review-body">{{ review.body | truncate(200) }}</p>
                 {% include "_review_comments.html" with context %}

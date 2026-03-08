@@ -7,7 +7,7 @@
         <h2 style="font-size:1.5rem; font-weight:800; color:#fff">
             <span class="genre-tag" data-genre="{{ genre }}" style="font-size:0.9rem; margin-right:0.5rem">{{ genre }}</span>
         </h2>
-        <p style="font-size:0.82rem; color:#5c6680; margin-top:0.4rem">{{ total }} film{{ 's' if total != 1 }} logged by the community</p>
+        <p style="font-size:0.82rem; color:var(--text-muted); margin-top:0.4rem">{{ total }} film{{ 's' if total != 1 }} logged by the community</p>
     </div>
     <a href="{{ url_for('browse') }}" class="btn btn-sm btn-ghost">All genres</a>
 </div>
@@ -22,19 +22,17 @@
             {% else %}
                 <div class="card-poster card-poster-empty">🎬</div>
             {% endif %}
-            <div class="card-poster-overlay">
-                {% if film.plot %}
-                    <p class="overlay-plot">{{ film.plot | truncate(120) }}</p>
-                {% endif %}
-            </div>
         </a>
+        <div class="card-always-visible">
+            <span class="card-title">{{ film.title }}</span>
+        </div>
         <div class="card-body">
             <div class="card-title-row">
                 <span class="card-title">{{ film.title }}</span>
                 {% if film.year %}<span class="card-year">{{ film.year }}</span>{% endif %}
             </div>
             {% if film.director %}<div class="card-director">{{ film.director }}</div>{% endif %}
-            <div class="search-result-user">{{ count }} member{{ 's' if count != 1 }} logged this</div>
+            <div class="search-result-user">{{ count }} logged this</div>
         </div>
     </li>
     {% endfor %}

@@ -5,7 +5,7 @@
 <div class="page-header">
     <div>
         <h2 style="font-size:1.5rem; font-weight:800; color:#fff">Community Lists</h2>
-        <p style="font-size:0.82rem; color:#5c6680; margin-top:0.2rem">{{ lists | length }} curated list{{ 's' if lists | length != 1 }}</p>
+        <p style="font-size:0.82rem; color:var(--text-muted); margin-top:0.2rem">{{ lists | length }} curated list{{ 's' if lists | length != 1 }}</p>
     </div>
 </div>
 
@@ -44,8 +44,8 @@
 <div class="empty-state mt-3">
     <p>No lists yet.</p>
     {% if current_user.is_authenticated %}
-    <p style="font-size:0.85rem; color:#5c6680; margin-top:0.4rem">
-        Create one from <a href="{{ url_for('user_profile', username=current_user.username) }}" style="color:#3b82f6">your profile</a>.
+    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.4rem">
+        Create one from <a href="{{ url_for('user_profile', username=current_user.username) }}" style="color:var(--accent)">your profile</a>.
     </p>
     {% endif %}
 </div>

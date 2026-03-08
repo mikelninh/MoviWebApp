@@ -26,12 +26,10 @@
                 {% else %}
                     <div class="card-poster card-poster-empty">🎬</div>
                 {% endif %}
-                <div class="card-poster-overlay">
-                    {% if film.plot %}
-                        <p class="overlay-plot">{{ film.plot | truncate(120) }}</p>
-                    {% endif %}
-                </div>
             </a>
+            <div class="card-always-visible">
+                <span class="card-title">{{ film.title }}</span>
+            </div>
             <div class="card-body">
                 <div class="card-title-row">
                     <span class="card-title">{{ film.title }}</span>
@@ -42,7 +40,7 @@
                 {% endif %}
                 {% if film.genre %}
                 <div class="genre-tags">
-                    {% for g in film.genre.split(', ')[:3] %}
+                    {% for g in film.genre.split(', ')[:2] %}
                         <a href="{{ url_for('genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
                     {% endfor %}
                 </div>
