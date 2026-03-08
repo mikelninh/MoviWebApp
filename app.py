@@ -3,8 +3,11 @@ import csv
 import io
 import json
 import os
+import re
 import secrets
 import threading
+import urllib.request as _urllib_req
+import xml.etree.ElementTree as ET
 import zipfile
 from collections import Counter
 
@@ -453,13 +456,18 @@ INSPIRATION_LISTS = [
 def _fetch_and_cache_posters():
     cache_path = os.path.join(basedir, 'data', 'inspiration_posters.json')
     lists = copy.deepcopy(INSPIRATION_LISTS)
-    for lst in lists:
-        for movie in lst['movies']:
-            try:
-                meta = data_manager.fetch_omdb_data(movie['title'])
-                movie['poster_url'] = meta.get('poster_url', '')
-            except Exception:
-                movie['poster_url'] = ''
+    with app.app_context():
+        for lst in lists:
+            for movie in lst['movies']:
+                try:
+                    meta = data_manager.fetch_omdb_data(movie['title'])
+                    movie['poster_url'] = meta.get('poster_url', '')
+                except Exception:
+                    movie['poster_url'] = ''
+                film = Film.query.filter(
+                    db.func.lower(Film.title) == movie['title'].lower()
+                ).first()
+                movie['film_id'] = film.id if film else None
     try:
         with open(cache_path, 'w') as f:
             json.dump(lists, f)
@@ -472,7 +480,17 @@ def get_inspiration_with_posters():
     if os.path.exists(cache_path):
         try:
             with open(cache_path) as f:
-                return json.load(f)
+                lists = json.load(f)
+            # Enrich any missing film_ids from the live DB (cheap lookup)
+            with app.app_context():
+                for lst in lists:
+                    for movie in lst['movies']:
+                        if not movie.get('film_id'):
+                            film = Film.query.filter(
+                                db.func.lower(Film.title) == movie['title'].lower()
+                            ).first()
+                            movie['film_id'] = film.id if film else None
+            return lists
         except Exception:
             pass
     # No cache yet — serve without posters instantly, fetch in background
@@ -481,7 +499,74 @@ def get_inspiration_with_posters():
     for lst in lists:
         for movie in lst['movies']:
             movie['poster_url'] = ''
+            film = Film.query.filter(
+                db.func.lower(Film.title) == movie['title'].lower()
+            ).first()
+            movie['film_id'] = film.id if film else None
     return lists
+
+
+# ── FILM NEWS (RSS) ───────────────────────────────────────────────────────────
+
+_news_cache = {"data": [], "fetched_at": None}
+_NEWS_SOURCES = [
+    ("IndieWire",      "https://www.indiewire.com/feed/"),
+    ("The Film Stage", "https://thefilmstage.com/feed/"),
+    ("Roger Ebert",    "https://www.rogerebert.com/feed"),
+]
+
+
+def fetch_film_news(limit=18):
+    import datetime
+    now = datetime.datetime.utcnow()
+    cached    = _news_cache.get("data")
+    fetched_at = _news_cache.get("fetched_at")
+    # Cache for 30 minutes
+    if cached and fetched_at and (now - fetched_at).seconds < 1800:
+        return cached
+    articles = []
+    ns = {
+        "dc":      "http://purl.org/dc/elements/1.1/",
+        "media":   "http://search.yahoo.com/mrss/",
+        "content": "http://purl.org/rss/1.0/modules/content/",
+    }
+    for source_name, url in _NEWS_SOURCES:
+        try:
+            req = _urllib_req.Request(
+                url, headers={"User-Agent": "MoviWebApp/1.0 film-news-reader"}
+            )
+            with _urllib_req.urlopen(req, timeout=6) as resp:
+                raw = resp.read()
+            root = ET.fromstring(raw)
+            for item in root.findall(".//item")[:6]:
+                title    = (item.findtext("title")       or "").strip()
+                link     = (item.findtext("link")        or "").strip()
+                desc_raw = (item.findtext("description") or "").strip()
+                desc     = re.sub(r"<[^>]+>", "", desc_raw)[:200].strip()
+                pub      = (item.findtext("pubDate")     or "").strip()[:16]
+                img = None
+                media_thumb = item.find("media:thumbnail", ns)
+                if media_thumb is not None:
+                    img = media_thumb.get("url")
+                if not img:
+                    enc = item.find("enclosure")
+                    if enc is not None and "image" in (enc.get("type") or ""):
+                        img = enc.get("url")
+                if title and link:
+                    articles.append({
+                        "source": source_name,
+                        "title":  title,
+                        "link":   link,
+                        "desc":   desc,
+                        "pub":    pub,
+                        "img":    img,
+                    })
+        except Exception:
+            pass
+    articles = articles[:limit]
+    _news_cache["data"]       = articles
+    _news_cache["fetched_at"] = now
+    return articles
 
 
 # ── TEMPLATE HELPERS & CONTEXT ────────────────────────────────────────────────
@@ -735,6 +820,12 @@ def privacy():
     return render_template("privacy.html")
 
 
+@app.route("/news")
+def news():
+    articles = fetch_film_news(limit=18)
+    return render_template("news.html", articles=articles)
+
+
 @app.route("/export")
 @login_required
 def export_data():
@@ -763,7 +854,6 @@ def export_data():
 
 @app.route("/")
 def index():
-    users = data_manager.get_users()
     total_movies = Movie.query.count()
     activity = data_manager.get_recent_activity(limit=8)
     inspiration = get_inspiration_with_posters()
@@ -775,9 +865,25 @@ def index():
                  .all())
     hero = hero_pool[datetime.date.today().toordinal() % len(hero_pool)] if hero_pool else None
     hero_film = Film.query.get(hero.film_id) if hero and hero.film_id else None
-    return render_template("index.html", users=users,
+    # Recent reviews enriched with film data
+    raw_reviews = (Review.query
+                   .order_by(Review.created_at.desc())
+                   .limit(12)
+                   .all())
+    recent_reviews = []
+    for rev in raw_reviews:
+        film = Film.query.filter_by(title=rev.movie_title).first()
+        # Find rating from the reviewer's movie entry
+        movie_entry = Movie.query.filter_by(user_id=rev.user_id, title=rev.movie_title).first()
+        recent_reviews.append({
+            'review': rev,
+            'film': film,
+            'rating': movie_entry.rating if movie_entry else None,
+        })
+    return render_template("index.html",
                            total_movies=total_movies, activity=activity,
-                           inspiration=inspiration, hero=hero, hero_film=hero_film)
+                           inspiration=inspiration, hero=hero, hero_film=hero_film,
+                           recent_reviews=recent_reviews)
 
 
 _PROFILE_PER_PAGE = 24

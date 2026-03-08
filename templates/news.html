@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Film News · MoviWebApp{% endblock %}
+
+{% block content %}
+<div class="news-page">
+    <div class="news-header">
+        <h1 class="news-title">What's Happening in Cinema</h1>
+        <p class="news-sub">Curated from IndieWire, The Film Stage, and Roger Ebert — updated every 30 minutes.</p>
+    </div>
+
+    {% if articles %}
+    <div class="news-grid">
+        {% for article in articles %}
+        <a href="{{ article.link }}" class="news-card" target="_blank" rel="noopener">
+            {% if article.img %}
+            <div class="news-card-img-wrap">
+                <img src="{{ article.img }}" alt="{{ article.title }}" class="news-card-img" loading="lazy">
+            </div>
+            {% else %}
+            <div class="news-card-img-wrap news-card-no-img">
+                <span class="news-no-img-icon">🎬</span>
+            </div>
+            {% endif %}
+            <div class="news-card-body">
+                <span class="news-source">{{ article.source }}</span>
+                <h2 class="news-card-title">{{ article.title }}</h2>
+                {% if article.desc %}
+                <p class="news-card-desc">{{ article.desc }}</p>
+                {% endif %}
+                <span class="news-card-date">{{ article.pub }}</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="news-empty">
+        <p>Could not load news right now. Check back in a moment.</p>
+        <a href="{{ url_for('index') }}" class="btn">← Back home</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

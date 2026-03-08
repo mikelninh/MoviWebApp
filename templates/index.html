@@ -3,6 +3,7 @@
 
 {% block content %}
 {% if hero %}
+<div class="hero-breakout">
 <div class="hero-section" style="--poster: url('{{ hero.poster_url }}')">
     <div class="hero-backdrop"></div>
     <div class="hero-content">
@@ -38,22 +39,15 @@
         </div>
     </div>
 </div>
+</div>
 {% endif %}
 
-<div class="stats-bar">
-    <span>👥 {{ users | length }} users</span>
-    <span class="stats-sep">·</span>
-    <span>🎬 {{ total_movies }} movies</span>
-    {% if not current_user.is_authenticated %}
-        <span class="stats-sep">·</span>
-        <a href="{{ url_for('register') }}">Join to build your list →</a>
-    {% endif %}
-</div>
+<div class="section-divider"></div>
 
 <section class="inspo-section mt-2">
     <div class="inspo-section-header">
-        <h2 class="inspo-section-title">Movie Night Inspiration</h2>
-        <p class="inspo-section-sub">Curated lists to set the mood — pick a vibe, press play.</p>
+        <h2 class="inspo-section-title">Tonight's Mood</h2>
+        <p class="inspo-section-sub">Pick a vibe.</p>
     </div>
 
     {% for lst in inspiration %}
@@ -106,51 +100,52 @@
 
 <div class="home-layout mt-2">
 
-    <!-- User grid -->
-    <section class="user-section">
-        <h2 class="section-title">Members</h2>
-        <ul class="user-grid">
-            {% for user in users %}
-            <li class="user-card">
-                <div class="user-card-header">
-                    <img src="{{ avatar_url(user.username) }}" class="avatar" alt="{{ user.username }}">
-                    <div class="user-card-info">
-                        <a href="{{ url_for('user_profile', username=user.username) }}" class="user-card-name">
-                            {{ user.username }}
-                        </a>
-                        <span class="movie-count">{{ user.movies | length }} movie{{ 's' if user.movies | length != 1 }}</span>
-                    </div>
-                    {% if current_user.is_authenticated and current_user.id == user.id %}
-                    <form action="{{ url_for('delete_user', user_id=user.id) }}" method="post"
-                          onsubmit="return confirm('Delete your account and all movies? This cannot be undone.')">
-                        <button type="submit" class="btn btn-danger btn-xs">✕</button>
-                    </form>
+    <!-- Latest reviews -->
+    <section class="activity-section">
+        <h2 class="section-title">Latest Reviews</h2>
+        {% if recent_reviews %}
+        <ul class="review-feed">
+            {% for entry in recent_reviews %}
+            {% set review = entry.review %}
+            {% set film = entry.film %}
+            {% set rating = entry.rating %}
+            <li class="review-feed-item">
+                <a href="{{ url_for('film_detail', film_id=film.id) if film else url_for('search', q=review.movie_title) }}" class="review-feed-poster-link">
+                    {% if film and film.poster_url %}
+                        <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="review-feed-poster">
+                    {% else %}
+                        <div class="review-feed-poster review-feed-poster-empty">🎬</div>
                     {% endif %}
-                </div>
-                {% set posters = user.movies[:4] %}
-                {% if posters %}
-                <a href="{{ url_for('user_profile', username=user.username) }}" class="poster-strip">
-                    {% for movie in posters %}
-                        {% if movie.poster_url %}
-                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="poster-thumb" title="{{ movie.title }}">
+                </a>
+                <div class="review-feed-body">
+                    <div class="review-feed-top">
+                        <a href="{{ url_for('user_profile', username=review.user.username) }}" class="review-feed-user">
+                            <img src="{{ avatar_url(review.user.username) }}" class="review-feed-avatar" alt="{{ review.user.username }}">
+                            {{ review.user.username }}
+                        </a>
+                        <span class="review-feed-sep">on</span>
+                        {% if film %}
+                        <a href="{{ url_for('film_detail', film_id=film.id) }}" class="review-feed-film">{{ film.title }}</a>
+                        {% if film.year %}<span class="review-feed-year">{{ film.year }}</span>{% endif %}
                         {% else %}
-                            <div class="poster-thumb poster-placeholder-sm" title="{{ movie.title }}">🎬</div>
+                        <span class="review-feed-film">{{ review.movie_title }}</span>
                         {% endif %}
-                    {% endfor %}
-                </a>
-                {% else %}
-                <a href="{{ url_for('user_profile', username=user.username) }}" class="poster-strip poster-strip-empty">
-                    <span>No movies yet</span>
-                </a>
-                {% endif %}
+                    </div>
+                    {% if rating %}
+                    <div class="review-feed-stars">{{ stars(rating) }}</div>
+                    {% endif %}
+                    <p class="review-feed-text">{{ review.body | truncate(160) }}</p>
+                    <span class="review-feed-date">{{ review.created_at.strftime('%b %d') }}</span>
+                </div>
             </li>
-            {% else %}
-            <li class="user-card-empty">No users yet. <a href="{{ url_for('register') }}">Be the first!</a></li>
             {% endfor %}
         </ul>
+        {% else %}
+        <p class="empty-state">No reviews yet.</p>
+        {% endif %}
     </section>
 
-    <!-- Activity feed -->
+    <!-- Recently Added -->
     <section class="activity-section">
         <h2 class="section-title">Recently Added</h2>
         {% if activity %}
