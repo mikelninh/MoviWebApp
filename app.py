@@ -2,14 +2,124 @@ import copy
 import json
 import os
 import threading
+from collections import Counter
 
 from dotenv import load_dotenv
 load_dotenv()
+
+import anthropic as _anthropic_sdk
 
 from flask import Flask, flash, redirect, render_template, request, url_for
 from flask_login import (LoginManager, current_user, login_required,
                          login_user, logout_user)
 from sqlalchemy import text
+
+# ── AI HELPERS ────────────────────────────────────────────────────────────────
+_ai_cache  = {}
+_ai_client = None
+
+
+def _get_ai_client():
+    global _ai_client
+    if _ai_client is None:
+        key = os.environ.get("ANTHROPIC_API_KEY", "")
+        if key:
+            _ai_client = _anthropic_sdk.Anthropic(api_key=key)
+    return _ai_client
+
+
+def ai_review_synthesis(film_title, reviews):
+    """1-2 sentence community consensus, or None."""
+    client = _get_ai_client()
+    if not client or len(reviews) < 2:
+        return None
+    cache_key = ("synth", film_title, len(reviews))
+    if cache_key in _ai_cache:
+        return _ai_cache[cache_key]
+    try:
+        texts = "\n".join(f"- {r.body}" for r in reviews[:15])
+        msg = client.messages.create(
+            model="claude-haiku-4-5-20251001", max_tokens=100,
+            messages=[{"role": "user", "content":
+                f"Summarize what people think of '{film_title}' in 1-2 sentences based on:\n{texts}\nBe specific, no preamble."}])
+        result = msg.content[0].text.strip()
+        _ai_cache[cache_key] = result
+        return result
+    except Exception:
+        return None
+
+
+def ai_why_love(user_movies, film):
+    """1-sentence personalised reason, or None."""
+    client = _get_ai_client()
+    if not client or not user_movies:
+        return None
+    cache_key = ("why", film.id, len(user_movies))
+    if cache_key in _ai_cache:
+        return _ai_cache[cache_key]
+    try:
+        top = sorted([m for m in user_movies if m.rating and m.rating >= 4],
+                     key=lambda m: m.rating, reverse=True)[:8]
+        if not top:
+            return None
+        favs = ", ".join(m.title for m in top)
+        msg = client.messages.create(
+            model="claude-haiku-4-5-20251001", max_tokens=80,
+            messages=[{"role": "user", "content":
+                f"Someone loves: {favs}. One sentence starting with 'You'll love this because' explaining why they'd enjoy '{film.title}' ({film.genre or ''}). No preamble."}])
+        result = msg.content[0].text.strip()
+        _ai_cache[cache_key] = result
+        return result
+    except Exception:
+        return None
+
+
+def ai_taste_report(user_movies):
+    """2-sentence taste profile, or None."""
+    client = _get_ai_client()
+    watched = [m for m in user_movies if m.status == "watched"]
+    if not client or len(watched) < 5:
+        return None
+    cache_key = ("taste", len(watched), sum(m.id for m in watched[-20:]))
+    if cache_key in _ai_cache:
+        return _ai_cache[cache_key]
+    try:
+        top = sorted([m for m in watched if m.rating],
+                     key=lambda m: m.rating, reverse=True)[:10]
+        titles = ", ".join(m.title for m in (top or watched[:10]))
+        gc = Counter(g for m in watched if m.genre for g in m.genre.split(", "))
+        genres = ", ".join(g for g, _ in gc.most_common(3))
+        msg = client.messages.create(
+            model="claude-haiku-4-5-20251001", max_tokens=120,
+            messages=[{"role": "user", "content":
+                f"Write a 2-sentence film taste profile for someone who loves: {titles}. Top genres: {genres}. Make it feel personal and insightful. No preamble."}])
+        result = msg.content[0].text.strip()
+        _ai_cache[cache_key] = result
+        return result
+    except Exception:
+        return None
+
+
+def ai_year_summary(total, top_genres, top_directors, avg_rating, year):
+    """2-sentence year-in-film summary, or None."""
+    client = _get_ai_client()
+    if not client or total < 3:
+        return None
+    cache_key = ("year", total, year, str(top_genres[:2]))
+    if cache_key in _ai_cache:
+        return _ai_cache[cache_key]
+    try:
+        genres = ", ".join(g for g, _ in top_genres[:3]) if top_genres else "various"
+        dirs   = ", ".join(d for d, _ in top_directors[:2]) if top_directors else "various directors"
+        msg = client.messages.create(
+            model="claude-haiku-4-5-20251001", max_tokens=100,
+            messages=[{"role": "user", "content":
+                f"Write 2 sentences describing someone's {year} in film: {total} films watched, top genres: {genres}, favourite directors: {dirs}, avg rating: {avg_rating or 'N/A'}/5. Make it feel celebratory and personal. No preamble."}])
+        result = msg.content[0].text.strip()
+        _ai_cache[cache_key] = result
+        return result
+    except Exception:
+        return None
 
 from data_manager import DataManager
 from models import (Film, Follow, Movie, MovieNight, MovieNightFilm, MovieNightVote,
@@ -489,7 +599,10 @@ def user_profile(username):
             Movie.query.filter_by(user_id=current_user.id).all(), all_movies)
         is_following = Follow.query.filter_by(
             follower_id=current_user.id, followed_id=user_id).first() is not None
-    user_lists = UserList.query.filter_by(user_id=user_id).all()
+    user_lists  = UserList.query.filter_by(user_id=user_id).all()
+    taste_blurb = ai_taste_report(all_movies)
+    from datetime import date
+    current_year = date.today().year
     return render_template(
         "user_detail.html",
         user=user, favorites=movies, sort=sort, status_filter=status_filter,
@@ -500,6 +613,7 @@ def user_profile(username):
         followers_count=len(user.followers),
         following_count=len(user.following),
         page=page, total_pages=total_pages,
+        taste_blurb=taste_blurb, current_year=current_year,
     )
 
 
@@ -571,6 +685,8 @@ def film_detail(film_id):
                             .order_by(Review.created_at.desc()).all()
     user_review = None
     friends_with_movie = []
+    ai_synthesis = None
+    ai_why       = None
     if current_user.is_authenticated:
         user_review = Review.query.filter_by(
             movie_title=film.title, user_id=current_user.id).first()
@@ -578,26 +694,34 @@ def film_detail(film_id):
                         Follow.query.filter_by(follower_id=current_user.id).all()}
         friends_with_movie = [(u, m) for u, m in users_with_movie
                               if u.id in followed_ids]
+        user_movies = Movie.query.filter_by(user_id=current_user.id).all()
+        ai_why = ai_why_love(user_movies, film)
+    ai_synthesis = ai_review_synthesis(film.title, reviews)
     return render_template("film_detail.html", film=film,
                            users_with_movie=users_with_movie,
                            friends_with_movie=friends_with_movie,
                            similar=similar_films,
-                           reviews=reviews, user_review=user_review)
+                           reviews=reviews, user_review=user_review,
+                           ai_synthesis=ai_synthesis, ai_why=ai_why)
 
 
 @app.route("/search")
 def search():
     from sqlalchemy import func
-    q    = request.args.get("q", "").strip()
-    page = request.args.get("page", 1, type=int)
+    q            = request.args.get("q", "").strip()
+    year_filter  = request.args.get("year", "").strip()
+    genre_filter = request.args.get("genre", "").strip()
+    page         = request.args.get("page", 1, type=int)
     results    = []
     omdb_film  = None
     pagination = None
     if q:
-        film_pag = (Film.query
-                    .filter(Film.title.ilike(f"%{q}%"))
-                    .order_by(Film.title)
-                    .paginate(page=page, per_page=20, error_out=False))
+        fq = Film.query.filter(Film.title.ilike(f"%{q}%"))
+        if year_filter:
+            fq = fq.filter(Film.year.like(f"{year_filter}%"))
+        if genre_filter:
+            fq = fq.filter(Film.genre.ilike(f"%{genre_filter}%"))
+        film_pag = fq.order_by(Film.title).paginate(page=page, per_page=20, error_out=False)
         if film_pag.items:
             pagination = film_pag
             film_ids = [f.id for f in film_pag.items]
@@ -608,7 +732,6 @@ def search():
             )
             results = [(f, counts.get(f.id, 0)) for f in film_pag.items]
         else:
-            # Try OMDb; create a Film record so the user lands on a real page
             meta = data_manager.fetch_omdb_data(q)
             if meta and meta.get("poster_url"):
                 film = get_or_create_film(q, meta)
@@ -616,7 +739,64 @@ def search():
                 return redirect(url_for("film_detail", film_id=film.id))
             omdb_film = meta
     return render_template("search.html", q=q, results=results,
+                           year_filter=year_filter, genre_filter=genre_filter,
                            omdb_film=omdb_film, pagination=pagination)
+
+
+# ── YEAR IN REVIEW ─────────────────────────────────────────────────────────────
+
+@app.route("/u/<username>/year/<int:year>")
+def year_in_review(username, year):
+    from datetime import date
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        flash("User not found.", "error")
+        return redirect(url_for("index"))
+    movies = (Movie.query
+              .filter_by(user_id=user.id, status="watched")
+              .filter(db.func.strftime("%Y", Movie.date_added) == str(year))
+              .order_by(Movie.date_added)
+              .all())
+    if not movies:
+        flash(f"No watched movies logged in {year}.", "error")
+        return redirect(url_for("user_profile", username=username))
+    total = len(movies)
+    hours = total * 2
+    gc = Counter(g for m in movies if m.genre for g in m.genre.split(", "))
+    dc = Counter(m.director for m in movies if m.director)
+    top_genres    = gc.most_common(5)
+    top_directors = dc.most_common(3)
+    rated    = [m for m in movies if m.rating]
+    avg_rating = round(sum(m.rating for m in rated) / len(rated), 1) if rated else None
+    rating_dist = {i: sum(1 for m in rated if m.rating == i) for i in range(1, 6)}
+    contrarian = None
+    biggest_diff = 0
+    for m in rated:
+        others = [om.rating for om in Movie.query.filter(
+            Movie.title == m.title, Movie.user_id != user.id,
+            Movie.rating.isnot(None)).all()]
+        if len(others) >= 2:
+            comm_avg = sum(others) / len(others)
+            diff = abs(m.rating - comm_avg)
+            if diff > biggest_diff:
+                biggest_diff, contrarian = diff, (m, round(comm_avg, 1))
+    if total >= 100:
+        badge = ("Film Addict", "🎬")
+    elif total >= 50:
+        badge = ("Cinema Devotee", "🍿")
+    elif total >= 20:
+        badge = ("Movie Buff", "⭐")
+    else:
+        badge = ("Film Explorer", "🔭")
+    ai_summary = ai_year_summary(total, top_genres, top_directors, avg_rating, year)
+    return render_template("year_in_review.html",
+        user=user, year=year, total=total, hours=hours,
+        top_genres=top_genres, top_directors=top_directors,
+        avg_rating=avg_rating, rating_dist=rating_dist,
+        contrarian=contrarian, first_film=movies[0], last_film=movies[-1],
+        badge=badge, rated_count=len(rated), ai_summary=ai_summary,
+        prev_year=year - 1, next_year=year + 1,
+        current_year=date.today().year)
 
 
 @app.route("/film/<int:film_id>/review", methods=["POST"])
@@ -762,21 +942,28 @@ def add_review(movie_id):
 def follow_user(user_id):
     if current_user.id == user_id:
         flash("You can't follow yourself.", "error")
-        return redirect(url_for("get_movies", user_id=user_id))
+        return redirect(url_for("user_profile", username=current_user.username))
     existing = Follow.query.filter_by(
         follower_id=current_user.id, followed_id=user_id).first()
     target = db.session.get(User, user_id)
     if existing:
         db.session.delete(existing)
-        flash(f"Unfollowed {target.username}.", "success")
+        if not request.headers.get("HX-Request"):
+            flash(f"Unfollowed {target.username}.", "success")
     else:
         db.session.add(Follow(follower_id=current_user.id, followed_id=user_id))
         create_notification(user_id, current_user.id, "follow",
                             f"{current_user.username} started following you.",
-                            link=f"/users/{current_user.id}")
-        flash(f"You're now following {target.username}! Their activity will appear in your feed.", "success")
+                            link=f"/u/{current_user.username}")
+        if not request.headers.get("HX-Request"):
+            flash(f"You're now following {target.username}! Their activity will appear in your feed.", "success")
     db.session.commit()
-    return redirect(url_for("get_movies", user_id=user_id))
+    if request.headers.get("HX-Request"):
+        is_following = Follow.query.filter_by(
+            follower_id=current_user.id, followed_id=user_id).first() is not None
+        return render_template("_follow_btn.html", target_user_id=user_id,
+                               target_username=target.username, is_following=is_following)
+    return redirect(url_for("user_profile", username=target.username))
 
 
 @app.route("/reviews/<int:review_id>/like", methods=["POST"])
@@ -784,6 +971,8 @@ def follow_user(user_id):
 def like_review(review_id):
     review = db.session.get(Review, review_id)
     if not review:
+        if request.headers.get("HX-Request"):
+            return "", 204
         flash("Review not found.", "error")
         return redirect(request.referrer or url_for("index"))
     existing = ReviewLike.query.filter_by(
@@ -798,8 +987,11 @@ def like_review(review_id):
             create_notification(review.user_id, current_user.id, "like",
                                 f"{current_user.username} liked your review of \"{review.movie_title}\".",
                                 link=link)
-            flash(f"You liked {review.user.username}'s review of \"{review.movie_title}\".", "success")
     db.session.commit()
+    if request.headers.get("HX-Request"):
+        liked      = ReviewLike.query.filter_by(user_id=current_user.id, review_id=review_id).first() is not None
+        like_count = ReviewLike.query.filter_by(review_id=review_id).count()
+        return render_template("_like_btn.html", review=review, liked=liked, like_count=like_count)
     return redirect(request.referrer or url_for("index"))
 
 

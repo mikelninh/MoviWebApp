@@ -37,6 +37,13 @@
         <p class="detail-plot mt-1">{{ film.plot }}</p>
         {% endif %}
 
+        {% if ai_why %}
+        <div class="ai-insight mt-1">
+            <span class="ai-badge">✦ AI</span>
+            <span>{{ ai_why }}</span>
+        </div>
+        {% endif %}
+
         <!-- Community rating -->
         {% set rated = users_with_movie | selectattr('1.rating') | list %}
         {% if rated %}
@@ -143,6 +150,13 @@
         {% if reviews %}<span class="review-count">{{ reviews | length }}</span>{% endif %}
     </h3>
 
+    {% if ai_synthesis %}
+    <div class="ai-synthesis mt-1">
+        <span class="ai-badge">✦ AI</span>
+        <span class="ai-synthesis-text">{{ ai_synthesis }}</span>
+    </div>
+    {% endif %}
+
     {% if current_user.is_authenticated %}
     <form action="{{ url_for('add_film_review', film_id=film.id) }}" method="post" class="review-form">
         <textarea name="body" rows="3" maxlength="1000"
@@ -168,11 +182,7 @@
             <p class="review-body">{{ review.body }}</p>
             <div class="review-footer">
                 {% if current_user.is_authenticated %}
-                <form action="{{ url_for('like_review', review_id=review.id) }}" method="post" class="like-form">
-                    <button type="submit" class="like-btn {{ 'liked' if liked }}">
-                        ♥ {% if review.likes %}{{ review.likes | length }}{% endif %}
-                    </button>
-                </form>
+                {% include "_like_btn.html" with context %}
                 {% else %}
                 <span class="like-count">{% if review.likes %}♥ {{ review.likes | length }}{% endif %}</span>
                 {% endif %}

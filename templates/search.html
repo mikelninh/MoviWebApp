@@ -6,6 +6,8 @@
     <h2>{{ 'Results for "' + q + '"' if q else 'Search' }}</h2>
     <form action="{{ url_for('search') }}" method="get" class="search-form-big">
         <input type="search" name="q" value="{{ q }}" placeholder="Search movies…" autofocus>
+        <input type="text" name="year" value="{{ year_filter }}" placeholder="Year" class="filter-input">
+        <input type="text" name="genre" value="{{ genre_filter }}" placeholder="Genre" class="filter-input">
         <button type="submit" class="btn">Search</button>
     </form>
 </div>
@@ -52,6 +54,13 @@
                         Not logged yet — be the first!
                     {% endif %}
                 </div>
+                {% if current_user.is_authenticated %}
+                <form action="{{ url_for('add_movie', user_id=current_user.id) }}" method="post" class="card-quick-add">
+                    <input type="hidden" name="title" value="{{ film.title }}">
+                    <input type="hidden" name="status" value="watchlist">
+                    <button type="submit" class="btn btn-xs quick-add-btn">☐ Watchlist</button>
+                </form>
+                {% endif %}
             </div>
         </li>
         {% endfor %}

@@ -1,0 +1,8 @@
+<form hx-post="{{ url_for('like_review', review_id=review.id) }}"
+      hx-swap="outerHTML"
+      hx-target="closest form"
+      class="like-form">
+    <button type="submit" class="like-btn {{ 'liked' if liked }}">
+        ♥ {{ like_count if like_count else '' }}
+    </button>
+</form>

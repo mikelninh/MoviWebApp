@@ -25,19 +25,21 @@
             {% endfor %}
         </div>
         {% endif %}
+        {% if taste_blurb %}
+        <p class="ai-taste-blurb mt-half">{{ taste_blurb }}</p>
+        {% endif %}
     </div>
     <div class="profile-actions">
         {% if current_user.is_authenticated and current_user.id != user.id %}
-        <form action="{{ url_for('follow_user', user_id=user.id) }}" method="post" style="display:inline">
-            <button type="submit" class="btn {{ 'btn-following' if is_following else '' }}">
-                {{ 'Unfollow' if is_following else '+ Follow' }}
-            </button>
-        </form>
+        {% set target_user_id = user.id %}
+        {% set target_username = user.username %}
+        {% include "_follow_btn.html" with context %}
         {% if taste_match %}
         <span class="taste-badge" title="Taste match based on shared films and ratings">{{ taste_match }}% match</span>
         {% endif %}
         {% endif %}
         <a href="{{ url_for('diary', user_id=user.id) }}" class="btn btn-sm">Diary</a>
+        <a href="{{ url_for('year_in_review', username=user.username, year=current_year) }}" class="btn btn-sm">{{ current_year }} Recap</a>
     </div>
 </div>
 

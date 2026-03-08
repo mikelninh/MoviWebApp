@@ -145,11 +145,8 @@
             <p class="review-body">{{ review.body }}</p>
             <div class="review-footer">
                 {% if current_user.is_authenticated %}
-                <form action="{{ url_for('like_review', review_id=review.id) }}" method="post" class="like-form">
-                    <button type="submit" class="like-btn {{ 'liked' if liked }}">
-                        ♥ {{ review.likes | length if review.likes | length > 0 else '' }}
-                    </button>
-                </form>
+                {% set like_count = review.likes | length %}
+                {% include "_like_btn.html" with context %}
                 {% else %}
                 <span class="like-count">{% if review.likes %}♥ {{ review.likes | length }}{% endif %}</span>
                 {% endif %}

@@ -1,0 +1,8 @@
+<form hx-post="{{ url_for('follow_user', user_id=target_user_id) }}"
+      hx-swap="outerHTML"
+      hx-target="closest form"
+      style="display:inline">
+    <button type="submit" class="btn {{ 'btn-following' if is_following else '' }}">
+        {{ 'Unfollow' if is_following else '+ Follow' }}
+    </button>
+</form>

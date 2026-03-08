@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}{{ user.username }}'s {{ year }} in Film · MoviWebApp{% endblock %}
+
+{% block content %}
+<div class="yir-hero">
+    <div class="yir-eyebrow">Year in Review</div>
+    <div class="yir-year">{{ year }}</div>
+    <div class="yir-username">{{ user.username }}</div>
+    <div class="yir-badge">{{ badge[1] }} {{ badge[0] }}</div>
+    {% if ai_summary %}
+    <p class="yir-ai-summary">{{ ai_summary }}</p>
+    {% endif %}
+</div>
+
+<div class="yir-grid mt-3">
+
+    <!-- Big numbers -->
+    <div class="yir-stat-card yir-stat-big">
+        <div class="yir-stat-number">{{ total }}</div>
+        <div class="yir-stat-label">Films watched</div>
+    </div>
+    <div class="yir-stat-card yir-stat-big">
+        <div class="yir-stat-number">~{{ hours }}</div>
+        <div class="yir-stat-label">Hours at the movies</div>
+    </div>
+    {% if avg_rating %}
+    <div class="yir-stat-card yir-stat-big">
+        <div class="yir-stat-number">{{ avg_rating }}</div>
+        <div class="yir-stat-label">Average rating</div>
+    </div>
+    {% endif %}
+
+    <!-- Top genres -->
+    {% if top_genres %}
+    <div class="yir-card yir-genres">
+        <h3 class="yir-card-title">Top Genres</h3>
+        <div class="yir-genre-list">
+            {% for genre, count in top_genres %}
+            <div class="yir-genre-row">
+                <span class="genre-tag" data-genre="{{ genre }}">{{ genre }}</span>
+                <div class="yir-bar-wrap">
+                    <div class="yir-bar" style="width: {{ (count / top_genres[0][1] * 100) | int }}%"></div>
+                </div>
+                <span class="yir-bar-count">{{ count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Top directors -->
+    {% if top_directors %}
+    <div class="yir-card">
+        <h3 class="yir-card-title">Favourite Directors</h3>
+        <ol class="yir-director-list">
+            {% for director, count in top_directors %}
+            <li class="yir-director-row">
+                <span class="yir-director-rank">{{ loop.index }}</span>
+                <span class="yir-director-name">{{ director }}</span>
+                <span class="yir-director-count">{{ count }} film{{ 's' if count != 1 }}</span>
+            </li>
+            {% endfor %}
+        </ol>
+    </div>
+    {% endif %}
+
+    <!-- Rating distribution -->
+    {% if rated_count %}
+    <div class="yir-card">
+        <h3 class="yir-card-title">How You Rated</h3>
+        <div class="yir-rating-dist">
+            {% for stars in [5, 4, 3, 2, 1] %}
+            {% set count = rating_dist.get(stars, 0) %}
+            <div class="yir-rating-row">
+                <span class="yir-stars">{{ '★' * stars }}</span>
+                <div class="yir-bar-wrap">
+                    {% if rated_count > 0 %}
+                    <div class="yir-bar yir-bar-gold" style="width: {{ (count / rated_count * 100) | int }}%"></div>
+                    {% endif %}
+                </div>
+                <span class="yir-bar-count">{{ count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- First & Last -->
+    <div class="yir-card yir-bookends">
+        <div class="yir-bookend">
+            <div class="yir-bookend-label">First watch of {{ year }}</div>
+            {% if first_film.poster_url %}
+            <img src="{{ first_film.poster_url }}" alt="{{ first_film.title }}" class="yir-bookend-poster" loading="lazy">
+            {% endif %}
+            <a href="{{ url_for('movie_detail', movie_id=first_film.id) }}" class="yir-bookend-title">{{ first_film.title }}</a>
+        </div>
+        <div class="yir-bookend">
+            <div class="yir-bookend-label">Last watch of {{ year }}</div>
+            {% if last_film.poster_url %}
+            <img src="{{ last_film.poster_url }}" alt="{{ last_film.title }}" class="yir-bookend-poster" loading="lazy">
+            {% endif %}
+            <a href="{{ url_for('movie_detail', movie_id=last_film.id) }}" class="yir-bookend-title">{{ last_film.title }}</a>
+        </div>
+    </div>
+
+    <!-- Contrarian take -->
+    {% if contrarian %}
+    {% set m, comm_avg = contrarian %}
+    <div class="yir-card yir-contrarian">
+        <h3 class="yir-card-title">Most Contrarian Take</h3>
+        <div class="yir-contrarian-body">
+            {% if m.poster_url %}
+            <img src="{{ m.poster_url }}" alt="{{ m.title }}" class="yir-contrarian-poster" loading="lazy">
+            {% endif %}
+            <div>
+                <div class="yir-contrarian-title">{{ m.title }}</div>
+                <div class="yir-contrarian-ratings">
+                    <span>You rated: <strong>{{ '★' * m.rating }}</strong></span>
+                    <span>Community: <strong>{{ comm_avg }}/5</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- Navigation -->
+<div class="yir-nav mt-3">
+    {% if prev_year >= 2015 %}
+    <a href="{{ url_for('year_in_review', username=user.username, year=prev_year) }}" class="btn btn-sm">← {{ prev_year }}</a>
+    {% endif %}
+    <a href="{{ url_for('user_profile', username=user.username) }}" class="btn btn-sm">Back to profile</a>
+    {% if next_year <= current_year %}
+    <a href="{{ url_for('year_in_review', username=user.username, year=next_year) }}" class="btn btn-sm">{{ next_year }} →</a>
+    {% endif %}
+</div>
+{% endblock %}
