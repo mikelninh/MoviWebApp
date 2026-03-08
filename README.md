@@ -2,8 +2,9 @@
 
 [![Ko-fi](https://img.shields.io/badge/Support-Ko--fi-ff5e5b?logo=ko-fi&logoColor=white)](https://ko-fi.com/mikel777)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-A social movie tracking app built with Flask — think Letterboxd, but open-source and yours to run. Users build personal watchlists, write reviews, follow each other, and discover films through a community feed.
+A social film tracking app built with Flask — think Letterboxd, but open-source, self-hostable, and community-built. Track what you watch, write reviews, follow people with great taste, and plan group movie nights.
 
 ![Homepage](screenshots/home.JPG)
 
@@ -12,44 +13,40 @@ A social movie tracking app built with Flask — think Letterboxd, but open-sour
 ## Features
 
 ### Discovery
-- **Global film pages** — every film has its own canonical page (`/film/<id>`) with community ratings, reviews, and similar films
-- **Film-aware search** — searches the Film table directly; unknown titles are fetched live from OMDb and get their own page instantly
-- **Search filters** — narrow by year and genre
-- **Trending** — most-added films in the last 14 days
-- **Genre browse** — all genres with member counts, colour-coded
-- **Curated inspiration rows** — Doomed Romance, Ghibli Forever, Mind the Gap, and more on the homepage
+- **Global film pages** — canonical pages with community ratings, AI review synthesis, streaming availability (JustWatch/DE)
+- **Film search** — live OMDb lookup for any title, year and genre filters
+- **Trending** — most-added films in the last 14 days with genre filter
+- **Genre browse** — colour-coded genre grid with member counts
+- **Curated inspiration rows** — Doomed Romance, Ghibli Forever, Mind the Gap, and more
 
 ### Social
-- **Follow users** — following feed shows recent activity from people you follow
-- **Reviews & likes** — write reviews, like others' reviews (HTMX — no page reload)
-- **Follow / Unfollow** — instant HTMX toggle on profiles
-- **Notifications** — in-app bell for follows and likes
-- **Taste match** — Jaccard + rating correlation score shown on every profile you visit
-- **Friends on film pages** — see which people you follow have watched a film and how they rated it
-- **Movie Nights** — create group nights, suggest films, vote on what to watch
-- **Custom Lists** — curated lists with poster strip previews, shareable
+- **Follow** — feed shows activity from people you follow
+- **Reviews & comments** — write reviews, like and comment (HTMX, no page reload)
+- **Taste match** — Jaccard + rating correlation score on every profile
+- **Movie Nights** — plan group watches, vote on films, declare a winner, share an invite link
+- **Custom Lists** — curated lists with poster strips, shareable URLs
+- **Notifications** — in-app bell + optional email notifications (opt-in)
 
 ### Profiles
-- **Pretty URLs** — `/u/<username>` (legacy `/users/<id>` redirects automatically)
-- **Diary view** — films grouped by month watched
-- **Year in Review** — `/u/<username>/year/<year>` with stats, bar charts, badges, and AI summary
-- **Profile stats** — watched count, average rating, top genres
-- **AI taste profile** — 2-sentence blurb describing your taste (requires Anthropic API key)
-- **Pagination** — 24 films per page on profiles, 20 per page in search
+- **Half-star ratings** — 0.5–5.0 stars with interactive star picker
+- **Currently Watching** status alongside Watched / Watchlist
+- **Letterboxd import** — ZIP upload, instant history migration
+- **Data export** — download your full list as CSV
+- **Diary view** — films grouped by month
+- **Year in Review** — stats, bar charts, genre breakdown, AI summary
+- **AI taste profile** — Claude describes your taste in 2 sentences
 
-### Film pages
-- **AI review synthesis** — Claude summarises community reviews in 1–2 sentences
-- **"You'll love this because"** — personalised one-liner based on your top-rated films
-- **Quick-add watchlist** — add any film to your watchlist from search results
+### Cinema Partners
+- `/cinemas` — local partner cinema pages (Berlin/Friedrichshain)
+- Community screening requests + upvoting
+- Now Showing & Staff Picks per cinema
 
-### Challenges
-- Milestone badges for watching streaks, genre variety, prolific reviewing, and more
-
-### UI
-- Cinematic dark design — glass morphism header, gradient text, DiceBear avatars
-- Skeleton shimmer on poster areas while images load
-- Mobile hamburger nav (< 640 px)
-- Custom 404 / 500 / 403 error pages with film quotes
+### Tech
+- **REST API** — `/api/v1/` JSON endpoints for films, users, trending
+- **PWA** — installable on Android/iOS (manifest + icons)
+- **i18n** — DE/EN language switcher
+- **Dark/light theme** — toggle with localStorage persistence
+- **Open Graph** — rich link previews on profiles, film pages, movie nights
 
 ---
 
@@ -59,10 +56,12 @@ A social movie tracking app built with Flask — think Letterboxd, but open-sour
 |-------|-----------|
 | Backend | Python 3.13 / Flask |
 | Database | SQLite via SQLAlchemy |
-| Auth | Flask-Login + Werkzeug password hashing |
+| Auth | Flask-Login + Werkzeug |
 | Frontend | HTML / CSS / HTMX (no JS framework) |
 | Movie data | OMDb API |
+| Streaming | JustWatch (unofficial GraphQL, DE) |
 | AI | Anthropic Claude Haiku (optional) |
+| Email | Flask-Mail (optional) |
 | Avatars | DiceBear Avataaars |
 
 ---
@@ -80,75 +79,40 @@ python -m venv .venv
 # 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. Configure environment
-# Create a .env file:
-OMDB_API_KEY=your_omdb_key       # https://www.omdbapi.com/apikey.aspx (free)
-ANTHROPIC_API_KEY=your_key_here  # optional — enables AI features
-SECRET_KEY=change-me-in-production
+# 3. Configure environment — create a .env file:
+OMDB_API_KEY=your_key        # free at omdbapi.com
+SECRET_KEY=change-me
 
-# 4. Seed demo data
-python seed.py          # 23 users with movie lists
-python seed_social.py   # follows, reviews, movie nights, custom lists
-python seed_rich.py     # more movies, reviews, and social graph density
+# Optional:
+ANTHROPIC_API_KEY=your_key   # enables AI features
+MAIL_SERVER=smtp.example.com # enables email notifications
+MAIL_PORT=587
+MAIL_USERNAME=you@example.com
+MAIL_PASSWORD=yourpassword
+MAIL_DEFAULT_SENDER=you@example.com
+
+# 4. Seed demo data (23 users, 500+ films, 200+ reviews)
+python seed_all.py
 
 # 5. Run
 python app.py
 ```
 
-Open `http://127.0.0.1:5000`
+Open `http://127.0.0.1:5000` — log in with `ninh` / `nolancore` / `voidpilot`, password `password123`.
 
 ---
 
-## Database stats (after full seed)
+## Database (after full seed)
 
 | Table | Count |
 |-------|-------|
-| Users | 24 (23 seeded + 1 real) |
+| Users | 23 seeded |
 | Films | ~503 |
 | Movies (user entries) | ~1 100 |
 | Reviews | ~215 |
 | Follows | ~90 |
 | Review likes | ~706 |
-
----
-
-## Project structure
-
-```
-MoviWebApp/
-├── app.py               # Flask routes, AI helpers, HTMX endpoints
-├── data_manager.py      # DB operations and OMDb fetching
-├── models.py            # SQLAlchemy models
-├── seed.py              # Base users and movie lists
-├── seed_social.py       # Follows, reviews, movie nights, custom lists
-├── seed_rich.py         # Extended movies, reviews, social graph
-├── requirements.txt
-├── static/
-│   └── style.css        # Full design system (2 000 + lines)
-├── templates/
-│   ├── base.html               # Header, nav, HTMX, flash messages
-│   ├── index.html              # Homepage — hero spotlight + inspiration rows
-│   ├── film_detail.html        # Global film page with AI, reviews, friends
-│   ├── user_detail.html        # Profile — movies, stats, AI taste blurb
-│   ├── year_in_review.html     # /u/<username>/year/<year>
-│   ├── search.html             # Film-aware search with filters
-│   ├── feed.html               # Following feed
-│   ├── trending.html           # Most-added films (14-day window)
-│   ├── browse.html             # Genre grid
-│   ├── genre_page.html         # Single genre film list
-│   ├── notifications.html      # In-app notification centre
-│   ├── movie_nights.html       # Group movie night lobby
-│   ├── movie_night_detail.html # Suggest + vote on films
-│   ├── lists_directory.html    # Community lists with poster strips
-│   ├── user_list.html          # Single custom list view
-│   ├── diary.html              # Films grouped by month
-│   ├── challenges.html         # Milestone badges
-│   ├── _like_btn.html          # HTMX partial — like button
-│   ├── _follow_btn.html        # HTMX partial — follow/unfollow button
-│   └── error.html              # Custom 404/500/403
-└── data/
-    └── movies.db               # SQLite (created on first run, gitignored)
-```
+| Cinemas | 2 (Berlin) |
 
 ---
 
@@ -157,30 +121,72 @@ MoviWebApp/
 | URL | Description |
 |-----|-------------|
 | `/` | Homepage |
-| `/u/<username>` | User profile (canonical) |
+| `/u/<username>` | User profile |
 | `/u/<username>/year/<year>` | Year in Review |
-| `/film/<id>` | Global film page |
-| `/search?q=...&year=...&genre=...` | Film search |
-| `/trending` | Trending films |
-| `/browse` | Genre browser |
-| `/browse/<genre>` | Single genre |
-| `/lists` | Community lists |
-| `/feed` | Following feed |
-| `/notifications` | Notification centre |
+| `/film/<id>` | Global film page with streaming |
+| `/cinemas` | Partner cinema directory |
+| `/cinema/<slug>` | Cinema page with programme |
 | `/nights` | Movie nights |
-| `/challenges` | Challenges |
+| `/feed` | Following feed |
+| `/import` | Letterboxd import |
+| `/export` | Download your list (CSV) |
+| `/settings` | Email & notification settings |
+| `/about` | About page |
+| `/privacy` | Privacy policy |
+| `/api/v1/` | REST API root |
+
+---
+
+## Project structure
+
+```
+MoviWebApp/
+├── app.py               # All routes, AI helpers, HTMX endpoints, REST API
+├── data_manager.py      # DB queries and OMDb fetching
+├── models.py            # SQLAlchemy models (16 tables)
+├── seed_all.py          # Run all seed scripts in order
+├── seed.py              # Base users and movie lists
+├── seed_social.py       # Follows, reviews, movie nights, custom lists
+├── seed_rich.py         # Extended movies, reviews, social graph
+├── seed_community.py    # Rich persona-matched reviews + likes
+├── enrich_films.py      # Batch OMDb enrichment for Film records
+├── requirements.txt
+├── static/
+│   ├── style.css        # Full design system (~3 000 lines)
+│   ├── manifest.json    # PWA manifest
+│   ├── icon-192.svg     # PWA icon
+│   └── icon-512.svg
+└── templates/
+    ├── base.html                # Header, nav, theme toggle, PWA meta
+    ├── _macros.html             # stars(), rating_select() macros
+    ├── _like_btn.html           # HTMX like button
+    ├── _follow_btn.html         # HTMX follow/unfollow
+    ├── _vote_btn.html           # HTMX movie night vote
+    ├── _review_comments.html    # HTMX review comments partial
+    ├── _welcome_results.html    # HTMX onboarding film search
+    ├── index.html               # Homepage
+    ├── film_detail.html         # Film page with streaming, AI, comments
+    ├── user_detail.html         # Profile — movies, stats, taste blurb
+    ├── feed.html                # Following feed
+    ├── welcome.html             # Onboarding step 1 — film picker
+    ├── welcome_follow.html      # Onboarding step 2 — follow suggestions
+    ├── cinemas.html             # Cinema partner directory
+    ├── cinema_detail.html       # Cinema programme + requests
+    ├── settings.html            # Email & notification preferences
+    ├── import.html              # Letterboxd import
+    ├── about.html               # About page
+    └── privacy.html             # Privacy policy
+```
 
 ---
 
 ## Contributing
 
-Pull requests welcome — this is a real deployed app with real users. See **[CONTRIBUTING.md](CONTRIBUTING.md)** for the full guide, good first issues, and stack notes.
-
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+This is a real deployed app in Berlin — your PR will be used. See **[CONTRIBUTING.md](CONTRIBUTING.md)** for the quick start, good first issues, and code style guide.
 
 ## Support
 
-MoviWebApp is free and open source, forever. If it made you smile, [buy me a coffee ☕](https://ko-fi.com/mikel777) — it genuinely helps.
+Free and open source, forever. If it made you smile, [buy us a coffee ☕](https://ko-fi.com/mikel777).
 
 ## License
 
