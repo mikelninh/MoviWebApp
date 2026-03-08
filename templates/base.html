@@ -102,11 +102,17 @@
         <div class="footer-inner">
             <span class="footer-logo">🎬 MoviWebApp</span>
             <span class="footer-sep">·</span>
-            <span class="footer-tagline">Free & open source, forever.</span>
+            <a href="{{ url_for('about') }}" class="footer-link">About</a>
+            <span class="footer-sep">·</span>
+            <a href="{{ url_for('privacy') }}" class="footer-link">Privacy</a>
             <span class="footer-sep">·</span>
             <a href="https://github.com/hallochupi-sketch/MoviWebApp" class="footer-link" target="_blank" rel="noopener">GitHub</a>
             <span class="footer-sep">·</span>
-            <a href="https://ko-fi.com/mikel777" class="footer-kofi" target="_blank" rel="noopener">☕ Support on Ko-fi</a>
+            <a href="https://ko-fi.com/mikel777" class="footer-kofi" target="_blank" rel="noopener">☕ Ko-fi</a>
+            {% if current_user.is_authenticated %}
+            <span class="footer-sep">·</span>
+            <a href="{{ url_for('export_data') }}" class="footer-link" title="Download your film list as CSV">⬇ Export</a>
+            {% endif %}
         </div>
     </footer>
 </body>

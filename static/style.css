@@ -2565,6 +2565,234 @@ input:focus, textarea:focus, select:focus {
 .loggedout-login-link:hover { color: #93c5fd; }
 
 /* ============================================================
+   ABOUT PAGE
+   ============================================================ */
+.about-page {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 2rem 0 4rem;
+}
+
+.about-hero {
+    text-align: center;
+    padding: 2.5rem 1rem 2rem;
+}
+
+.about-hero-reel {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.about-title {
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    color: #fff;
+    margin-bottom: 0.75rem;
+    line-height: 1.2;
+}
+
+.about-lead {
+    font-size: 1.05rem;
+    color: #7a88aa;
+    max-width: 540px;
+    margin: 0 auto;
+    line-height: 1.65;
+}
+
+.about-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.about-card {
+    background: #111827;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
+    padding: 1.25rem;
+    transition: border-color 0.15s;
+}
+.about-card:hover { border-color: rgba(59,130,246,0.4); }
+
+.about-card-icon { font-size: 1.5rem; margin-bottom: 0.6rem; }
+
+.about-card h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #e8eaf0;
+    margin-bottom: 0.4rem;
+}
+
+.about-card p { font-size: 0.85rem; color: #6b7a99; line-height: 1.55; }
+
+.about-story {
+    border-top: 1px solid rgba(255,255,255,0.07);
+    padding-top: 2rem;
+    margin-top: 2rem;
+}
+.about-story h2 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 1rem;
+}
+.about-story p {
+    color: #7a88aa;
+    line-height: 1.7;
+    margin-bottom: 0.9rem;
+    font-size: 0.95rem;
+}
+.about-story a { color: #60a5fa; text-decoration: underline; }
+
+.about-cta {
+    text-align: center;
+    margin: 2.5rem 0 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.about-join-btn {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    padding: 0.65rem 2rem;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: background 0.15s, transform 0.1s;
+}
+.about-join-btn:hover { background: #2563eb; transform: translateY(-1px); }
+
+.about-login-link { font-size: 0.85rem; color: #4a5a80; text-decoration: underline; }
+.about-login-link:hover { color: #93c5fd; }
+
+.about-links {
+    text-align: center;
+    font-size: 0.82rem;
+    color: #3a4460;
+}
+.about-links a { color: #4a5a80; }
+.about-links a:hover { color: #93c5fd; }
+.about-sep { margin: 0 0.4rem; }
+
+/* ============================================================
+   PRIVACY / STATIC PAGES
+   ============================================================ */
+.static-page {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 2rem 0 4rem;
+}
+
+.static-title {
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    color: #fff;
+    margin-bottom: 0.4rem;
+}
+
+.static-meta {
+    font-size: 0.82rem;
+    color: #3a4460;
+    margin-bottom: 2rem;
+}
+
+.static-body h2 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #e8eaf0;
+    margin: 1.75rem 0 0.5rem;
+}
+
+.static-body p {
+    font-size: 0.92rem;
+    color: #7a88aa;
+    line-height: 1.7;
+    margin-bottom: 0.6rem;
+}
+
+.static-body ul {
+    list-style: disc;
+    padding-left: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.static-body li {
+    font-size: 0.92rem;
+    color: #7a88aa;
+    line-height: 1.65;
+    margin-bottom: 0.25rem;
+}
+
+.static-body a { color: #60a5fa; text-decoration: underline; }
+.static-body strong { color: #c5cde0; }
+
+/* ============================================================
+   MOBILE AUDIT — ADDITIONAL FIXES
+   ============================================================ */
+
+/* Winner banner: stack on small screens */
+@media (max-width: 560px) {
+    .winner-inner { flex-direction: column; align-items: flex-start; }
+    .winner-title { font-size: 1.2rem; }
+    .winner-share { flex-direction: row; flex-wrap: wrap; }
+}
+
+/* Night film card: compress on phone */
+@media (max-width: 560px) {
+    .night-film-card { gap: 0.6rem; padding: 0.75rem; }
+    .night-film-poster { width: 44px; height: 66px; }
+    .night-film-title { font-size: 0.88rem; }
+}
+
+/* Invite bar: stack on phone */
+@media (max-width: 520px) {
+    .night-invite-bar { flex-direction: column; align-items: flex-start; gap: 0.4rem; }
+    .night-invite-link { width: 100%; }
+}
+
+/* Welcome onboarding: film grid tighter on phone */
+@media (max-width: 560px) {
+    .welcome-film-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 0.5rem; }
+    .welcome-film-poster { height: 130px; }
+    .welcome-film-title { font-size: 0.7rem; }
+}
+
+/* Welcome follow cards: stack on phone */
+@media (max-width: 500px) {
+    .welcome-follow-card { flex-wrap: wrap; }
+    .taste-badge { margin-left: 0; }
+}
+
+/* About page hero: smaller title on phone */
+@media (max-width: 560px) {
+    .about-title { font-size: 1.5rem; }
+    .about-lead { font-size: 0.92rem; }
+    .about-grid { grid-template-columns: 1fr; }
+}
+
+/* Logged-out CTA: stack on phone */
+@media (max-width: 500px) {
+    .loggedout-cta-inner { flex-direction: column; align-items: flex-start; }
+    .loggedout-cta-btns { width: 100%; }
+    .loggedout-join-btn { width: 100%; text-align: center; }
+}
+
+/* Footer: wrap tighter on phone */
+@media (max-width: 560px) {
+    .footer-inner { gap: 0.4rem 0.75rem; font-size: 0.78rem; }
+}
+
+/* Detail page: title smaller on phone */
+@media (max-width: 480px) {
+    .detail-title { font-size: 1.5rem; }
+}
+
+/* ============================================================
    MOVIE NIGHTS v2 — INVITE / WINNER / RESULT
    ============================================================ */
 

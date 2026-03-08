@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}About · MoviWebApp{% endblock %}
+
+{% block og_tags %}
+<meta property="og:title"       content="About MoviWebApp">
+<meta property="og:description" content="A free, open-source film tracking app built for people who actually care about movies.">
+{% endblock %}
+
+{% block content %}
+<div class="about-page">
+
+    <div class="about-hero">
+        <div class="about-hero-reel">🎬</div>
+        <h1 class="about-title">Built for people who care about movies</h1>
+        <p class="about-lead">MoviWebApp is a free, open-source film tracker. No algorithms pushing blockbusters at you. No ads. Just your list, your taste, and your people.</p>
+    </div>
+
+    <div class="about-grid">
+
+        <div class="about-card">
+            <div class="about-card-icon">📋</div>
+            <h3>Track everything you watch</h3>
+            <p>Add films, rate them, mark your watchlist. Import your full history from Letterboxd in seconds.</p>
+        </div>
+
+        <div class="about-card">
+            <div class="about-card-icon">👥</div>
+            <h3>Find your people</h3>
+            <p>Taste match scores show exactly how much your film taste overlaps with others. Follow people who love what you love.</p>
+        </div>
+
+        <div class="about-card">
+            <div class="about-card-icon">🌙</div>
+            <h3>Movie Nights</h3>
+            <p>Plan group watches, suggest films, vote on the pick, and share a shareable result card when the winner is declared.</p>
+        </div>
+
+        <div class="about-card">
+            <div class="about-card-icon">✍️</div>
+            <h3>Write & read reviews</h3>
+            <p>Short takes or long essays — write what you actually think. See what your community thinks before you watch.</p>
+        </div>
+
+        <div class="about-card">
+            <div class="about-card-icon">🏆</div>
+            <h3>Challenges & streaks</h3>
+            <p>Set watching goals, track your year in film, and see your stats at a glance in your annual recap.</p>
+        </div>
+
+        <div class="about-card">
+            <div class="about-card-icon">🔓</div>
+            <h3>Free & open source, forever</h3>
+            <p>No paywalls. No premium tiers. The code is on GitHub — read it, fork it, contribute to it.</p>
+        </div>
+
+    </div>
+
+    <div class="about-story">
+        <h2>The story</h2>
+        <p>MoviWebApp started as a weekend project — a simple list app for keeping track of what to watch next. It grew into something we actually wanted to use every day: a place to log films, discover what friends were watching, and settle the eternal group-chat debate of "what should we watch tonight?"</p>
+        <p>We believe film tracking should be simple, beautiful, and social — without dark patterns or paywalls. If you love it, <a href="https://ko-fi.com/mikel777" target="_blank" rel="noopener">buy us a coffee</a>. If you want to help build it, <a href="https://github.com/hallochupi-sketch/MoviWebApp" target="_blank" rel="noopener">open a PR</a>.</p>
+    </div>
+
+    <div class="about-cta">
+        {% if not current_user.is_authenticated %}
+        <a href="{{ url_for('register') }}" class="btn about-join-btn">Create your free account →</a>
+        <a href="{{ url_for('login') }}" class="about-login-link">Already a member? Log in</a>
+        {% else %}
+        <a href="{{ url_for('user_profile', username=current_user.username) }}" class="btn about-join-btn">Go to your list →</a>
+        {% endif %}
+    </div>
+
+    <div class="about-links">
+        <a href="https://github.com/hallochupi-sketch/MoviWebApp" target="_blank" rel="noopener">GitHub</a>
+        <span class="about-sep">·</span>
+        <a href="https://ko-fi.com/mikel777" target="_blank" rel="noopener">Ko-fi</a>
+        <span class="about-sep">·</span>
+        <a href="{{ url_for('privacy') }}">Privacy</a>
+    </div>
+
+</div>
+{% endblock %}

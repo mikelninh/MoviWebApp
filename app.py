@@ -631,6 +631,42 @@ def logout():
     return redirect(url_for("index"))
 
 
+# ── STATIC PAGES ──────────────────────────────────────────────────────────────
+
+@app.route("/about")
+def about():
+    return render_template("about.html")
+
+
+@app.route("/privacy")
+def privacy():
+    return render_template("privacy.html")
+
+
+@app.route("/export")
+@login_required
+def export_data():
+    from flask import make_response
+    movies = Movie.query.filter_by(user_id=current_user.id).all()
+    out = io.StringIO()
+    writer = csv.writer(out)
+    writer.writerow(["Title", "Year", "Rating", "Status", "Director", "Genre", "Date Added"])
+    for m in movies:
+        writer.writerow([
+            m.title,
+            m.year or "",
+            m.rating or "",
+            m.status or "watched",
+            m.director or "",
+            m.genre or "",
+            m.date_added.strftime("%Y-%m-%d") if m.date_added else "",
+        ])
+    resp = make_response(out.getvalue())
+    resp.headers["Content-Type"] = "text/csv; charset=utf-8"
+    resp.headers["Content-Disposition"] = f"attachment; filename={current_user.username}-moviwebapp.csv"
+    return resp
+
+
 # ── MAIN ──────────────────────────────────────────────────────────────────────
 
 @app.route("/")

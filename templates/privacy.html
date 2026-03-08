@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Privacy · MoviWebApp{% endblock %}
+
+{% block content %}
+<div class="static-page">
+
+    <h1 class="static-title">Privacy Policy</h1>
+    <p class="static-meta">Last updated: March 2026</p>
+
+    <div class="static-body">
+
+        <h2>What we collect</h2>
+        <p>We collect only what's needed to run the service:</p>
+        <ul>
+            <li><strong>Username and password</strong> — your password is hashed with bcrypt and never stored in plain text.</li>
+            <li><strong>Films, ratings, and reviews</strong> — the content you add to your list.</li>
+            <li><strong>Follow relationships</strong> — who you follow and who follows you.</li>
+        </ul>
+        <p>We do <strong>not</strong> collect your email address, real name, location, or any payment information. We do <strong>not</strong> run advertising or sell data.</p>
+
+        <h2>Cookies</h2>
+        <p>We use a single session cookie to keep you logged in. No tracking cookies, no third-party analytics.</p>
+
+        <h2>Film metadata</h2>
+        <p>When you add a film, we look up its poster, director, and plot from the <a href="https://www.omdbapi.com/" target="_blank" rel="noopener">OMDb API</a>. Your username is not sent to OMDb — only the film title and year.</p>
+
+        <h2>Your data</h2>
+        <p>You can <a href="{{ url_for('export_data') }}">download all your data</a> as a CSV at any time. To delete your account, contact us via <a href="https://github.com/hallochupi-sketch/MoviWebApp/issues" target="_blank" rel="noopener">GitHub Issues</a> and we'll remove it promptly.</p>
+
+        <h2>Open source</h2>
+        <p>The entire application is <a href="https://github.com/hallochupi-sketch/MoviWebApp" target="_blank" rel="noopener">open source on GitHub</a>. You can read exactly how your data is stored and used. There are no hidden trackers.</p>
+
+        <h2>Changes</h2>
+        <p>If this policy changes materially, we'll note it at the top of this page with a new date. We'll never retroactively change how existing data is used without notice.</p>
+
+        <h2>Contact</h2>
+        <p>Questions? Open an issue on <a href="https://github.com/hallochupi-sketch/MoviWebApp/issues" target="_blank" rel="noopener">GitHub</a> or reach out via <a href="https://ko-fi.com/mikel777" target="_blank" rel="noopener">Ko-fi</a>.</p>
+
+    </div>
+
+</div>
+{% endblock %}
