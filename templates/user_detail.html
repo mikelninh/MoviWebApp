@@ -4,7 +4,7 @@
 {% block content %}
 <!-- Profile header -->
 <div class="profile-header">
-    <div class="profile-avatar avatar-0">{{ user.username[0].upper() }}</div>
+    <img src="{{ avatar_url(user.username) }}" class="profile-avatar" alt="{{ user.username }}">
     <div class="profile-meta">
         <h2 class="profile-name">{{ user.username }}</h2>
         <div class="profile-sub">

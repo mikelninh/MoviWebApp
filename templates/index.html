@@ -72,7 +72,7 @@
             {% for user in users %}
             <li class="user-card">
                 <div class="user-card-header">
-                    <div class="avatar avatar-{{ loop.index0 % 8 }}">{{ user.username[0].upper() }}</div>
+                    <img src="{{ avatar_url(user.username) }}" class="avatar" alt="{{ user.username }}">
                     <div class="user-card-info">
                         <a href="{{ url_for('get_movies', user_id=user.id) }}" class="user-card-name">
                             {{ user.username }}

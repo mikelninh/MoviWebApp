@@ -78,6 +78,23 @@ INSPIRATION_LISTS = [
         ],
     },
     {
+        "name": "Ghibli Forever",
+        "icon": "✦",
+        "tagline": "Studio Ghibli — where every frame is a painting.",
+        "movies": [
+            {"title": "Spirited Away", "year": "2001"},
+            {"title": "Princess Mononoke", "year": "1997"},
+            {"title": "My Neighbor Totoro", "year": "1988"},
+            {"title": "Howl's Moving Castle", "year": "2004"},
+            {"title": "Grave of the Fireflies", "year": "1988"},
+            {"title": "Nausicaa of the Valley of the Wind", "year": "1984"},
+            {"title": "Kiki's Delivery Service", "year": "1989"},
+            {"title": "The Tale of Princess Kaguya", "year": "2013"},
+            {"title": "Castle in the Sky", "year": "1986"},
+            {"title": "Porco Rosso", "year": "1992"},
+        ],
+    },
+    {
         "name": "Mind the Gap",
         "icon": "⧗",
         "tagline": "Time travel, fractured memory, and nonlinear minds.",
@@ -163,23 +180,6 @@ INSPIRATION_LISTS = [
         ],
     },
     {
-        "name": "Ghibli Forever",
-        "icon": "✦",
-        "tagline": "Studio Ghibli — where every frame is a painting.",
-        "movies": [
-            {"title": "Spirited Away", "year": "2001"},
-            {"title": "Princess Mononoke", "year": "1997"},
-            {"title": "My Neighbor Totoro", "year": "1988"},
-            {"title": "Howl's Moving Castle", "year": "2004"},
-            {"title": "Grave of the Fireflies", "year": "1988"},
-            {"title": "Nausicaa of the Valley of the Wind", "year": "1984"},
-            {"title": "Kiki's Delivery Service", "year": "1989"},
-            {"title": "The Tale of Princess Kaguya", "year": "2013"},
-            {"title": "Castle in the Sky", "year": "1986"},
-            {"title": "Porco Rosso", "year": "1992"},
-        ],
-    },
-    {
         "name": "Anime That Breaks You",
         "icon": "◉",
         "tagline": "Mind-bending, heartbreaking, unforgettable.",
@@ -248,6 +248,19 @@ def get_inspiration_with_posters():
         for movie in lst['movies']:
             movie['poster_url'] = ''
     return lists
+
+
+# ── TEMPLATE HELPERS ──────────────────────────────────────────────────────────
+
+@app.template_global()
+def avatar_url(username):
+    """DiceBear avataaars — unique cartoon portrait per username."""
+    return (
+        f"https://api.dicebear.com/9.x/avataaars/svg"
+        f"?seed={username}"
+        f"&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf,d1fae5"
+        f"&backgroundType=gradientLinear"
+    )
 
 
 # ── HELPERS ───────────────────────────────────────────────────────────────────
@@ -582,8 +595,9 @@ def movie_night_detail(night_id):
     if current_user.is_authenticated:
         user_vote = MovieNightVote.query.filter_by(
             user_id=current_user.id).first()
+    sorted_films = sorted(night.films, key=lambda f: len(f.votes), reverse=True)
     return render_template("movie_night_detail.html", night=night,
-                           user_vote=user_vote)
+                           sorted_films=sorted_films, user_vote=user_vote)
 
 
 @app.route("/movie-nights/<int:night_id>/suggest", methods=["POST"])
@@ -810,6 +824,35 @@ def delete_user(user_id):
     data_manager.delete_user(user_id)
     flash("Your account has been deleted.", "success")
     return redirect(url_for("index"))
+
+
+# ── ERROR HANDLERS ───────────────────────────────────────────────────────────
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template("error.html", code=404,
+                           title="Scene Missing",
+                           message="We looked everywhere. This page got cut from the final edit.",
+                           quote="\"I don't know what you're talking about. There's no scene here.\"",
+                           quote_attr="— Every director ever"), 404
+
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template("error.html", code=500,
+                           title="The Projector Broke",
+                           message="Something went wrong in the booth. We're rewinding the reel.",
+                           quote="\"All right, Mr. DeMille, I'm ready for my close-up.\"",
+                           quote_attr="— Norma Desmond, Sunset Blvd."), 500
+
+
+@app.errorhandler(403)
+def forbidden(e):
+    return render_template("error.html", code=403,
+                           title="Restricted Section",
+                           message="You don't have a ticket for this screening.",
+                           quote="\"You shall not pass.\"",
+                           quote_attr="— Gandalf (wrong franchise, still applies)"), 403
 
 
 # ── STARTUP ──────────────────────────────────────────────────────────────────

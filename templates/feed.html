@@ -68,7 +68,7 @@
             <li class="review-card">
                 <div class="review-header">
                     <a href="{{ url_for('get_movies', user_id=review.user.id) }}" class="review-author">
-                        <span class="chip-avatar avatar-{{ loop.index0 % 8 }}">{{ review.user.username[0].upper() }}</span>
+                        <img src="{{ avatar_url(review.user.username) }}" class="chip-avatar" alt="{{ review.user.username }}">
                         {{ review.user.username }}
                     </a>
                     <span class="review-date">{{ review.created_at.strftime('%b %d') }}</span>

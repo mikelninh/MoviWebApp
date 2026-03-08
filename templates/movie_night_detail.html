@@ -26,9 +26,9 @@
 
 <!-- Film list with votes -->
 <section class="night-films-section mt-3">
-    {% if night.films %}
+    {% if sorted_films %}
     <ul class="night-films-list">
-        {% for film in night.films | sort(attribute='votes', reverse=True) %}
+        {% for film in sorted_films %}
         {% set vote_count = film.votes | length %}
         {% set user_voted = current_user.is_authenticated and film.votes | selectattr('user_id','equalto',current_user.id) | list | length > 0 %}
         <li class="night-film-card {{ 'user-voted' if user_voted }}">
@@ -59,7 +59,7 @@
     </ul>
     {% else %}
     <div class="empty-state">
-        <p>No films suggested yet.{% if current_user.is_authenticated %} Add one above!{% endif %}</p>
+        <p>No films suggested yet.{% if current_user.is_authenticated %} Suggest one above!{% endif %}</p>
     </div>
     {% endif %}
 </section>
