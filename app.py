@@ -496,6 +496,90 @@ def compute_challenges(movies, review_count=0):
     ]
 
 
+# ── ONBOARDING ────────────────────────────────────────────────────────────────
+
+@app.route("/welcome")
+@login_required
+def welcome():
+    return render_template("welcome.html")
+
+
+@app.route("/welcome/search")
+@login_required
+def welcome_search():
+    q = request.args.get("q", "").strip()
+    if len(q) < 2:
+        return ""
+    films = (Film.query
+             .filter(Film.title.ilike(f"%{q}%"), Film.poster_url.isnot(None))
+             .order_by(Film.year.desc())
+             .limit(12).all())
+    return render_template("_welcome_results.html", films=films)
+
+
+@app.route("/welcome/pick", methods=["POST"])
+@login_required
+def welcome_pick():
+    film_ids = request.form.getlist("film_ids")
+    if not film_ids:
+        flash("Pick at least one film to continue.", "info")
+        return redirect(url_for("welcome"))
+    added = 0
+    for fid in film_ids[:8]:
+        film = db.session.get(Film, int(fid))
+        if not film:
+            continue
+        exists = Movie.query.filter_by(user_id=current_user.id, film_id=film.id).first()
+        if not exists:
+            db.session.add(Movie(
+                title=film.title, user_id=current_user.id, film_id=film.id,
+                rating=5, status="watched",
+                year=film.year, director=film.director,
+                plot=film.plot, poster_url=film.poster_url, genre=film.genre,
+            ))
+            added += 1
+    db.session.commit()
+    return redirect(url_for("welcome_follow"))
+
+
+@app.route("/welcome/follow")
+@login_required
+def welcome_follow():
+    my_movies = Movie.query.filter_by(user_id=current_user.id).all()
+    already_following = {f.followed_id for f in Follow.query.filter_by(follower_id=current_user.id).all()}
+    candidates = User.query.filter(User.id != current_user.id, User.id.notin_(already_following)).all()
+    scored = []
+    for u in candidates:
+        their_movies = Movie.query.filter_by(user_id=u.id).all()
+        score = compute_taste_match(my_movies, their_movies)
+        if score > 0:
+            scored.append((u, score))
+    scored.sort(key=lambda x: x[1], reverse=True)
+    suggestions = scored[:8]
+    return render_template("welcome_follow.html", suggestions=suggestions)
+
+
+@app.route("/welcome/done", methods=["POST"])
+@login_required
+def welcome_done():
+    follow_ids = request.form.getlist("follow_ids")
+    for uid in follow_ids:
+        uid = int(uid)
+        exists = Follow.query.filter_by(follower_id=current_user.id, followed_id=uid).first()
+        if not exists:
+            db.session.add(Follow(follower_id=current_user.id, followed_id=uid))
+            notif = Notification(
+                user_id=uid, from_user_id=current_user.id,
+                type="follow",
+                message=f"{current_user.username} started following you.",
+                link=url_for("user_profile", username=current_user.username),
+            )
+            db.session.add(notif)
+    db.session.commit()
+    flash(f"Welcome to MoviWebApp, {current_user.username}! 🎬", "success")
+    return redirect(url_for("feed"))
+
+
 # ── AUTH ──────────────────────────────────────────────────────────────────────
 
 @app.route("/register", methods=["GET", "POST"])
@@ -516,8 +600,7 @@ def register():
             flash("Username already taken.", "error")
             return render_template("register.html")
         login_user(user)
-        flash(f"Welcome to MoviWebApp, {user.username}! Follow some members to fill your feed.", "success")
-        return redirect(url_for("feed"))
+        return redirect(url_for("welcome"))
     return render_template("register.html")
 
 

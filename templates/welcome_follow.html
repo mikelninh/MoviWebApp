@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Find your people · MoviWebApp{% endblock %}
+
+{% block content %}
+<div class="welcome-page">
+
+    <div class="welcome-hero">
+        <div class="welcome-step-indicator">
+            <span class="welcome-step done">✓</span>
+            <span class="welcome-step-line welcome-step-line-done"></span>
+            <span class="welcome-step active">2</span>
+        </div>
+        <h1 class="welcome-title">People who share your taste</h1>
+        <p class="welcome-sub">Follow them and your feed comes alive instantly.</p>
+    </div>
+
+    <form action="{{ url_for('welcome_done') }}" method="post">
+
+        {% if suggestions %}
+        <ul class="welcome-follow-list">
+            {% for user, score in suggestions %}
+            <li class="welcome-follow-card" id="wf-{{ user.id }}">
+                <img src="{{ avatar_url(user.username) }}" class="welcome-follow-avatar" alt="{{ user.username }}">
+                <div class="welcome-follow-info">
+                    <a href="{{ url_for('user_profile', username=user.username) }}" class="welcome-follow-name" target="_blank">
+                        {{ user.username }}
+                    </a>
+                    <span class="welcome-follow-meta">{{ user.movies | length }} films</span>
+                </div>
+                <span class="taste-badge taste-badge-{{ 'high' if score >= 70 else ('mid' if score >= 40 else 'low') }}">
+                    {{ score }}% match
+                </span>
+                <label class="welcome-follow-toggle">
+                    <input type="checkbox" name="follow_ids" value="{{ user.id }}" checked>
+                    <span class="welcome-follow-check">Follow</span>
+                </label>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="empty-state mt-2">
+            <p>No matches yet — your taste is delightfully unique. You can find people to follow on the <a href="{{ url_for('index') }}">homepage</a>.</p>
+        </div>
+        {% endif %}
+
+        <div class="welcome-actions mt-2">
+            <button type="submit" class="btn welcome-continue-btn">
+                {% if suggestions %}Follow selected & go to feed →{% else %}Go to feed →{% endif %}
+            </button>
+            <a href="{{ url_for('feed') }}" class="welcome-skip">Skip</a>
+        </div>
+    </form>
+
+</div>
+{% endblock %}

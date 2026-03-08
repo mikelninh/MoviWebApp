@@ -1,0 +1,18 @@
+{% if films %}
+<ul class="welcome-film-grid">
+    {% for film in films %}
+    <li class="welcome-film-card"
+        data-film-id="{{ film.id }}"
+        onclick="toggleFilm('{{ film.id }}', {{ film.title | tojson }}, {{ film.poster_url | tojson }})">
+        <div class="welcome-film-poster-wrap">
+            <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="welcome-film-poster">
+            <div class="welcome-film-check">✓</div>
+        </div>
+        <div class="welcome-film-title">{{ film.title }}</div>
+        {% if film.year %}<div class="welcome-film-year">{{ film.year }}</div>{% endif %}
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p class="welcome-no-results">No films found. Try another title.</p>
+{% endif %}

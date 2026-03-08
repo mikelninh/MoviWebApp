@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Welcome · MoviWebApp{% endblock %}
+
+{% block content %}
+<div class="welcome-page">
+
+    <div class="welcome-hero">
+        <div class="welcome-step-indicator">
+            <span class="welcome-step active">1</span>
+            <span class="welcome-step-line"></span>
+            <span class="welcome-step">2</span>
+        </div>
+        <h1 class="welcome-title">What do you love watching?</h1>
+        <p class="welcome-sub">Pick a few films — we'll find people who share your taste.</p>
+    </div>
+
+    <form action="{{ url_for('welcome_pick') }}" method="post" id="pick-form">
+        <div class="welcome-search-wrap">
+            <input type="search" id="welcome-search" placeholder="Search any film…"
+                   hx-get="{{ url_for('welcome_search') }}"
+                   hx-trigger="input changed delay:250ms"
+                   hx-target="#welcome-results"
+                   hx-include="[name='q']"
+                   name="q"
+                   autocomplete="off" autofocus>
+        </div>
+
+        <div id="welcome-results" class="welcome-results"></div>
+
+        <div class="welcome-selected" id="welcome-selected">
+            <p class="welcome-selected-label" id="selected-label" style="display:none">
+                Your picks — <span id="selected-count">0</span> selected
+            </p>
+            <div class="welcome-selected-grid" id="selected-grid"></div>
+        </div>
+
+        <div class="welcome-actions">
+            <button type="submit" class="btn welcome-continue-btn" id="continue-btn" disabled>
+                Continue →
+            </button>
+            <a href="{{ url_for('feed') }}" class="welcome-skip">Skip for now</a>
+        </div>
+    </form>
+
+</div>
+
+<script>
+const selected = {};
+
+function toggleFilm(id, title, poster) {
+    if (selected[id]) {
+        delete selected[id];
+    } else {
+        if (Object.keys(selected).length >= 8) return;
+        selected[id] = { title, poster };
+    }
+    renderSelected();
+    updateResults();
+}
+
+function renderSelected() {
+    const grid   = document.getElementById('selected-grid');
+    const label  = document.getElementById('selected-label');
+    const count  = document.getElementById('selected-count');
+    const btn    = document.getElementById('continue-btn');
+    const ids    = Object.keys(selected);
+
+    label.style.display = ids.length ? '' : 'none';
+    count.textContent   = ids.length;
+    btn.disabled        = ids.length === 0;
+
+    // Rebuild hidden inputs
+    document.querySelectorAll('input[name="film_ids"]').forEach(el => el.remove());
+    ids.forEach(id => {
+        const inp = document.createElement('input');
+        inp.type = 'hidden'; inp.name = 'film_ids'; inp.value = id;
+        document.getElementById('pick-form').appendChild(inp);
+    });
+
+    // Rebuild selected poster strip
+    grid.innerHTML = ids.map(id => `
+        <div class="welcome-selected-card" onclick="toggleFilm('${id}','','')">
+            <img src="${selected[id].poster}" class="welcome-selected-poster" title="${selected[id].title}">
+            <div class="welcome-selected-remove">✕</div>
+        </div>
+    `).join('');
+}
+
+function updateResults() {
+    document.querySelectorAll('.welcome-film-card').forEach(card => {
+        const id = card.dataset.filmId;
+        card.classList.toggle('welcome-film-selected', !!selected[id]);
+    });
+}
+
+// After every HTMX swap, re-highlight selected cards
+document.addEventListener('htmx:afterSwap', updateResults);
+</script>
+{% endblock %}
