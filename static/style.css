@@ -3178,3 +3178,248 @@ html[data-theme="light"] .flash-error   { background: #fee2e2; color: #991b1b; }
 .streaming-disneyplus      { background: rgba(17,60,149,0.15);  border-color: rgba(17,60,149,0.4);  color: #113c95; }
 .streaming-mubi            { background: rgba(64,64,64,0.15);   border-color: rgba(100,100,100,0.4); color: #aaa; }
 .streaming-appletv+        { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.15); color: var(--text); }
+
+/* ============================================================
+   CINEMATIC UI — FILM GRAIN, TYPOGRAPHY, TRANSITIONS, BACKDROPS
+   ============================================================ */
+
+/* ── Film grain overlay ────────────────────────────────────── */
+@keyframes grain-drift {
+  0%  { transform: translate(0,0); }
+  10% { transform: translate(-2%,-3%); }
+  20% { transform: translate(4%,2%); }
+  30% { transform: translate(-3%,5%); }
+  40% { transform: translate(2%,-2%); }
+  50% { transform: translate(-4%,3%); }
+  60% { transform: translate(3%,-5%); }
+  70% { transform: translate(-2%,2%); }
+  80% { transform: translate(4%,-3%); }
+  90% { transform: translate(-3%,4%); }
+}
+
+.grain-overlay {
+  position: fixed;
+  inset: -60%;
+  width: 220%;
+  height: 220%;
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0.032;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+  animation: grain-drift 0.4s steps(1) infinite;
+}
+
+html[data-theme='light'] .grain-overlay { opacity: 0.04; }
+
+/* ── Cinematic display typography ──────────────────────────── */
+.detail-title,
+.hero-title,
+.welcome-title,
+.about-title,
+.static-title,
+.winner-title,
+.night-name,
+.section-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  letter-spacing: -0.01em;
+}
+
+.detail-title {
+  font-size: 2.4rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+/* Bebas Neue for stat numbers / year badges */
+.card-year,
+.detail-year,
+.profile-sub .stat-number {
+  font-family: 'Bebas Neue', 'Inter', sans-serif;
+  letter-spacing: 0.04em;
+}
+
+/* ── Cinematic scrollbar ───────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--accent) 0%, rgba(59,130,246,0.3) 100%);
+  border-radius: 999px;
+}
+
+/* ── Improved full-bleed backdrop (animated slow zoom) ─────── */
+.detail-backdrop {
+  animation: backdrop-breathe 20s ease-in-out infinite alternate;
+}
+@keyframes backdrop-breathe {
+  from { transform: scale(1.1); }
+  to   { transform: scale(1.22); }
+}
+
+/* ── Profile backdrop ──────────────────────────────────────── */
+.profile-backdrop {
+  position: fixed;
+  inset: 0;
+  background-image: var(--poster);
+  background-size: cover;
+  background-position: center top;
+  filter: blur(80px) brightness(0.07) saturate(1.4);
+  z-index: -1;
+  transform: scale(1.2);
+  pointer-events: none;
+}
+
+/* ── Movie card — cinematic poster hover ───────────────────── */
+.movie-card {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.movie-card:hover {
+  transform: translateY(-6px) scale(1.025);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
+  z-index: 2;
+}
+.card-poster {
+  transition: transform 0.3s ease;
+}
+.movie-card:hover .card-poster {
+  transform: scale(1.04);
+}
+
+/* Poster glow — tinted by genre accent on film pages */
+.detail-poster {
+  box-shadow:
+    0 32px 80px rgba(0,0,0,0.85),
+    0 0 0 1px rgba(255,255,255,0.07),
+    0 0 60px var(--accent-glow, rgba(59,130,246,0.2));
+}
+.detail-poster:hover {
+  box-shadow:
+    0 40px 100px rgba(0,0,0,0.9),
+    0 0 80px var(--accent-glow, rgba(59,130,246,0.35));
+}
+
+/* ── Letterbox bars on hero ────────────────────────────────── */
+.hero-content {
+  position: relative;
+}
+.hero-content::before,
+.hero-content::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 18px;
+  background: #000;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.6;
+}
+.hero-content::before { top: 0; }
+.hero-content::after  { bottom: 0; }
+
+/* ── Film strip inspiration rows ──────────────────────────── */
+.film-strip-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+.film-strip-wrapper::before,
+.film-strip-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 28px;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 8px,
+    rgba(0,0,0,0.85) 8px,
+    rgba(0,0,0,0.85) 14px
+  );
+  z-index: 3;
+  pointer-events: none;
+}
+.film-strip-wrapper::before { left: 0; border-right: 2px solid #111; }
+.film-strip-wrapper::after  { right: 0; border-left: 2px solid #111; }
+
+/* ── Cinematic section titles ──────────────────────────────── */
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #c5cde0;
+  position: relative;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 2.5rem; height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+/* ── Cinematic hero title gradient ─────────────────────────── */
+.hero-title {
+  background: linear-gradient(135deg, #fff 0%, #c5cde0 60%, #7a88aa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+/* ── Review card — film quote style ────────────────────────── */
+.review-body {
+  position: relative;
+  font-style: italic;
+  color: #9ca3af;
+  line-height: 1.7;
+}
+.review-body::before {
+  content: '\201C';
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 3rem;
+  line-height: 0;
+  color: var(--accent);
+  opacity: 0.3;
+  position: absolute;
+  top: 0.6rem;
+  left: -0.5rem;
+}
+
+/* ── About page hero reel spin ─────────────────────────────── */
+.about-hero-reel {
+  animation: reel-pulse 4s ease-in-out infinite;
+}
+@keyframes reel-pulse {
+  0%, 100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 8px rgba(59,130,246,0.3)); }
+  50%       { transform: scale(1.08) rotate(5deg); filter: drop-shadow(0 0 20px rgba(59,130,246,0.6)); }
+}
+
+/* ── Night card — cinematic poster mosaic bg ───────────────── */
+.night-film-card {
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.night-film-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+}
+
+/* ── Light theme cinematic overrides ───────────────────────── */
+html[data-theme='light'] .hero-title {
+  background: linear-gradient(135deg, #1a1a2e 0%, #3b4a6b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+html[data-theme='light'] .detail-title { color: #1a1a2e; }
+html[data-theme='light'] .grain-overlay { filter: invert(1); opacity: 0.025; }
+
+/* ── Mobile: reduce grain animation on low-power ───────────── */
+@media (prefers-reduced-motion: reduce) {
+  .grain-overlay { animation: none; }
+  .detail-backdrop { animation: none; }
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+}

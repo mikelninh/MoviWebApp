@@ -10,6 +10,13 @@
 {% endblock %}
 
 {% block content %}
+{# Profile backdrop from top-rated film #}
+{% set top_film = favorites | selectattr('poster_url') | selectattr('rating') | sort(attribute='rating', reverse=True) | first | default(None) %}
+{% if not top_film %}{% set top_film = favorites | selectattr('poster_url') | first | default(None) %}{% endif %}
+{% if top_film and top_film.poster_url %}
+<div class="profile-backdrop" style="--poster: url('{{ top_film.poster_url }}')"></div>
+{% endif %}
+
 <!-- Profile header -->
 <div class="profile-header">
     <img src="{{ avatar_url(user.username) }}" class="profile-avatar" alt="{{ user.username }}">

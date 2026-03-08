@@ -10,6 +10,37 @@
 {% endblock %}
 
 {% block content %}
+{# Inject genre-based accent colour as CSS variable #}
+{% set genre_colors = {
+    'Drama':       '#3b6fd4',
+    'Thriller':    '#c0392b',
+    'Horror':      '#7b0000',
+    'Crime':       '#6d28d9',
+    'Romance':     '#be185d',
+    'Comedy':      '#d97706',
+    'Animation':   '#0891b2',
+    'Sci-Fi':      '#0369a1',
+    'Science Fiction': '#0369a1',
+    'Adventure':   '#15803d',
+    'Action':      '#b45309',
+    'Documentary': '#166534',
+    'Fantasy':     '#7e22ce',
+    'Mystery':     '#1e3a5f',
+    'War':         '#44403c',
+    'Western':     '#92400e',
+    'History':     '#78350f',
+    'Music':       '#db2777',
+    'Biography':   '#0f766e',
+    'Family':      '#0284c7'
+} %}
+{% set accent = '#3b82f6' %}
+{% if film.genre %}
+  {% for g in film.genre.split(', ') %}
+    {% if g in genre_colors and accent == '#3b82f6' %}{% set accent = genre_colors[g] %}{% endif %}
+  {% endfor %}
+{% endif %}
+<style>:root { --accent: {{ accent }}; --accent-dim: {{ accent }}26; --accent-glow: {{ accent }}59; }</style>
+
 {% if film.poster_url %}
 <div class="detail-backdrop" style="--poster: url('{{ film.poster_url }}')"></div>
 {% endif %}

@@ -20,9 +20,18 @@
     <meta property="og:description" content="A free, open-source film tracking app for people who actually care about movies.">
     {% endblock %}
 
+    <!-- View Transitions -->
+    <style>
+      @view-transition { navigation: auto; }
+      ::view-transition-old(root) { animation: .2s ease-in both cinema-out; }
+      ::view-transition-new(root) { animation: .25s ease-out both cinema-in; }
+      @keyframes cinema-out { to   { opacity: 0; transform: scale(1.015); } }
+      @keyframes cinema-in  { from { opacity: 0; transform: scale(0.985); } }
+    </style>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Bebas+Neue&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://unpkg.com/htmx.org@2.0.3" defer></script>
 
@@ -35,6 +44,7 @@
     </script>
 </head>
 <body>
+    <div class="grain-overlay" aria-hidden="true"></div>
     <header class="main-header" id="main-header">
         <div class="header-left">
             <a href="{{ url_for('index') }}" class="logo">🎬 MoviWebApp</a>
