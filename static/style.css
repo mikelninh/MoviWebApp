@@ -938,3 +938,308 @@ input:focus, textarea:focus, select:focus {
 .mt-1 { margin-top: 0.5rem; }
 .mt-2 { margin-top: 1rem; }
 .mt-3 { margin-top: 2rem; }
+.mt-half { margin-top: 0.25rem; }
+
+/* ============================================================
+   REVIEW LIKES
+   ============================================================ */
+.review-footer { margin-top: 0.6rem; }
+.review-movie-link { font-size: 0.8rem; margin-bottom: 0.3rem; font-weight: 600; }
+
+.like-form { display: inline; }
+.like-btn {
+    background: none; border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 999px; padding: 0.2rem 0.65rem;
+    font-size: 0.78rem; color: #5c6680; cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+}
+.like-btn:hover { color: #f472b6; border-color: #f472b6; transform: none; box-shadow: none; filter: none; }
+.like-btn.liked { color: #f472b6; border-color: #f472b6; }
+.like-count { font-size: 0.78rem; color: #5c6680; }
+
+/* ============================================================
+   PROFILE HEADER
+   ============================================================ */
+.profile-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+    padding: 1.25rem 0 0;
+}
+
+.profile-avatar {
+    width: 56px; height: 56px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; font-weight: 800;
+    flex-shrink: 0;
+}
+
+.profile-meta { flex: 1; }
+.profile-name { font-size: 1.35rem; font-weight: 800; color: #fff; }
+.profile-sub { font-size: 0.8rem; color: #5c6680; margin-top: 0.25rem; }
+
+.profile-actions {
+    display: flex; align-items: center; gap: 0.6rem;
+    flex-shrink: 0; flex-wrap: wrap;
+}
+
+.btn-following {
+    background: rgba(59,130,246,0.15);
+    border-color: #3b82f6;
+    color: #60a5fa;
+}
+
+.taste-badge {
+    display: inline-flex; align-items: center;
+    background: rgba(52,211,153,0.12);
+    color: #34d399;
+    border: 1px solid rgba(52,211,153,0.3);
+    border-radius: 999px;
+    padding: 0.25rem 0.7rem;
+    font-size: 0.78rem; font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+/* ============================================================
+   CUSTOM LISTS (user profile section)
+   ============================================================ */
+.lists-section { border-top: 1px solid rgba(255,255,255,0.06); padding-top: 1.5rem; }
+
+.create-list-form {
+    display: flex; gap: 0.5rem; align-items: center;
+    margin-bottom: 0.75rem;
+}
+.create-list-form input {
+    flex: 1; max-width: 280px;
+    padding: 0.45rem 0.75rem;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: #e8eaf0; font-size: 0.85rem;
+}
+.create-list-form input::placeholder { color: #3a4460; }
+
+.lists-grid {
+    display: flex; flex-wrap: wrap; gap: 0.6rem;
+}
+
+.list-card {
+    display: flex; flex-direction: column;
+    background: #111827;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 0.7rem 1rem;
+    min-width: 130px;
+    transition: border-color 0.15s, background 0.15s;
+    cursor: pointer;
+}
+.list-card:hover { border-color: #3b82f6; background: #131d35; }
+.list-card-name { font-size: 0.85rem; font-weight: 700; color: #c5cde0; }
+.list-card-count { font-size: 0.75rem; color: #5c6680; margin-top: 0.2rem; }
+
+/* ============================================================
+   FEED
+   ============================================================ */
+.feed-layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 2rem;
+}
+
+@media (max-width: 700px) {
+    .feed-layout { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   MOVIE NIGHTS
+   ============================================================ */
+.create-night-form {
+    background: #111827;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px;
+    padding: 1.25rem;
+    max-width: 640px;
+}
+
+.night-create-form .form-group { margin-bottom: 0.6rem; }
+
+.nights-list { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; }
+
+.night-card {
+    background: #111827;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+}
+.night-card:hover { border-color: #3b82f6; }
+
+.night-card-link { display: block; padding: 1rem 1.25rem; }
+.night-card-header { display: flex; align-items: baseline; gap: 0.75rem; }
+.night-name { font-size: 1rem; font-weight: 700; color: #fff; }
+.night-date { font-size: 0.78rem; color: #3b82f6; }
+.night-desc { font-size: 0.82rem; color: #6b7a99; margin-top: 0.3rem; }
+.night-meta { display: flex; gap: 1rem; margin-top: 0.6rem; font-size: 0.75rem; color: #3a4460; }
+.night-by { color: #4b5a7a; }
+.night-films { color: #3a4460; }
+
+/* Night detail */
+.night-detail-header {
+    display: flex; align-items: flex-start;
+    justify-content: space-between; gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.night-detail-header h2 { font-size: 1.5rem; font-weight: 800; color: #fff; }
+
+.suggest-form .form-row { align-items: flex-end; }
+
+.night-films-list { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+
+.night-film-card {
+    display: flex; align-items: center; gap: 1rem;
+    background: #111827;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    transition: border-color 0.15s;
+}
+.night-film-card.user-voted { border-color: rgba(59,130,246,0.4); }
+
+.night-film-poster {
+    width: 42px; height: 60px;
+    object-fit: cover; border-radius: 5px; flex-shrink: 0;
+}
+.night-film-poster-empty {
+    width: 42px; height: 60px;
+    background: #0d1117; border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0;
+}
+
+.night-film-info { flex: 1; }
+.night-film-title { font-size: 0.9rem; font-weight: 700; color: #c5cde0; display: block; }
+.night-film-by { font-size: 0.75rem; color: #3a4460; }
+
+.night-film-votes { flex-shrink: 0; }
+.vote-btn {
+    background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25);
+    border-radius: 8px; padding: 0.35rem 0.75rem;
+    font-size: 0.82rem; color: #60a5fa; cursor: pointer;
+    transition: background 0.15s; font-weight: 600;
+}
+.vote-btn:hover, .vote-btn.voted { background: rgba(59,130,246,0.25); transform: none; box-shadow: none; filter: none; }
+.vote-count { font-size: 0.82rem; color: #5c6680; }
+
+/* ============================================================
+   USER LIST (view_list page)
+   ============================================================ */
+.list-items-grid {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 0.75rem;
+}
+
+.list-item-card {
+    display: flex; flex-direction: column;
+    gap: 0.4rem;
+    background: #111827;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+.list-item-poster {
+    width: 100%; aspect-ratio: 2/3;
+    object-fit: cover; display: block;
+}
+.list-item-poster-empty {
+    width: 100%; aspect-ratio: 2/3;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem; background: #0d1117; color: #1e2a40;
+}
+
+.list-item-info { padding: 0.4rem 0.6rem 0.2rem; }
+.list-item-title { font-size: 0.78rem; font-weight: 600; color: #c5cde0; }
+.list-item-title:hover { color: #60a5fa; }
+
+.list-item-card .btn-xs {
+    position: absolute; top: 0.35rem; right: 0.35rem;
+    opacity: 0.7;
+}
+.list-item-card:hover .btn-xs { opacity: 1; }
+
+/* ============================================================
+   DIARY
+   ============================================================ */
+.diary-month-label {
+    font-size: 0.78rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: #3b82f6; margin-bottom: 0.75rem;
+}
+
+.diary-list { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+
+.diary-item {
+    display: flex; align-items: center; gap: 1rem;
+    background: #111827;
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 0.7rem 1rem;
+}
+
+.diary-poster-link { flex-shrink: 0; }
+.diary-poster {
+    width: 38px; height: 54px;
+    object-fit: cover; border-radius: 5px; display: block;
+}
+.diary-poster-empty {
+    width: 38px; height: 54px;
+    background: #0d1117; border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+}
+
+.diary-info { flex: 1; }
+.diary-title { font-size: 0.9rem; font-weight: 700; color: #c5cde0; }
+.diary-title:hover { color: #60a5fa; }
+
+.diary-rating { flex-shrink: 0; }
+
+/* ============================================================
+   CHALLENGES
+   ============================================================ */
+.challenges-list { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; }
+
+.challenge-card {
+    display: flex; align-items: center; gap: 1rem;
+    background: #111827;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
+}
+.challenge-card.challenge-done { border-color: rgba(52,211,153,0.35); }
+
+.challenge-icon { font-size: 1.2rem; flex-shrink: 0; width: 28px; text-align: center; }
+
+.challenge-body { flex: 1; }
+.challenge-name { font-size: 0.9rem; font-weight: 700; color: #c5cde0; }
+.challenge-desc { font-size: 0.78rem; color: #6b7a99; margin-top: 0.1rem; margin-bottom: 0.5rem; }
+
+.challenge-bar-wrap {
+    height: 4px; background: rgba(255,255,255,0.06);
+    border-radius: 999px; overflow: hidden;
+}
+.challenge-bar {
+    height: 100%; background: #3b82f6;
+    border-radius: 999px; transition: width 0.4s ease;
+}
+.challenge-done .challenge-bar { background: #34d399; }
+
+.challenge-progress {
+    font-size: 0.85rem; font-weight: 700; color: #c5cde0;
+    flex-shrink: 0; text-align: right; min-width: 48px;
+}
+.challenge-check { color: #34d399; margin-left: 0.3rem; }

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ night.name }} · MoviWebApp{% endblock %}
+
+{% block content %}
+<div class="night-detail-header">
+    <div>
+        <h2>{{ night.name }}</h2>
+        {% if night.date %}<p class="night-date">{{ night.date }}</p>{% endif %}
+        {% if night.description %}<p class="night-desc mt-1">{{ night.description }}</p>{% endif %}
+        <p class="night-by mt-half">Planned by <a href="{{ url_for('get_movies', user_id=night.creator.id) }}">{{ night.creator.username }}</a></p>
+    </div>
+    <a href="{{ url_for('movie_nights') }}" class="btn btn-sm">All nights</a>
+</div>
+
+<!-- Suggest a film -->
+{% if current_user.is_authenticated %}
+<div class="suggest-form mt-2">
+    <form action="{{ url_for('suggest_film', night_id=night.id) }}" method="post" class="form-row">
+        <div class="form-group" style="flex:2">
+            <input type="text" name="title" placeholder="Suggest a film…" required maxlength="120">
+        </div>
+        <button type="submit" class="btn">Suggest</button>
+    </form>
+</div>
+{% endif %}
+
+<!-- Film list with votes -->
+<section class="night-films-section mt-3">
+    {% if night.films %}
+    <ul class="night-films-list">
+        {% for film in night.films | sort(attribute='votes', reverse=True) %}
+        {% set vote_count = film.votes | length %}
+        {% set user_voted = current_user.is_authenticated and film.votes | selectattr('user_id','equalto',current_user.id) | list | length > 0 %}
+        <li class="night-film-card {{ 'user-voted' if user_voted }}">
+            {% if film.poster_url %}
+            <img src="{{ film.poster_url }}" alt="{{ film.movie_title }}" class="night-film-poster">
+            {% else %}
+            <div class="night-film-poster night-film-poster-empty">🎬</div>
+            {% endif %}
+            <div class="night-film-info">
+                <span class="night-film-title">{{ film.movie_title }}</span>
+                {% if film.suggester %}
+                <span class="night-film-by">suggested by {{ film.suggester.username }}</span>
+                {% endif %}
+            </div>
+            <div class="night-film-votes">
+                {% if current_user.is_authenticated %}
+                <form action="{{ url_for('vote_film', night_id=night.id, film_id=film.id) }}" method="post">
+                    <button type="submit" class="vote-btn {{ 'voted' if user_voted }}">
+                        ▲ {{ vote_count }}
+                    </button>
+                </form>
+                {% else %}
+                <span class="vote-count">▲ {{ vote_count }}</span>
+                {% endif %}
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state">
+        <p>No films suggested yet.{% if current_user.is_authenticated %} Add one above!{% endif %}</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

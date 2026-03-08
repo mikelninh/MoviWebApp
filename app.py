@@ -12,7 +12,8 @@ from flask_login import (LoginManager, current_user, login_required,
 from sqlalchemy import text
 
 from data_manager import DataManager
-from models import Movie, Review, User, db
+from models import (Follow, Movie, MovieNight, MovieNightFilm, MovieNightVote,
+                    Review, ReviewLike, User, UserList, UserListItem, db)
 
 app = Flask(__name__)
 
@@ -249,6 +250,69 @@ def get_inspiration_with_posters():
     return lists
 
 
+# ── HELPERS ───────────────────────────────────────────────────────────────────
+
+def compute_taste_match(movies_a, movies_b):
+    if not movies_a or not movies_b:
+        return 0
+    a = {m.title.lower(): m.rating for m in movies_a}
+    b = {m.title.lower(): m.rating for m in movies_b}
+    common = set(a) & set(b)
+    if not common:
+        return 0
+    jaccard = len(common) / len(set(a) | set(b))
+    common_rated = [(a[t], b[t]) for t in common if a.get(t) and b.get(t)]
+    if common_rated:
+        avg_diff = sum(abs(ra - rb) for ra, rb in common_rated) / len(common_rated)
+        score = (jaccard * 0.5 + (1 - avg_diff / 4) * 0.5) * 100
+    else:
+        score = jaccard * 100
+    return round(min(score, 99))
+
+
+def compute_profile_stats(movies):
+    from collections import Counter
+    watched = [m for m in movies if m.status == 'watched']
+    rated   = [m for m in movies if m.rating]
+    avg_rating = round(sum(m.rating for m in rated) / len(rated), 1) if rated else None
+    gc = Counter()
+    for m in movies:
+        if m.genre:
+            for g in m.genre.split(', '):
+                gc[g] += 1
+    dc = Counter(m.director for m in movies if m.director)
+    return {
+        "watched":      len(watched),
+        "avg_rating":   avg_rating,
+        "top_genres":   gc.most_common(3),
+        "top_director": dc.most_common(1)[0][0] if dc else None,
+    }
+
+
+def compute_challenges(movies, review_count=0):
+    from collections import Counter
+    watched = [m for m in movies if m.status == 'watched']
+    rated   = [m for m in movies if m.rating]
+    gc = Counter()
+    for m in movies:
+        if m.genre:
+            for g in m.genre.split(', '):
+                gc[g] += 1
+    decades = {m.year[:3] for m in rated if m.year and len(m.year) >= 3}
+    return [
+        {"name": "First Steps",    "icon": "◎", "desc": "Watch your first movie",        "progress": min(len(watched), 1),               "target": 1},
+        {"name": "Getting Serious","icon": "◎", "desc": "Watch 10 movies",                "progress": min(len(watched), 10),              "target": 10},
+        {"name": "Film Buff",      "icon": "◎", "desc": "Watch 25 movies",                "progress": min(len(watched), 25),              "target": 25},
+        {"name": "Cinephile",      "icon": "◉", "desc": "Watch 50 movies",                "progress": min(len(watched), 50),              "target": 50},
+        {"name": "Harsh Critic",   "icon": "★", "desc": "Rate 10 movies",                 "progress": min(len(rated), 10),                "target": 10},
+        {"name": "Genre Hopper",   "icon": "◈", "desc": "Watch films in 5 different genres","progress": min(len(gc), 5),                  "target": 5},
+        {"name": "Anime Pilgrim",  "icon": "✦", "desc": "Watch 5 animated films",          "progress": min(gc.get("Animation", 0), 5),    "target": 5},
+        {"name": "Time Traveller", "icon": "⧗", "desc": "Rate films from 3 different decades","progress": min(len(decades), 3),           "target": 3},
+        {"name": "Critic",         "icon": "✍", "desc": "Write your first review",         "progress": min(review_count, 1),              "target": 1},
+        {"name": "Voice",          "icon": "✍", "desc": "Write 5 reviews",                 "progress": min(review_count, 5),              "target": 5},
+    ]
+
+
 # ── AUTH ──────────────────────────────────────────────────────────────────────
 
 @app.route("/register", methods=["GET", "POST"])
@@ -330,11 +394,25 @@ def get_movies(user_id):
     recommendations = []
     if current_user.is_authenticated and current_user.id == user_id:
         recommendations = data_manager.get_recommendations(user_id)
+    all_movies   = Movie.query.filter_by(user_id=user_id).all()
+    profile_stats = compute_profile_stats(all_movies)
+    taste_match  = 0
+    is_following = False
+    if current_user.is_authenticated and current_user.id != user_id:
+        taste_match  = compute_taste_match(
+            Movie.query.filter_by(user_id=current_user.id).all(), all_movies)
+        is_following = Follow.query.filter_by(
+            follower_id=current_user.id, followed_id=user_id).first() is not None
+    user_lists = UserList.query.filter_by(user_id=user_id).all()
     return render_template(
         "user_detail.html",
         user=user, favorites=movies, sort=sort, status_filter=status_filter,
         all_count=all_count, watched_count=watched_count,
         watchlist_count=watchlist_count, recommendations=recommendations,
+        profile_stats=profile_stats, taste_match=taste_match,
+        is_following=is_following, user_lists=user_lists,
+        followers_count=len(user.followers),
+        following_count=len(user.following),
     )
 
 
@@ -409,6 +487,245 @@ def add_review(movie_id):
         flash("Review posted.", "success")
     db.session.commit()
     return redirect(url_for("movie_detail", movie_id=movie_id))
+
+
+# ── SOCIAL: FOLLOW / LIKE ────────────────────────────────────────────────────
+
+@app.route("/users/<int:user_id>/follow", methods=["POST"])
+@login_required
+def follow_user(user_id):
+    if current_user.id == user_id:
+        flash("You can't follow yourself.", "error")
+        return redirect(url_for("get_movies", user_id=user_id))
+    existing = Follow.query.filter_by(
+        follower_id=current_user.id, followed_id=user_id).first()
+    if existing:
+        db.session.delete(existing)
+        flash("Unfollowed.", "success")
+    else:
+        db.session.add(Follow(follower_id=current_user.id, followed_id=user_id))
+        flash("Following!", "success")
+    db.session.commit()
+    return redirect(url_for("get_movies", user_id=user_id))
+
+
+@app.route("/reviews/<int:review_id>/like", methods=["POST"])
+@login_required
+def like_review(review_id):
+    review = db.session.get(Review, review_id)
+    if not review:
+        flash("Review not found.", "error")
+        return redirect(request.referrer or url_for("index"))
+    existing = ReviewLike.query.filter_by(
+        user_id=current_user.id, review_id=review_id).first()
+    if existing:
+        db.session.delete(existing)
+    else:
+        db.session.add(ReviewLike(user_id=current_user.id, review_id=review_id))
+    db.session.commit()
+    return redirect(request.referrer or url_for("index"))
+
+
+@app.route("/feed")
+@login_required
+def feed():
+    followed_ids = [f.followed_id for f in current_user.following]
+    if not followed_ids:
+        movies = []
+    else:
+        movies = (Movie.query
+                  .filter(Movie.user_id.in_(followed_ids))
+                  .order_by(Movie.date_added.desc())
+                  .limit(30).all())
+    reviews = []
+    if followed_ids:
+        reviews = (Review.query
+                   .filter(Review.user_id.in_(followed_ids))
+                   .order_by(Review.created_at.desc())
+                   .limit(20).all())
+    return render_template("feed.html", movies=movies, reviews=reviews,
+                           following_count=len(followed_ids))
+
+
+# ── MOVIE NIGHTS ─────────────────────────────────────────────────────────────
+
+@app.route("/movie-nights")
+def movie_nights():
+    nights = MovieNight.query.order_by(MovieNight.created_at.desc()).all()
+    return render_template("movie_nights.html", nights=nights)
+
+
+@app.route("/movie-nights/create", methods=["POST"])
+@login_required
+def create_movie_night():
+    name = request.form.get("name", "").strip()
+    date = request.form.get("date", "").strip()
+    desc = request.form.get("description", "").strip()
+    if not name:
+        flash("Movie night needs a name.", "error")
+        return redirect(url_for("movie_nights"))
+    night = MovieNight(creator_id=current_user.id, name=name,
+                       date=date or None, description=desc or None)
+    db.session.add(night)
+    db.session.commit()
+    flash(f"'{name}' created!", "success")
+    return redirect(url_for("movie_night_detail", night_id=night.id))
+
+
+@app.route("/movie-nights/<int:night_id>")
+def movie_night_detail(night_id):
+    night = db.session.get(MovieNight, night_id)
+    if not night:
+        flash("Movie night not found.", "error")
+        return redirect(url_for("movie_nights"))
+    user_vote = None
+    if current_user.is_authenticated:
+        user_vote = MovieNightVote.query.filter_by(
+            user_id=current_user.id).first()
+    return render_template("movie_night_detail.html", night=night,
+                           user_vote=user_vote)
+
+
+@app.route("/movie-nights/<int:night_id>/suggest", methods=["POST"])
+@login_required
+def suggest_film(night_id):
+    night = db.session.get(MovieNight, night_id)
+    if not night:
+        flash("Movie night not found.", "error")
+        return redirect(url_for("movie_nights"))
+    title = request.form.get("title", "").strip()
+    if not title:
+        flash("Film title required.", "error")
+        return redirect(url_for("movie_night_detail", night_id=night_id))
+    meta = data_manager.fetch_omdb_data(title)
+    film = MovieNightFilm(night_id=night_id, movie_title=title,
+                          poster_url=meta.get("poster_url"),
+                          suggested_by=current_user.id)
+    db.session.add(film)
+    db.session.commit()
+    flash(f"'{title}' suggested!", "success")
+    return redirect(url_for("movie_night_detail", night_id=night_id))
+
+
+@app.route("/movie-nights/<int:night_id>/vote/<int:film_id>", methods=["POST"])
+@login_required
+def vote_film(night_id, film_id):
+    film = db.session.get(MovieNightFilm, film_id)
+    if not film or film.night_id != night_id:
+        flash("Film not found.", "error")
+        return redirect(url_for("movie_night_detail", night_id=night_id))
+    existing = MovieNightVote.query.filter_by(
+        user_id=current_user.id, film_id=film_id).first()
+    if existing:
+        db.session.delete(existing)
+    else:
+        # Remove old vote for this night first (one vote per night)
+        old_votes = (MovieNightVote.query
+                     .join(MovieNightFilm)
+                     .filter(MovieNightFilm.night_id == night_id,
+                             MovieNightVote.user_id == current_user.id)
+                     .all())
+        for v in old_votes:
+            db.session.delete(v)
+        db.session.add(MovieNightVote(user_id=current_user.id, film_id=film_id))
+    db.session.commit()
+    return redirect(url_for("movie_night_detail", night_id=night_id))
+
+
+# ── CUSTOM LISTS ─────────────────────────────────────────────────────────────
+
+@app.route("/users/<int:user_id>/lists/create", methods=["POST"])
+@login_required
+def create_list(user_id):
+    if current_user.id != user_id:
+        flash("Not allowed.", "error")
+        return redirect(url_for("get_movies", user_id=user_id))
+    name = request.form.get("name", "").strip()
+    if not name:
+        flash("List needs a name.", "error")
+        return redirect(url_for("get_movies", user_id=user_id))
+    lst = UserList(user_id=user_id, name=name)
+    db.session.add(lst)
+    db.session.commit()
+    flash(f"List '{name}' created.", "success")
+    return redirect(url_for("view_list", list_id=lst.id))
+
+
+@app.route("/lists/<int:list_id>")
+def view_list(list_id):
+    lst = db.session.get(UserList, list_id)
+    if not lst:
+        flash("List not found.", "error")
+        return redirect(url_for("index"))
+    return render_template("user_list.html", lst=lst)
+
+
+@app.route("/lists/<int:list_id>/add", methods=["POST"])
+@login_required
+def add_to_list(list_id):
+    lst = db.session.get(UserList, list_id)
+    if not lst or lst.user_id != current_user.id:
+        flash("Not allowed.", "error")
+        return redirect(url_for("index"))
+    title = request.form.get("title", "").strip()
+    if not title:
+        flash("Title required.", "error")
+        return redirect(url_for("view_list", list_id=list_id))
+    meta = data_manager.fetch_omdb_data(title)
+    db.session.add(UserListItem(list_id=list_id, movie_title=title,
+                                poster_url=meta.get("poster_url")))
+    db.session.commit()
+    flash(f"'{title}' added to list.", "success")
+    return redirect(url_for("view_list", list_id=list_id))
+
+
+@app.route("/lists/<int:list_id>/remove/<int:item_id>", methods=["POST"])
+@login_required
+def remove_from_list(list_id, item_id):
+    lst = db.session.get(UserList, list_id)
+    if not lst or lst.user_id != current_user.id:
+        flash("Not allowed.", "error")
+        return redirect(url_for("index"))
+    item = db.session.get(UserListItem, item_id)
+    if item and item.list_id == list_id:
+        db.session.delete(item)
+        db.session.commit()
+    return redirect(url_for("view_list", list_id=list_id))
+
+
+# ── DIARY ─────────────────────────────────────────────────────────────────────
+
+@app.route("/users/<int:user_id>/diary")
+def diary(user_id):
+    user = db.session.get(User, user_id)
+    if not user:
+        flash("User not found.", "error")
+        return redirect(url_for("index"))
+    movies = (Movie.query
+              .filter_by(user_id=user_id, status="watched")
+              .order_by(Movie.date_added.desc())
+              .all())
+    # Group by month
+    from collections import defaultdict
+    grouped = defaultdict(list)
+    for m in movies:
+        if m.date_added:
+            key = m.date_added.strftime("%B %Y")
+        else:
+            key = "Earlier"
+        grouped[key].append(m)
+    return render_template("diary.html", user=user, grouped=dict(grouped))
+
+
+# ── CHALLENGES ────────────────────────────────────────────────────────────────
+
+@app.route("/challenges")
+@login_required
+def challenges():
+    movies = Movie.query.filter_by(user_id=current_user.id).all()
+    review_count = Review.query.filter_by(user_id=current_user.id).count()
+    all_challenges = compute_challenges(movies, review_count)
+    return render_template("challenges.html", challenges=all_challenges)
 
 
 @app.route("/users/<int:user_id>/add_movie", methods=["POST"])

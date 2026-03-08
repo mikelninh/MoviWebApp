@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Challenges · MoviWebApp{% endblock %}
+
+{% block content %}
+<h2 class="section-title">Your Challenges</h2>
+<p style="color:#5c6680; font-size:0.88rem; margin-top:0.25rem;">Track your progress as a film lover.</p>
+
+<ul class="challenges-list mt-3">
+    {% for c in challenges %}
+    {% set pct = ((c.progress / c.target) * 100) | int %}
+    {% set done = c.progress >= c.target %}
+    <li class="challenge-card {{ 'challenge-done' if done }}">
+        <div class="challenge-icon">{{ c.icon }}</div>
+        <div class="challenge-body">
+            <div class="challenge-name">{{ c.name }}</div>
+            <div class="challenge-desc">{{ c.desc }}</div>
+            <div class="challenge-bar-wrap">
+                <div class="challenge-bar" style="width: {{ [pct, 100] | min }}%"></div>
+            </div>
+        </div>
+        <div class="challenge-progress">
+            {{ c.progress }}<span style="color:#5c6680">/{{ c.target }}</span>
+            {% if done %}<span class="challenge-check">✓</span>{% endif %}
+        </div>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}

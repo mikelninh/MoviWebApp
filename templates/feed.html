@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Feed · MoviWebApp{% endblock %}
+
+{% block content %}
+<h2 class="section-title">Following Feed</h2>
+
+{% if following_count == 0 %}
+<div class="empty-state mt-3">
+    <p>You're not following anyone yet.</p>
+    <p style="margin-top:0.5rem; font-size:0.88rem; color:#5c6680">
+        Browse <a href="{{ url_for('index') }}" style="color:#3b82f6">members</a> and hit Follow to see their activity here.
+    </p>
+</div>
+{% elif not movies and not reviews %}
+<div class="empty-state mt-3">
+    <p>Nothing from the people you follow yet.</p>
+</div>
+{% else %}
+<div class="feed-layout mt-2">
+    <section class="feed-movies">
+        <h3 class="section-title-sm">Recently Added</h3>
+        {% if movies %}
+        <ul class="activity-feed">
+            {% for movie in movies %}
+            <li class="activity-item">
+                <a href="{{ url_for('movie_detail', movie_id=movie.id) }}" class="activity-poster-link">
+                    {% if movie.poster_url %}
+                        <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="activity-poster">
+                    {% else %}
+                        <div class="activity-poster activity-poster-empty">🎬</div>
+                    {% endif %}
+                </a>
+                <div class="activity-info">
+                    <a href="{{ url_for('movie_detail', movie_id=movie.id) }}" class="activity-title">{{ movie.title }}</a>
+                    {% if movie.year %}<span class="activity-year">{{ movie.year }}</span>{% endif %}
+                    {% if movie.genre %}
+                    <div class="genre-tags">
+                        {% for g in movie.genre.split(', ')[:2] %}
+                            <span class="genre-tag" data-genre="{{ g }}">{{ g }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <span class="activity-user">
+                        added by
+                        <a href="{{ url_for('get_movies', user_id=movie.user.id) }}">{{ movie.user.username }}</a>
+                    </span>
+                </div>
+                {% if movie.rating %}
+                <div class="activity-rating">
+                    {% for i in range(1, 6) %}
+                        <span class="star {{ 'filled' if i <= movie.rating else '' }}">★</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted">No recent movies.</p>
+        {% endif %}
+    </section>
+
+    <section class="feed-reviews">
+        <h3 class="section-title-sm">Recent Reviews</h3>
+        {% if reviews %}
+        <ul class="review-list">
+            {% for review in reviews %}
+            <li class="review-card">
+                <div class="review-header">
+                    <a href="{{ url_for('get_movies', user_id=review.user.id) }}" class="review-author">
+                        <span class="chip-avatar avatar-{{ loop.index0 % 8 }}">{{ review.user.username[0].upper() }}</span>
+                        {{ review.user.username }}
+                    </a>
+                    <span class="review-date">{{ review.created_at.strftime('%b %d') }}</span>
+                </div>
+                <p class="review-movie-link">
+                    <a href="{{ url_for('search', q=review.movie_title) }}" style="color:#3b82f6">{{ review.movie_title }}</a>
+                </p>
+                <p class="review-body">{{ review.body | truncate(200) }}</p>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted">No recent reviews.</p>
+        {% endif %}
+    </section>
+</div>
+{% endif %}
+{% endblock %}

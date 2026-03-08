@@ -30,11 +30,19 @@
                    class="{{ 'active' if request.endpoint == 'get_movies' and request.view_args.user_id == current_user.id }}">
                    My List
                 </a>
+                <a href="{{ url_for('feed') }}"
+                   class="{{ 'active' if request.endpoint == 'feed' }}">Feed</a>
+                <a href="{{ url_for('movie_nights') }}"
+                   class="{{ 'active' if request.endpoint in ('movie_nights','movie_night_detail') }}">Nights</a>
+                <a href="{{ url_for('challenges') }}"
+                   class="{{ 'active' if request.endpoint == 'challenges' }}">Challenges</a>
                 <a href="{{ url_for('logout') }}" class="nav-user">
                     <span class="nav-avatar">{{ current_user.username[0].upper() }}</span>
                     {{ current_user.username }}
                 </a>
             {% else %}
+                <a href="{{ url_for('movie_nights') }}"
+                   class="{{ 'active' if request.endpoint in ('movie_nights','movie_night_detail') }}">Nights</a>
                 <a href="{{ url_for('login') }}" class="{{ 'active' if request.endpoint == 'login' }}">Login</a>
                 <a href="{{ url_for('register') }}" class="btn-nav {{ 'active' if request.endpoint == 'register' }}">Register</a>
             {% endif %}

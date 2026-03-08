@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ lst.name }} · MoviWebApp{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>{{ lst.name }}</h2>
+        <p class="night-by">by <a href="{{ url_for('get_movies', user_id=lst.user.id) }}">{{ lst.user.username }}</a></p>
+    </div>
+</div>
+
+{% if current_user.is_authenticated and current_user.id == lst.user_id %}
+<div class="suggest-form mt-2">
+    <form action="{{ url_for('add_to_list', list_id=lst.id) }}" method="post" class="form-row">
+        <div class="form-group" style="flex:2">
+            <input type="text" name="title" placeholder="Add a film…" required maxlength="120">
+        </div>
+        <button type="submit" class="btn">Add</button>
+    </form>
+</div>
+{% endif %}
+
+{% if lst.items %}
+<ul class="list-items-grid mt-2">
+    {% for item in lst.items %}
+    <li class="list-item-card">
+        {% if item.poster_url %}
+        <img src="{{ item.poster_url }}" alt="{{ item.movie_title }}" class="list-item-poster">
+        {% else %}
+        <div class="list-item-poster list-item-poster-empty">🎬</div>
+        {% endif %}
+        <div class="list-item-info">
+            <a href="{{ url_for('search', q=item.movie_title) }}" class="list-item-title">{{ item.movie_title }}</a>
+        </div>
+        {% if current_user.is_authenticated and current_user.id == lst.user_id %}
+        <form action="{{ url_for('remove_from_list', list_id=lst.id, item_id=item.id) }}" method="post">
+            <button type="submit" class="btn btn-danger btn-xs" title="Remove">✕</button>
+        </form>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<div class="empty-state mt-3">
+    <p>Nothing in this list yet.</p>
+</div>
+{% endif %}
+{% endblock %}

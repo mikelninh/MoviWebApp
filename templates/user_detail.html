@@ -2,8 +2,47 @@
 {% block title %}{{ user.username }}'s Movies · MoviWebApp{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h2>{{ user.username }}'s movies</h2>
+<!-- Profile header -->
+<div class="profile-header">
+    <div class="profile-avatar avatar-0">{{ user.username[0].upper() }}</div>
+    <div class="profile-meta">
+        <h2 class="profile-name">{{ user.username }}</h2>
+        <div class="profile-sub">
+            <span>{{ followers_count }} follower{{ 's' if followers_count != 1 }}</span>
+            <span class="stats-sep">·</span>
+            <span>{{ following_count }} following</span>
+            <span class="stats-sep">·</span>
+            <span>{{ profile_stats.watched }} watched</span>
+            {% if profile_stats.avg_rating %}
+            <span class="stats-sep">·</span>
+            <span>{{ profile_stats.avg_rating }}★ avg</span>
+            {% endif %}
+        </div>
+        {% if profile_stats.top_genres %}
+        <div class="genre-tags mt-half">
+            {% for g, _ in profile_stats.top_genres %}
+                <span class="genre-tag" data-genre="{{ g }}">{{ g }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    <div class="profile-actions">
+        {% if current_user.is_authenticated and current_user.id != user.id %}
+        <form action="{{ url_for('follow_user', user_id=user.id) }}" method="post" style="display:inline">
+            <button type="submit" class="btn {{ 'btn-following' if is_following else '' }}">
+                {{ 'Unfollow' if is_following else '+ Follow' }}
+            </button>
+        </form>
+        {% if taste_match %}
+        <span class="taste-badge" title="Taste match based on shared films and ratings">{{ taste_match }}% match</span>
+        {% endif %}
+        {% endif %}
+        <a href="{{ url_for('diary', user_id=user.id) }}" class="btn btn-sm">Diary</a>
+    </div>
+</div>
+
+<div class="page-header" style="margin-top:1.5rem">
+    <div style="font-size:0"></div>
     <div class="header-controls">
         <input type="text" id="movie-search" placeholder="Filter…" autocomplete="off">
         <form method="get" class="sort-form">
@@ -139,6 +178,29 @@
         {% endif %}
     </p>
 </div>
+{% endif %}
+
+<!-- Custom Lists -->
+{% if user_lists or (current_user.is_authenticated and current_user.id == user.id) %}
+<section class="lists-section mt-3">
+    <h3 class="section-title">Lists</h3>
+    {% if current_user.is_authenticated and current_user.id == user.id %}
+    <form action="{{ url_for('create_list', user_id=user.id) }}" method="post" class="create-list-form">
+        <input type="text" name="name" placeholder="New list name…" maxlength="120" required>
+        <button type="submit" class="btn btn-sm">+ Create</button>
+    </form>
+    {% endif %}
+    {% if user_lists %}
+    <div class="lists-grid mt-1">
+        {% for lst in user_lists %}
+        <a href="{{ url_for('view_list', list_id=lst.id) }}" class="list-card">
+            <span class="list-card-name">{{ lst.name }}</span>
+            <span class="list-card-count">{{ lst.items | length }} film{{ 's' if lst.items | length != 1 }}</span>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+</section>
 {% endif %}
 
 <!-- Recommendations (owner only) -->
