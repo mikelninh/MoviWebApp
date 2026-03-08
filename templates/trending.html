@@ -7,12 +7,13 @@
         <h2 style="font-size:1.5rem; font-weight:800; color:#fff">Trending</h2>
         <p style="font-size:0.82rem; color:#5c6680; margin-top:0.2rem">Most logged in the last two weeks</p>
     </div>
+    <input type="text" id="trending-filter" placeholder="Filter by genre…" autocomplete="off" class="filter-input">
 </div>
 
 {% if films %}
-<ul class="trending-list mt-2">
+<ul class="trending-list mt-2" id="trending-list">
     {% for film, count in films %}
-    <li class="trending-item">
+    <li class="trending-item" data-genres="{{ film.genre or '' }}">
         <span class="trending-rank">{{ loop.index }}</span>
         <a href="{{ url_for('film_detail', film_id=film.id) }}" class="trending-poster-link">
             {% if film.poster_url %}
@@ -30,7 +31,7 @@
             {% if film.genre %}
             <div class="genre-tags">
                 {% for g in film.genre.split(', ')[:3] %}
-                    <span class="genre-tag" data-genre="{{ g }}">{{ g }}</span>
+                    <a href="{{ url_for('genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
                 {% endfor %}
             </div>
             {% endif %}
@@ -47,4 +48,17 @@
     <p>No recent activity yet.</p>
 </div>
 {% endif %}
+
+<script>
+const tf = document.getElementById('trending-filter');
+if (tf) {
+    tf.addEventListener('input', function() {
+        const q = this.value.toLowerCase();
+        document.querySelectorAll('#trending-list .trending-item').forEach(item => {
+            const genres = item.dataset.genres || '';
+            item.style.display = (!q || genres.toLowerCase().includes(q)) ? '' : 'none';
+        });
+    });
+}
+</script>
 {% endblock %}

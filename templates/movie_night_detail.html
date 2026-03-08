@@ -66,6 +66,12 @@
                 <span class="vote-count">▲ {{ vote_count }}</span>
                 {% endif %}
             </div>
+            {% if current_user.is_authenticated and (film.suggested_by == current_user.id or night.creator_id == current_user.id) %}
+            <form action="{{ url_for('delete_suggestion', night_id=night.id, film_id=film.id) }}" method="post"
+                  onsubmit="return confirm('Remove this suggestion?')">
+                <button type="submit" class="btn btn-xs btn-danger night-delete-btn" title="Remove suggestion">✕</button>
+            </form>
+            {% endif %}
         </li>
         {% endfor %}
     </ul>

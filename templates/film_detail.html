@@ -28,7 +28,7 @@
         {% if film.genre %}
         <div class="genre-tags mt-1">
             {% for g in film.genre.split(', ') %}
-                <span class="genre-tag" data-genre="{{ g }}">{{ g }}</span>
+                <a href="{{ url_for('genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
             {% endfor %}
         </div>
         {% endif %}
@@ -115,7 +115,16 @@
             <button type="submit" class="btn">+ Add to my list</button>
         </form>
         {% else %}
-        <p class="already-in-list mt-2">✓ Already in your list</p>
+        {% set my_instance = already_have[0][1] %}
+        <div class="already-in-list mt-2">
+            <span class="already-check">✓ In your list</span>
+            {% if my_instance.rating %}
+            <span class="already-rating">
+                {% for i in range(1, 6) %}<span class="star {{ 'filled' if i <= my_instance.rating }}">★</span>{% endfor %}
+            </span>
+            {% endif %}
+            <a href="{{ url_for('edit_movie', user_id=current_user.id, movie_id=my_instance.id) }}" class="btn btn-sm btn-ghost">Edit</a>
+        </div>
         {% endif %}
         {% endif %}
     </div>

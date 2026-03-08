@@ -556,12 +556,13 @@ def index():
     import datetime
     hero_pool = (Movie.query
                  .filter(Movie.rating == 5, Movie.poster_url.isnot(None),
-                         Movie.status == 'watched')
+                         Movie.status == 'watched', Movie.film_id.isnot(None))
                  .all())
     hero = hero_pool[datetime.date.today().toordinal() % len(hero_pool)] if hero_pool else None
+    hero_film = Film.query.get(hero.film_id) if hero and hero.film_id else None
     return render_template("index.html", users=users,
                            total_movies=total_movies, activity=activity,
-                           inspiration=inspiration, hero=hero)
+                           inspiration=inspiration, hero=hero, hero_film=hero_film)
 
 
 _PROFILE_PER_PAGE = 24
@@ -1017,7 +1018,13 @@ def feed():
         # Sort by movie count descending, take top 8
         candidates.sort(key=lambda u: len(u.movies), reverse=True)
         suggested = candidates[:8]
+    review_titles = [r.movie_title for r in reviews]
+    film_map = {}
+    if review_titles:
+        for f in Film.query.filter(Film.title.in_(review_titles)).all():
+            film_map[f.title] = f.id
     return render_template("feed.html", movies=movies, reviews=reviews,
+                           film_map=film_map,
                            following_count=len(followed_ids), suggested=suggested)
 
 
@@ -1079,6 +1086,23 @@ def suggest_film(night_id):
     db.session.add(film)
     db.session.commit()
     flash(f"'{title}' suggested!", "success")
+    return redirect(url_for("movie_night_detail", night_id=night_id))
+
+
+@app.route("/movie-nights/<int:night_id>/film/<int:film_id>/delete", methods=["POST"])
+@login_required
+def delete_suggestion(night_id, film_id):
+    film = db.session.get(MovieNightFilm, film_id)
+    if not film or film.night_id != night_id:
+        flash("Film not found.", "error")
+        return redirect(url_for("movie_night_detail", night_id=night_id))
+    night = db.session.get(MovieNight, night_id)
+    if film.suggested_by != current_user.id and night.creator_id != current_user.id:
+        flash("You can only remove your own suggestions.", "error")
+        return redirect(url_for("movie_night_detail", night_id=night_id))
+    db.session.delete(film)
+    db.session.commit()
+    flash("Suggestion removed.", "info")
     return redirect(url_for("movie_night_detail", night_id=night_id))
 
 

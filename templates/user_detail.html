@@ -21,7 +21,7 @@
         {% if profile_stats.top_genres %}
         <div class="genre-tags mt-half">
             {% for g, _ in profile_stats.top_genres %}
-                <span class="genre-tag" data-genre="{{ g }}">{{ g }}</span>
+                <a href="{{ url_for('genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
             {% endfor %}
         </div>
         {% endif %}
@@ -50,7 +50,7 @@
 <div class="page-header" style="margin-top:1.5rem">
     <div style="font-size:0"></div>
     <div class="header-controls">
-        <input type="text" id="movie-search" placeholder="Filter…" autocomplete="off">
+        {% if total_pages <= 1 %}<input type="text" id="movie-search" placeholder="Filter…" autocomplete="off">{% endif %}
         <form method="get" class="sort-form">
             {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
             <select name="sort" onchange="this.form.submit()" title="Sort by">
@@ -142,7 +142,7 @@
             {% if movie.genre %}
             <div class="genre-tags">
                 {% for g in movie.genre.split(', ')[:3] %}
-                    <span class="genre-tag" data-genre="{{ g }}">{{ g }}</span>
+                    <a href="{{ url_for('genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
                 {% endfor %}
             </div>
             {% endif %}

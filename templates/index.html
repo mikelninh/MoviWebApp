@@ -21,7 +21,7 @@
             {% if hero.genre %}
             <div class="genre-tags hero-genres">
                 {% for g in hero.genre.split(', ')[:3] %}
-                    <span class="genre-tag" data-genre="{{ g }}">{{ g }}</span>
+                    <a href="{{ url_for('genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
                 {% endfor %}
             </div>
             {% endif %}
@@ -29,9 +29,9 @@
             <p class="hero-plot">{{ hero.plot | truncate(180) }}</p>
             {% endif %}
             <div class="hero-actions">
-                <a href="{{ url_for('movie_detail', movie_id=hero.id) }}" class="btn hero-btn">View Film</a>
-                {% if current_user.is_authenticated %}
-                <a href="{{ url_for('search', q=hero.title) }}" class="btn btn-ghost">+ Add to list</a>
+                <a href="{{ url_for('film_detail', film_id=hero_film.id) if hero_film else url_for('movie_detail', movie_id=hero.id) }}" class="btn hero-btn">View Film</a>
+                {% if current_user.is_authenticated and hero_film %}
+                <a href="{{ url_for('film_detail', film_id=hero_film.id) }}" class="btn btn-ghost">+ Add to list</a>
                 {% endif %}
             </div>
         </div>
@@ -67,7 +67,7 @@
         <ul class="inspo-scroll">
             {% for movie in lst.movies %}
             <li class="inspo-poster-card">
-                <a href="{{ url_for('search', q=movie.title) }}">
+                <a href="{{ url_for('film_detail', film_id=movie.film_id) if movie.film_id else url_for('search', q=movie.title) }}">
                     <div class="inspo-poster-wrap">
                         {% if movie.poster_url %}
                         <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="inspo-poster-img" loading="lazy">
@@ -169,7 +169,7 @@
                     {% if movie.genre %}
                     <div class="genre-tags">
                         {% for g in movie.genre.split(', ')[:2] %}
-                            <span class="genre-tag" data-genre="{{ g }}">{{ g }}</span>
+                            <a href="{{ url_for('genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
                         {% endfor %}
                     </div>
                     {% endif %}

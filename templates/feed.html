@@ -61,7 +61,7 @@
                     {% if movie.genre %}
                     <div class="genre-tags">
                         {% for g in movie.genre.split(', ')[:2] %}
-                            <span class="genre-tag" data-genre="{{ g }}">{{ g }}</span>
+                            <a href="{{ url_for('genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
                         {% endfor %}
                     </div>
                     {% endif %}
@@ -99,7 +99,8 @@
                     <span class="review-date">{{ review.created_at.strftime('%b %d') }}</span>
                 </div>
                 <p class="review-movie-link">
-                    <a href="{{ url_for('search', q=review.movie_title) }}" style="color:#3b82f6">{{ review.movie_title }}</a>
+                    {% set fid = film_map.get(review.movie_title) %}
+                    <a href="{{ url_for('film_detail', film_id=fid) if fid else url_for('search', q=review.movie_title) }}" style="color:#3b82f6">{{ review.movie_title }}</a>
                 </p>
                 <p class="review-body">{{ review.body | truncate(200) }}</p>
             </li>

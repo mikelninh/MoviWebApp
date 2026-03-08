@@ -63,6 +63,14 @@
           var open = hdr.classList.toggle('nav-open');
           btn.setAttribute('aria-expanded', open);
         });
+        // '/' focuses search bar
+        document.addEventListener('keydown', function(e) {
+          if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            var s = document.querySelector('.header-search input[type="search"]');
+            if (s) s.focus();
+          }
+        });
       })();
     </script>
 

@@ -43,7 +43,7 @@
                 {% if film.genre %}
                 <div class="genre-tags">
                     {% for g in film.genre.split(', ')[:3] %}
-                        <span class="genre-tag" data-genre="{{ g }}">{{ g }}</span>
+                        <a href="{{ url_for('genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
                     {% endfor %}
                 </div>
                 {% endif %}
@@ -96,7 +96,7 @@
                 {% if omdb_film.genre %}
                 <div class="genre-tags">
                     {% for g in omdb_film.genre.split(', ')[:4] %}
-                        <span class="genre-tag" data-genre="{{ g }}">{{ g }}</span>
+                        <a href="{{ url_for('genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
                     {% endfor %}
                 </div>
                 {% endif %}

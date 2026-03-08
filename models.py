@@ -78,6 +78,7 @@ class MovieNightFilm(db.Model):
 class MovieNightVote(db.Model):
     user_id  = db.Column(db.Integer, db.ForeignKey("user.id"), primary_key=True)
     film_id  = db.Column(db.Integer, db.ForeignKey("movie_night_film.id"), primary_key=True)
+    voter    = db.relationship("User", foreign_keys=[user_id])
 
 
 class Review(db.Model):
