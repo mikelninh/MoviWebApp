@@ -25,4 +25,35 @@
         <button type="submit" class="btn">Save settings</button>
     </form>
 </div>
+
+<div class="settings-card mt-3" style="border-color: rgba(239,68,68,0.35);">
+    <h3 class="section-title" style="color: #ef4444; margin-bottom: 1rem;">Danger zone</h3>
+    <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.2rem; line-height: 1.5;">
+        Permanently delete your account. This removes all your films, reviews, watchlist, comments, and follow connections.
+        <strong style="color: var(--text);">This cannot be undone.</strong>
+    </p>
+
+    <details>
+        <summary style="cursor: pointer; font-weight: 600; font-size: 0.9rem; color: #ef4444; user-select: none; list-style: none; display: flex; align-items: center; gap: 0.4rem;">
+            <span>&#9660;</span> Delete my account
+        </summary>
+        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(239,68,68,0.2);">
+            <form action="{{ url_for('delete_account') }}" method="post"
+                  onsubmit="return confirm('This will permanently delete your account and all your data. There is no way back. Continue?')">
+                <div class="form-group">
+                    <label for="confirm_password" style="font-size: 0.88rem;">Confirm your password to continue</label>
+                    <input type="password" id="confirm_password" name="confirm_password"
+                           placeholder="Your current password"
+                           autocomplete="current-password"
+                           style="width:100%; padding:0.5rem 0.75rem; border-radius:8px;
+                                  border:1px solid rgba(239,68,68,0.4);
+                                  background:var(--surface2); color:var(--text); font-size:0.95rem;">
+                </div>
+                <button type="submit" class="btn btn-danger" style="margin-top: 0.25rem;">
+                    Delete my account permanently
+                </button>
+            </form>
+        </div>
+    </details>
+</div>
 {% endblock %}

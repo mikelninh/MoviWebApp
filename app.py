@@ -1820,6 +1820,40 @@ def settings():
     return render_template("settings.html")
 
 
+@app.route("/settings/delete-account", methods=["POST"])
+@login_required
+def delete_account():
+    password = request.form.get("confirm_password", "")
+    if not current_user.check_password(password):
+        flash("Incorrect password. Account not deleted.", "error")
+        return redirect(url_for("settings"))
+
+    user_id = current_user.id
+
+    # Delete all user data before removing the account
+    ReviewComment.query.filter_by(user_id=user_id).delete()
+    ReviewLike.query.filter_by(user_id=user_id).delete()
+    # Remove likes on the user's reviews (so cascade doesn't fail)
+    for review in Review.query.filter_by(user_id=user_id).all():
+        ReviewLike.query.filter_by(review_id=review.id).delete()
+        ReviewComment.query.filter_by(review_id=review.id).delete()
+    Review.query.filter_by(user_id=user_id).delete()
+    Follow.query.filter_by(follower_id=user_id).delete()
+    Follow.query.filter_by(followed_id=user_id).delete()
+    Movie.query.filter_by(user_id=user_id).delete()
+    Notification.query.filter_by(user_id=user_id).delete()
+    Notification.query.filter_by(from_user_id=user_id).delete()
+
+    logout_user()
+    user = db.session.get(User, user_id)
+    if user:
+        db.session.delete(user)
+    db.session.commit()
+
+    flash("Your account has been deleted.", "success")
+    return redirect(url_for("index"))
+
+
 # ── LANGUAGE SWITCHER ─────────────────────────────────────────────────────────
 
 @app.route("/lang/<code>")
@@ -2059,6 +2093,236 @@ def delete_comment(review_id, comment_id):
         review = db.session.get(Review, review_id)
         return render_template("_review_comments.html", review=review)
     return redirect(request.referrer or url_for("index"))
+
+
+# ── PICK TONIGHT ─────────────────────────────────────────────────────────────
+
+@app.route("/pick-tonight")
+@login_required
+def pick_tonight():
+    import random
+    from datetime import datetime as dt, timedelta
+    from sqlalchemy import func
+
+    exclude_film_id = request.args.get("exclude", type=int)
+
+    # 1. Watchlist films
+    watchlist = Movie.query.filter_by(
+        user_id=current_user.id, status="watchlist"
+    ).all()
+
+    # 2. Gems from followed users (rated 4+) that current user hasn't seen
+    followed_ids = [f.followed_id for f in current_user.following]
+    my_titles = {m.title for m in current_user.movies}
+    their_gems = []
+    if followed_ids:
+        their_gems = Movie.query.filter(
+            Movie.user_id.in_(followed_ids),
+            Movie.rating >= 4,
+            Movie.title.notin_(my_titles),
+            Movie.status == "watched",
+        ).all()
+
+    # 3. Trending films (last 14 days)
+    cutoff = dt.utcnow() - timedelta(days=14)
+    trending_rows = (
+        db.session.query(Movie.title, func.count(Movie.id).label("c"))
+        .filter(Movie.date_added >= cutoff, Movie.status == "watched")
+        .group_by(Movie.title)
+        .order_by(func.count(Movie.id).desc())
+        .limit(20)
+        .all()
+    )
+    trending_films = []
+    for row in trending_rows:
+        if row.title not in my_titles:
+            f = Film.query.filter_by(title=row.title).first()
+            if f:
+                trending_films.append(f)
+
+    # Build weighted pool: (film_obj_or_movie, reason, weight)
+    pool = []
+    for m in watchlist:
+        if m.film_id and (not exclude_film_id or m.film_id != exclude_film_id):
+            f = db.session.get(Film, m.film_id)
+            if f:
+                pool.extend([(f, "On your watchlist", None)] * 3)
+    for m in their_gems:
+        if m.film_id and (not exclude_film_id or m.film_id != exclude_film_id):
+            f = db.session.get(Film, m.film_id)
+            if f:
+                recommender = db.session.get(User, m.user_id)
+                stars = "★" * m.rating if m.rating else ""
+                reason = f"{recommender.username} gave it {stars}" if recommender else "Loved by your network"
+                pool.extend([(f, reason, recommender)] * 2)
+    for f in trending_films:
+        if not exclude_film_id or f.id != exclude_film_id:
+            pool.append((f, "Trending this week", None))
+
+    if not pool:
+        return render_template("pick_tonight.html", film=None, reason=None, recommender=None)
+
+    picked_film, reason, recommender = random.choice(pool)
+    return render_template(
+        "pick_tonight.html",
+        film=picked_film,
+        reason=reason,
+        recommender=recommender,
+        exclude_film_id=picked_film.id,
+    )
+
+
+# ── DISCOVER ──────────────────────────────────────────────────────────────────
+
+@app.route("/discover")
+@login_required
+def discover():
+    from datetime import datetime as dt, timedelta
+    from sqlalchemy import func
+
+    followed_ids = [f.followed_id for f in current_user.following]
+    my_titles = {m.title for m in current_user.movies}
+
+    # Section 1: From your network — rated 4.5+ by follows, unseen
+    network_films = []
+    if followed_ids:
+        network_movies = (
+            Movie.query.filter(
+                Movie.user_id.in_(followed_ids),
+                Movie.rating >= 4,
+                Movie.title.notin_(my_titles),
+                Movie.status == "watched",
+            )
+            .order_by(Movie.rating.desc(), Movie.date_added.desc())
+            .all()
+        )
+        seen_titles = set()
+        for m in network_movies:
+            if m.title not in seen_titles and m.film_id:
+                f = db.session.get(Film, m.film_id)
+                if f:
+                    recommender = db.session.get(User, m.user_id)
+                    network_films.append((f, recommender, m.rating))
+                    seen_titles.add(m.title)
+                if len(network_films) >= 12:
+                    break
+
+    # Section 2: Because you liked [Film] — collaborative filtering
+    because_films = []
+    because_title = None
+    my_top = sorted(
+        [m for m in current_user.movies if m.rating and m.rating >= 4 and m.status == "watched"],
+        key=lambda m: m.rating, reverse=True,
+    )
+    if my_top:
+        anchor = my_top[0]
+        because_title = anchor.title
+        # Find users who also love the anchor film
+        sibling_users = (
+            Movie.query.filter(
+                Movie.title == anchor.title,
+                Movie.user_id != current_user.id,
+                Movie.rating >= 4,
+            )
+            .with_entities(Movie.user_id)
+            .all()
+        )
+        sibling_ids = [r.user_id for r in sibling_users]
+        if sibling_ids:
+            loved_by_siblings = (
+                Movie.query.filter(
+                    Movie.user_id.in_(sibling_ids),
+                    Movie.title.notin_(my_titles),
+                    Movie.rating >= 4,
+                    Movie.status == "watched",
+                )
+                .order_by(Movie.rating.desc())
+                .all()
+            )
+            seen_titles = set()
+            for m in loved_by_siblings:
+                if m.title not in seen_titles and m.film_id:
+                    f = db.session.get(Film, m.film_id)
+                    if f:
+                        because_films.append(f)
+                        seen_titles.add(m.title)
+                    if len(because_films) >= 8:
+                        break
+
+    # Section 3: Hidden gems — high avg rating but fewer than 5 users
+    hidden_gems = []
+    rows = (
+        db.session.query(
+            Movie.title,
+            func.avg(Movie.rating).label("avg_r"),
+            func.count(Movie.id).label("cnt"),
+        )
+        .filter(Movie.status == "watched", Movie.rating.isnot(None))
+        .group_by(Movie.title)
+        .having(func.avg(Movie.rating) >= 4.0)
+        .having(func.count(Movie.id) < 5)
+        .order_by(func.avg(Movie.rating).desc())
+        .limit(30)
+        .all()
+    )
+    for row in rows:
+        if row.title not in my_titles:
+            f = Film.query.filter_by(title=row.title).first()
+            if f and f.poster_url:
+                hidden_gems.append((f, round(row.avg_r, 1)))
+            if len(hidden_gems) >= 8:
+                break
+
+    # Section 4: Your watchlist
+    watchlist_movies = (
+        Movie.query.filter_by(user_id=current_user.id, status="watchlist")
+        .order_by(Movie.date_added.asc())
+        .limit(6)
+        .all()
+    )
+    watchlist_films = []
+    for m in watchlist_movies:
+        if m.film_id:
+            f = db.session.get(Film, m.film_id)
+            if f:
+                watchlist_films.append(f)
+        elif m.title:
+            # Try to find by title
+            f = Film.query.filter_by(title=m.title).first()
+            if f:
+                watchlist_films.append(f)
+
+    # Section 5: New to the community — added in last 30 days
+    cutoff = dt.utcnow() - timedelta(days=30)
+    fresh_rows = (
+        db.session.query(Movie.title, func.max(Movie.date_added).label("added"))
+        .filter(Movie.date_added >= cutoff, Movie.status == "watched")
+        .group_by(Movie.title)
+        .order_by(func.max(Movie.date_added).desc())
+        .limit(30)
+        .all()
+    )
+    fresh_films = []
+    seen_fresh = set()
+    for row in fresh_rows:
+        if row.title not in seen_fresh:
+            f = Film.query.filter_by(title=row.title).first()
+            if f and f.poster_url:
+                fresh_films.append(f)
+                seen_fresh.add(row.title)
+            if len(fresh_films) >= 8:
+                break
+
+    return render_template(
+        "discover.html",
+        network_films=network_films,
+        because_films=because_films,
+        because_title=because_title,
+        hidden_gems=hidden_gems,
+        watchlist_films=watchlist_films,
+        fresh_films=fresh_films,
+        followed_count=len(followed_ids),
+    )
 
 
 # ── ERROR HANDLERS ───────────────────────────────────────────────────────────

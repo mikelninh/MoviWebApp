@@ -7,7 +7,7 @@
 
     <!-- PWA -->
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-    <meta name="theme-color" content="#3b82f6">
+    <meta name="theme-color" content="#e8b84b">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon-192.svg') }}">
@@ -31,8 +31,9 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='features.css') }}">
     <script src="https://unpkg.com/htmx.org@2.0.3" defer></script>
 
     <!-- Theme: read from localStorage before first paint to avoid flash -->
@@ -47,7 +48,7 @@
     <div class="grain-overlay" aria-hidden="true"></div>
     <header class="main-header" id="main-header">
         <div class="header-left">
-            <a href="{{ url_for('index') }}" class="logo">🎬 MoviWebApp</a>
+            <a href="{{ url_for('index') }}" class="logo">MOVIWEB</a>
         </div>
 
         <form action="{{ url_for('search') }}" method="get" class="header-search">
@@ -77,7 +78,9 @@
                 <a href="{{ url_for('user_profile', username=current_user.username) }}"
                    class="{{ 'active' if request.endpoint == 'get_movies' and request.view_args.user_id == current_user.id }}">{{ _('My List') }}</a>
                 <a href="{{ url_for('feed') }}" class="{{ 'active' if request.endpoint == 'feed' }}">{{ _('Feed') }}</a>
+                <a href="{{ url_for('discover') }}" class="{{ 'active' if request.endpoint == 'discover' }}">{{ _('Discover') }}</a>
                 <a href="{{ url_for('challenges') }}" class="{{ 'active' if request.endpoint == 'challenges' }}">{{ _('Challenges') }}</a>
+                <a href="{{ url_for('pick_tonight') }}" class="nav-pick-tonight {{ 'active' if request.endpoint == 'pick_tonight' }}" title="Pick a film for tonight">🎲 Pick Tonight</a>
                 <a href="{{ url_for('notifications') }}" class="nav-bell {{ 'nav-bell-active' if request.endpoint == 'notifications' }}">
                     🔔{% if unread_notifications %}<span class="notif-badge">{{ unread_notifications }}</span>{% endif %}
                 </a>
@@ -143,7 +146,7 @@
 
     <footer class="site-footer">
         <div class="footer-inner">
-            <span class="footer-logo">🎬 MoviWebApp</span>
+            <span class="footer-logo">MOVIWEB</span>
             <span class="footer-sep">·</span>
             <a href="{{ url_for('about') }}" class="footer-link">{{ _('About') }}</a>
             <span class="footer-sep">·</span>

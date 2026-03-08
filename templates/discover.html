@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stars %}
+
+{% block title %}Discover — MoviWebApp{% endblock %}
+
+{% block og_tags %}
+<meta property="og:title" content="Discover — MoviWebApp">
+<meta property="og:description" content="Personalised film discovery: from your network, hidden gems, and fresh arrivals.">
+{% endblock %}
+
+{% block content %}
+<div class="discover-page">
+
+    <div class="discover-hero">
+        <h1 class="discover-hero-title">Discover</h1>
+        <p class="discover-hero-sub">Curated just for you — from people you trust and films the crowd hasn't found yet.</p>
+        <a href="{{ url_for('pick_tonight') }}" class="btn btn-ghost discover-pick-cta">🎲 Pick one for tonight</a>
+    </div>
+
+    {# ── Section 1: From Your People ── #}
+    <section class="discover-section">
+        <div class="discover-section-header">
+            <h2 class="discover-section-title">From Your People</h2>
+            <p class="discover-section-sub">Films rated 4+ by people you follow that you haven't seen.</p>
+        </div>
+
+        {% if network_films %}
+        <div class="film-strip-wrapper">
+        <ul class="inspo-scroll">
+            {% for film, recommender, rating in network_films %}
+            <li class="inspo-poster-card">
+                <a href="{{ url_for('film_detail', film_id=film.id) }}">
+                    <div class="inspo-poster-wrap">
+                        {% if film.poster_url %}
+                        <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="inspo-poster-img" loading="lazy">
+                        {% else %}
+                        <div class="inspo-poster-empty">🎬</div>
+                        {% endif %}
+                        <div class="inspo-poster-overlay">
+                            <span class="inspo-overlay-title">{{ film.title }}</span>
+                            {% if recommender %}
+                            <span class="inspo-overlay-year">{{ recommender.username }} · {{ '★' * rating }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        </div>
+        {% else %}
+        <div class="discover-empty">
+            {% if followed_count == 0 %}
+            <span>Follow some film lovers to see their picks here.</span>
+            <a href="{{ url_for('index') }}" class="discover-empty-link">Find people →</a>
+            {% else %}
+            <span>The people you follow haven't added any highly-rated films you haven't seen yet.</span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </section>
+
+    {# ── Section 2: Because You Loved It ── #}
+    <section class="discover-section">
+        <div class="discover-section-header">
+            <h2 class="discover-section-title">
+                Because You Loved{% if because_title %} <em>{{ because_title }}</em>{% endif %}
+            </h2>
+            <p class="discover-section-sub">Others who love the same film also rated these highly.</p>
+        </div>
+
+        {% if because_films %}
+        <div class="film-strip-wrapper">
+        <ul class="inspo-scroll">
+            {% for film in because_films %}
+            <li class="inspo-poster-card">
+                <a href="{{ url_for('film_detail', film_id=film.id) }}">
+                    <div class="inspo-poster-wrap">
+                        {% if film.poster_url %}
+                        <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="inspo-poster-img" loading="lazy">
+                        {% else %}
+                        <div class="inspo-poster-empty">🎬</div>
+                        {% endif %}
+                        <div class="inspo-poster-overlay">
+                            <span class="inspo-overlay-title">{{ film.title }}</span>
+                            <span class="inspo-overlay-year">{{ film.year or '' }}</span>
+                        </div>
+                    </div>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        </div>
+        {% else %}
+        <div class="discover-empty">
+            <span>Rate more films to unlock personalised recommendations.</span>
+        </div>
+        {% endif %}
+    </section>
+
+    {# ── Section 3: Hidden Gems ── #}
+    <section class="discover-section">
+        <div class="discover-section-header">
+            <h2 class="discover-section-title">Hidden Gems</h2>
+            <p class="discover-section-sub">Highly rated by the few who've seen them — ready to be discovered.</p>
+        </div>
+
+        {% if hidden_gems %}
+        <div class="film-strip-wrapper">
+        <ul class="inspo-scroll">
+            {% for film, avg_rating in hidden_gems %}
+            <li class="inspo-poster-card">
+                <a href="{{ url_for('film_detail', film_id=film.id) }}">
+                    <div class="inspo-poster-wrap">
+                        {% if film.poster_url %}
+                        <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="inspo-poster-img" loading="lazy">
+                        {% else %}
+                        <div class="inspo-poster-empty">🎬</div>
+                        {% endif %}
+                        <div class="inspo-poster-overlay">
+                            <span class="inspo-overlay-title">{{ film.title }}</span>
+                            <span class="inspo-overlay-year">avg {{ avg_rating }}★</span>
+                        </div>
+                    </div>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        </div>
+        {% else %}
+        <div class="discover-empty">
+            <span>Not enough community data yet. Come back as more people join.</span>
+        </div>
+        {% endif %}
+    </section>
+
+    {# ── Section 4: Still On Your List ── #}
+    <section class="discover-section">
+        <div class="discover-section-header">
+            <h2 class="discover-section-title">Still On Your List</h2>
+            <p class="discover-section-sub">Films you saved — still waiting for the right evening.</p>
+        </div>
+
+        {% if watchlist_films %}
+        <div class="film-strip-wrapper">
+        <ul class="inspo-scroll">
+            {% for film in watchlist_films %}
+            <li class="inspo-poster-card">
+                <a href="{{ url_for('film_detail', film_id=film.id) }}">
+                    <div class="inspo-poster-wrap">
+                        {% if film.poster_url %}
+                        <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="inspo-poster-img" loading="lazy">
+                        {% else %}
+                        <div class="inspo-poster-empty">🎬</div>
+                        {% endif %}
+                        <div class="inspo-poster-overlay">
+                            <span class="inspo-overlay-title">{{ film.title }}</span>
+                            <span class="inspo-overlay-year">on your watchlist</span>
+                        </div>
+                    </div>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        </div>
+        {% else %}
+        <div class="discover-empty">
+            <span>Your watchlist is empty. <a href="{{ url_for('browse') }}" class="discover-empty-link">Browse films →</a></span>
+        </div>
+        {% endif %}
+    </section>
+
+    {# ── Section 5: Fresh Arrivals ── #}
+    <section class="discover-section">
+        <div class="discover-section-header">
+            <h2 class="discover-section-title">Fresh Arrivals</h2>
+            <p class="discover-section-sub">Films added to the community in the last 30 days.</p>
+        </div>
+
+        {% if fresh_films %}
+        <div class="film-strip-wrapper">
+        <ul class="inspo-scroll">
+            {% for film in fresh_films %}
+            <li class="inspo-poster-card">
+                <a href="{{ url_for('film_detail', film_id=film.id) }}">
+                    <div class="inspo-poster-wrap">
+                        {% if film.poster_url %}
+                        <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="inspo-poster-img" loading="lazy">
+                        {% else %}
+                        <div class="inspo-poster-empty">🎬</div>
+                        {% endif %}
+                        <div class="inspo-poster-overlay">
+                            <span class="inspo-overlay-title">{{ film.title }}</span>
+                            <span class="inspo-overlay-year">{{ film.year or '' }}</span>
+                        </div>
+                    </div>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        </div>
+        {% else %}
+        <div class="discover-empty">
+            <span>No new films added in the last 30 days.</span>
+        </div>
+        {% endif %}
+    </section>
+
+</div>
+{% endblock %}
