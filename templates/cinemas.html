@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Cinemas · MoviWebApp{% endblock %}
+
+{% block content %}
+<div class="page-header mt-2">
+    <h2 class="section-title">Cinema Partners</h2>
+    <p class="text-muted" style="font-size:0.9rem;margin-top:0.3rem;">Independent cinemas we love. Request screenings, vote on what plays next.</p>
+</div>
+
+{% if cinemas %}
+<div class="cinemas-grid mt-3">
+    {% for cinema in cinemas %}
+    <a href="{{ url_for('cinema_detail', slug=cinema.slug) }}" class="cinema-card">
+        <div class="cinema-card-header">
+            <h3 class="cinema-name">{{ cinema.name }}</h3>
+            {% if cinema.neighbourhood %}
+            <span class="cinema-location">{{ cinema.neighbourhood }}{% if cinema.city %}, {{ cinema.city }}{% endif %}</span>
+            {% endif %}
+        </div>
+        {% if cinema.description %}
+        <p class="cinema-desc">{{ cinema.description | truncate(120) }}</p>
+        {% endif %}
+        <div class="cinema-meta">
+            <span class="cinema-film-count">{{ cinema.films | length }} film{{ 's' if cinema.films | length != 1 }}</span>
+            {% if cinema.website %}
+            <span class="cinema-website-hint">↗ website</span>
+            {% endif %}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state mt-3"><p>No cinema partners yet.</p></div>
+{% endif %}
+{% endblock %}

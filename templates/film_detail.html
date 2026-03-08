@@ -41,6 +41,14 @@
         </div>
         {% endif %}
 
+        {% if streaming %}
+        <div class="streaming-row mt-1">
+          {% for s in streaming %}
+          <a href="{{ s.url }}" class="streaming-chip streaming-{{ s.service|lower|replace(' ','') }}" target="_blank" rel="noopener">{{ s.service }}</a>
+          {% endfor %}
+        </div>
+        {% endif %}
+
         {% if film.plot %}
         <p class="detail-plot mt-1">{{ film.plot }}</p>
         {% endif %}
@@ -198,6 +206,7 @@
                 <span class="like-count">{% if review.likes %}♥ {{ review.likes | length }}{% endif %}</span>
                 {% endif %}
             </div>
+            {% include "_review_comments.html" with context %}
         </li>
         {% endfor %}
     </ul>

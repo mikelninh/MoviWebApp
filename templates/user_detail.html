@@ -99,6 +99,12 @@
        class="tab {{ 'active' if status_filter == 'watchlist' }}">
         ☐ Watchlist <span class="tab-count">{{ watchlist_count }}</span>
     </a>
+    {% if watching_count > 0 or status_filter == 'watching' %}
+    <a href="{{ url_for('user_profile', username=user.username, sort=sort, status='watching') }}"
+       class="tab tab-watching {{ 'active' if status_filter == 'watching' }}">
+        📺 Watching <span class="tab-count">{{ watching_count }}</span>
+    </a>
+    {% endif %}
 </div>
 
 <!-- Add movie form (owner only) -->
@@ -120,6 +126,7 @@
                 <div class="status-radio-group">
                     <label class="status-radio"><input type="radio" name="status" value="watched" checked> Watched</label>
                     <label class="status-radio"><input type="radio" name="status" value="watchlist"> Watchlist</label>
+                    <label class="status-radio"><input type="radio" name="status" value="watching"> 📺 Watching</label>
                 </div>
             </div>
             <input type="submit" value="Add">

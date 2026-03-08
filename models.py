@@ -8,9 +8,11 @@ db = SQLAlchemy()
 
 
 class User(UserMixin, db.Model):
-    id            = db.Column(db.Integer, primary_key=True)
-    username      = db.Column(db.String(80), nullable=False, unique=True)
-    password_hash = db.Column(db.String(256), nullable=True)
+    id                   = db.Column(db.Integer, primary_key=True)
+    username             = db.Column(db.String(80), nullable=False, unique=True)
+    password_hash        = db.Column(db.String(256), nullable=True)
+    email                = db.Column(db.String(120), nullable=True)
+    email_notifications  = db.Column(db.Boolean, default=False)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -95,6 +97,18 @@ class Review(db.Model):
     user        = db.relationship("User", backref="reviews")
     likes       = db.relationship("ReviewLike", backref="review",
                                   cascade="all, delete-orphan", lazy=True)
+    comments    = db.relationship("ReviewComment", backref="review",
+                                  cascade="all, delete-orphan", lazy=True,
+                                  order_by="ReviewComment.created_at")
+
+
+class ReviewComment(db.Model):
+    id         = db.Column(db.Integer, primary_key=True)
+    review_id  = db.Column(db.Integer, db.ForeignKey("review.id"), nullable=False)
+    user_id    = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    body       = db.Column(db.String(500), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user       = db.relationship("User")
 
 
 class Film(db.Model):
@@ -108,6 +122,13 @@ class Film(db.Model):
     genre      = db.Column(db.String(200), nullable=True)
     imdb_id    = db.Column(db.String(20), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class FilmStreaming(db.Model):
+    id         = db.Column(db.Integer, primary_key=True)
+    film_id    = db.Column(db.Integer, db.ForeignKey("film.id"), unique=True, nullable=False)
+    data_json  = db.Column(db.Text, nullable=True)   # JSON list of {service, url, type}
+    fetched_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class Notification(db.Model):
@@ -138,3 +159,25 @@ class Movie(db.Model):
     date_added = db.Column(db.DateTime, nullable=True, default=datetime.utcnow)
     user       = db.relationship("User", backref="movies")
     film       = db.relationship("Film", backref="user_movies")
+
+
+class Cinema(db.Model):
+    id            = db.Column(db.Integer, primary_key=True)
+    name          = db.Column(db.String(120), nullable=False)
+    slug          = db.Column(db.String(60), unique=True, nullable=False)
+    city          = db.Column(db.String(80), nullable=True)
+    neighbourhood = db.Column(db.String(80), nullable=True)
+    description   = db.Column(db.Text, nullable=True)
+    website       = db.Column(db.String(300), nullable=True)
+    created_at    = db.Column(db.DateTime, default=datetime.utcnow)
+    films         = db.relationship("CinemaFilm", backref="cinema", cascade="all, delete-orphan")
+
+
+class CinemaFilm(db.Model):
+    id          = db.Column(db.Integer, primary_key=True)
+    cinema_id   = db.Column(db.Integer, db.ForeignKey("cinema.id"), nullable=False)
+    film_title  = db.Column(db.String(120), nullable=False)
+    poster_url  = db.Column(db.String(300), nullable=True)
+    show_type   = db.Column(db.String(30), default="now_showing")  # now_showing | staff_pick | screening_request
+    votes       = db.Column(db.Integer, default=0)
+    added_at    = db.Column(db.DateTime, default=datetime.utcnow)

@@ -67,7 +67,7 @@
                     </div>
                     {% endif %}
                     <span class="activity-user">
-                        added by
+                        {% if movie.status == 'watching' %}is watching{% else %}added by{% endif %}
                         <a href="{{ url_for('user_profile', username=movie.user.username) }}">{{ movie.user.username }}</a>
                     </span>
                 </div>
@@ -100,6 +100,7 @@
                     <a href="{{ url_for('film_detail', film_id=fid) if fid else url_for('search', q=review.movie_title) }}" style="color:#3b82f6">{{ review.movie_title }}</a>
                 </p>
                 <p class="review-body">{{ review.body | truncate(200) }}</p>
+                {% include "_review_comments.html" with context %}
             </li>
             {% endfor %}
         </ul>

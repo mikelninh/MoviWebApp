@@ -126,8 +126,10 @@ def ai_year_summary(total, top_genres, top_directors, avg_rating, year):
         return None
 
 from data_manager import DataManager
-from models import (Film, Follow, Movie, MovieNight, MovieNightFilm, MovieNightVote,
-                    Notification, Review, ReviewLike, User, UserList, UserListItem, db)
+from models import (Cinema, CinemaFilm, Film, FilmStreaming, Follow, Movie,
+                    MovieNight, MovieNightFilm, MovieNightVote,
+                    Notification, Review, ReviewComment, ReviewLike,
+                    User, UserList, UserListItem, db)
 
 app = Flask(__name__)
 
@@ -136,8 +138,90 @@ app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(basedir, 'data
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "change-me-in-production")
 
+# ── FLASK-MAIL ─────────────────────────────────────────────────────────────────
+app.config["MAIL_SERVER"]   = os.environ.get("MAIL_SERVER", "")
+app.config["MAIL_PORT"]     = int(os.environ.get("MAIL_PORT", 587))
+app.config["MAIL_USE_TLS"]  = True
+app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USERNAME", "")
+app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD", "")
+app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_USERNAME", "noreply@moviwebapp.com")
+
+from flask_mail import Mail, Message as MailMessage
+mail = Mail(app)
+
+def send_notification_email(to_email, subject, body):
+    """Send an email asynchronously, silently skip if mail not configured."""
+    if not app.config.get("MAIL_SERVER"):
+        return
+    def _send():
+        with app.app_context():
+            try:
+                msg = MailMessage(subject, recipients=[to_email], body=body)
+                mail.send(msg)
+            except Exception:
+                pass
+    threading.Thread(target=_send, daemon=True).start()
+
+# ── FLASK-LIMITER ──────────────────────────────────────────────────────────────
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+limiter = Limiter(get_remote_address, app=app, default_limits=[])
+
 db.init_app(app)
 data_manager = DataManager()
+
+# ── TRANSLATIONS (i18n) ────────────────────────────────────────────────────────
+TRANSLATIONS = {
+    "de": {
+        "Home": "Startseite",
+        "Trending": "Trending",
+        "Browse": "Entdecken",
+        "Nights": "Filmabende",
+        "My List": "Meine Liste",
+        "Feed": "Feed",
+        "Challenges": "Herausforderungen",
+        "Login": "Anmelden",
+        "Register": "Registrieren",
+        "Logout": "Abmelden",
+        "Import": "Importieren",
+        "Settings": "Einstellungen",
+        "Cinemas": "Kinos",
+        "About": "Über uns",
+        "Privacy": "Datenschutz",
+        "Watched": "Gesehen",
+        "Watchlist": "Merkliste",
+        "Watching": "Schaue ich",
+        "All": "Alle",
+        "Add": "Hinzufügen",
+        "Edit": "Bearbeiten",
+        "Delete": "Löschen",
+        "Post review": "Rezension posten",
+        "Update review": "Rezension aktualisieren",
+        "Your Feed": "Dein Feed",
+        "Reviews": "Rezensionen",
+        "Recently Added": "Zuletzt hinzugefügt",
+        "Recent Reviews": "Aktuelle Rezensionen",
+        "No recent movies.": "Keine aktuellen Filme.",
+        "No recent reviews.": "Keine aktuellen Rezensionen.",
+        "Filter…": "Filtern…",
+        "Search movies…": "Filme suchen…",
+        "Movie title": "Filmtitel",
+        "Rating": "Bewertung",
+        "Status": "Status",
+        "People to follow — find your people": "Personen folgen — finde deine Community",
+        "You might also enjoy": "Das könnte dir auch gefallen",
+        "Diary": "Tagebuch",
+        "Recap": "Rückblick",
+    }
+}
+
+from flask import session as flask_session
+
+def _t(key):
+    lang = flask_session.get("lang", "en")
+    if lang == "en":
+        return key
+    return TRANSLATIONS.get(lang, {}).get(key, key)
 
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
@@ -147,6 +231,10 @@ login_manager.login_message_category = "error"
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, int(user_id))
+
+
+# Register _t as Jinja2 global
+app.jinja_env.globals["_"] = _t
 
 
 def migrate_db():
@@ -169,6 +257,10 @@ def migrate_db():
         existing_user = {row[1] for row in conn.execute(text("PRAGMA table_info(user)"))}
         if "password_hash" not in existing_user:
             conn.execute(text("ALTER TABLE user ADD COLUMN password_hash VARCHAR(256)"))
+        if "email" not in existing_user:
+            conn.execute(text("ALTER TABLE user ADD COLUMN email VARCHAR(120)"))
+        if "email_notifications" not in existing_user:
+            conn.execute(text("ALTER TABLE user ADD COLUMN email_notifications BOOLEAN DEFAULT 0"))
 
         existing_movie = {row[1] for row in conn.execute(text("PRAGMA table_info(movie)"))}
         if "film_id" not in existing_movie:
@@ -711,6 +803,8 @@ def user_profile(username):
                                          Movie.status == "watched").count()
     watchlist_count = Movie.query.filter(Movie.user_id == user_id,
                                          Movie.status == "watchlist").count()
+    watching_count  = Movie.query.filter(Movie.user_id == user_id,
+                                         Movie.status == "watching").count()
     recommendations = []
     if current_user.is_authenticated and current_user.id == user_id:
         recommendations = data_manager.get_recommendations(user_id)
@@ -731,7 +825,8 @@ def user_profile(username):
         "user_detail.html",
         user=user, favorites=movies, sort=sort, status_filter=status_filter,
         all_count=all_count, watched_count=watched_count,
-        watchlist_count=watchlist_count, recommendations=recommendations,
+        watchlist_count=watchlist_count, watching_count=watching_count,
+        recommendations=recommendations,
         profile_stats=profile_stats, taste_match=taste_match,
         is_following=is_following, user_lists=user_lists,
         followers_count=len(user.followers),
@@ -821,12 +916,14 @@ def film_detail(film_id):
         user_movies = Movie.query.filter_by(user_id=current_user.id).all()
         ai_why = ai_why_love(user_movies, film)
     ai_synthesis = ai_review_synthesis(film.title, reviews)
+    streaming = get_streaming(film)
     return render_template("film_detail.html", film=film,
                            users_with_movie=users_with_movie,
                            friends_with_movie=friends_with_movie,
                            similar=similar_films,
                            reviews=reviews, user_review=user_review,
-                           ai_synthesis=ai_synthesis, ai_why=ai_why)
+                           ai_synthesis=ai_synthesis, ai_why=ai_why,
+                           streaming=streaming)
 
 
 @app.route("/search")
@@ -1079,6 +1176,12 @@ def follow_user(user_id):
         create_notification(user_id, current_user.id, "follow",
                             f"{current_user.username} started following you.",
                             link=f"/u/{current_user.username}")
+        if target.email and target.email_notifications:
+            send_notification_email(
+                target.email,
+                f"{current_user.username} started following you on MoviWebApp",
+                f"Hi {target.username},\n\n{current_user.username} started following you on MoviWebApp.\n\nVisit their profile: https://moviwebapp.com/u/{current_user.username}\n"
+            )
         if not request.headers.get("HX-Request"):
             flash(f"You're now following {target.username}! Their activity will appear in your feed.", "success")
     db.session.commit()
@@ -1111,6 +1214,13 @@ def like_review(review_id):
             create_notification(review.user_id, current_user.id, "like",
                                 f"{current_user.username} liked your review of \"{review.movie_title}\".",
                                 link=link)
+            review_owner = db.session.get(User, review.user_id)
+            if review_owner and review_owner.email and review_owner.email_notifications:
+                send_notification_email(
+                    review_owner.email,
+                    f"{current_user.username} liked your review on MoviWebApp",
+                    f"Hi {review_owner.username},\n\n{current_user.username} liked your review of \"{review.movie_title}\".\n"
+                )
     db.session.commit()
     if request.headers.get("HX-Request"):
         liked      = ReviewLike.query.filter_by(user_id=current_user.id, review_id=review_id).first() is not None
@@ -1554,7 +1664,7 @@ def add_movie(user_id):
     film = get_or_create_film(title, meta)
     movie = Movie(
         title=title, user_id=user_id, film_id=film.id, rating=rating,
-        status=status if status in ("watched", "watchlist") else "watched",
+        status=status if status in ("watched", "watchlist", "watching") else "watched",
         year=meta.get("year"), director=meta.get("director"),
         plot=meta.get("plot"), poster_url=meta.get("poster_url"),
         genre=meta.get("genre"),
@@ -1623,6 +1733,334 @@ def delete_user(user_id):
     return redirect(url_for("index"))
 
 
+# ── STREAMING (JustWatch) ─────────────────────────────────────────────────────
+
+import urllib.request as _urllib_req
+
+_JUSTWATCH_GQL = """
+query GetStreamingOffers($title: String!, $country: Country!) {
+  titleSearch(input: {searchQuery: $title, country: $country, first: 1}) {
+    edges {
+      node {
+        ... on Movie {
+          offers(country: $country, platform: WEB) {
+            monetizationType
+            package { clearName shortName }
+            standardWebURL
+          }
+        }
+      }
+    }
+  }
+}
+"""
+
+
+def get_streaming(film):
+    """Return list of {service, url, type} dicts, using 7-day cache."""
+    from datetime import timedelta
+    try:
+        cache = FilmStreaming.query.filter_by(film_id=film.id).first()
+        now = datetime.utcnow()
+        if cache and (now - cache.fetched_at) < timedelta(days=7):
+            return json.loads(cache.data_json or "[]")
+        # Query JustWatch GraphQL
+        payload = json.dumps({
+            "query": _JUSTWATCH_GQL,
+            "variables": {"title": film.title, "country": "DE"},
+        }).encode("utf-8")
+        req = _urllib_req.Request(
+            "https://apis.justwatch.com/graphql",
+            data=payload,
+            headers={"Content-Type": "application/json", "User-Agent": "MoviWebApp/1.0"},
+        )
+        with _urllib_req.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read())
+        offers = []
+        edges = (data.get("data", {})
+                     .get("titleSearch", {})
+                     .get("edges", []))
+        seen = set()
+        for edge in edges:
+            node = edge.get("node", {})
+            for offer in node.get("offers", []):
+                pkg  = offer.get("package", {})
+                name = pkg.get("clearName", "")
+                url  = offer.get("standardWebURL", "")
+                mtype = offer.get("monetizationType", "")
+                key = (name, mtype)
+                if name and url and key not in seen:
+                    seen.add(key)
+                    offers.append({"service": name, "url": url, "type": mtype})
+        data_str = json.dumps(offers)
+        if cache:
+            cache.data_json  = data_str
+            cache.fetched_at = now
+        else:
+            db.session.add(FilmStreaming(film_id=film.id, data_json=data_str, fetched_at=now))
+        db.session.commit()
+        return offers
+    except Exception:
+        return []
+
+
+# ── SETTINGS ──────────────────────────────────────────────────────────────────
+
+@app.route("/settings", methods=["GET", "POST"])
+@login_required
+def settings():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip()
+        email_notifs = bool(request.form.get("email_notifications"))
+        current_user.email = email or None
+        current_user.email_notifications = email_notifs
+        db.session.commit()
+        flash("Settings saved.", "success")
+        return redirect(url_for("settings"))
+    return render_template("settings.html")
+
+
+# ── LANGUAGE SWITCHER ─────────────────────────────────────────────────────────
+
+@app.route("/lang/<code>")
+def set_lang(code):
+    from flask import session as flask_session
+    if code in ("en", "de"):
+        flask_session["lang"] = code
+    return redirect(request.referrer or url_for("index"))
+
+
+# ── CINEMAS ───────────────────────────────────────────────────────────────────
+
+def _seed_cinemas():
+    if Cinema.query.count() > 0:
+        return
+    intimes = Cinema(
+        name="Intimes", slug="intimes", city="Berlin",
+        neighbourhood="Friedrichshain",
+        website="https://www.intimes-kino.de",
+        description="Tiny 90-seat cinema on Boxhagener Platz. Known for anime nights and independent programming.",
+    )
+    bware = Cinema(
+        name="B-ware! Ladenkino", slug="b-ware-ladenkino", city="Berlin",
+        neighbourhood="Friedrichshain",
+        website="https://b-ware-ladenkino.de",
+        description="Neighbourhood arthouse cinema on Frankfurter Allee. Late-night screenings and politically engaged programming.",
+    )
+    db.session.add_all([intimes, bware])
+    db.session.flush()
+    # Seed CinemaFilms for Intimes
+    for title in ["Nausicaa of the Valley of the Wind", "The Tale of Princess Kaguya", "Spirited Away"]:
+        db.session.add(CinemaFilm(cinema_id=intimes.id, film_title=title, show_type="now_showing"))
+    for title in ["Grave of the Fireflies", "Perfect Blue"]:
+        db.session.add(CinemaFilm(cinema_id=intimes.id, film_title=title, show_type="staff_pick"))
+    db.session.commit()
+
+
+@app.route("/cinemas")
+def cinemas():
+    all_cinemas = Cinema.query.order_by(Cinema.name).all()
+    return render_template("cinemas.html", cinemas=all_cinemas)
+
+
+@app.route("/cinema/<slug>")
+def cinema_detail(slug):
+    cinema = Cinema.query.filter_by(slug=slug).first_or_404()
+    now_showing   = [f for f in cinema.films if f.show_type == "now_showing"]
+    staff_picks   = [f for f in cinema.films if f.show_type == "staff_pick"]
+    requests_list = sorted([f for f in cinema.films if f.show_type == "screening_request"],
+                           key=lambda f: f.votes, reverse=True)
+    return render_template("cinema_detail.html", cinema=cinema,
+                           now_showing=now_showing, staff_picks=staff_picks,
+                           requests_list=requests_list)
+
+
+@app.route("/cinema/<slug>/request", methods=["POST"])
+@login_required
+def cinema_request(slug):
+    cinema = Cinema.query.filter_by(slug=slug).first_or_404()
+    title = request.form.get("title", "").strip()
+    if not title:
+        flash("Film title required.", "error")
+        return redirect(url_for("cinema_detail", slug=slug))
+    db.session.add(CinemaFilm(cinema_id=cinema.id, film_title=title,
+                               show_type="screening_request", votes=0))
+    db.session.commit()
+    flash(f"Screening request for '{title}' submitted!", "success")
+    return redirect(url_for("cinema_detail", slug=slug))
+
+
+@app.route("/cinema/<slug>/request/<int:film_id>/vote", methods=["POST"])
+@login_required
+def cinema_vote(slug, film_id):
+    cf = db.session.get(CinemaFilm, film_id)
+    if not cf:
+        flash("Film not found.", "error")
+        return redirect(url_for("cinema_detail", slug=slug))
+    cf.votes = (cf.votes or 0) + 1
+    db.session.commit()
+    return redirect(url_for("cinema_detail", slug=slug))
+
+
+# ── REST API v1 ───────────────────────────────────────────────────────────────
+
+from flask import jsonify
+
+_API_PER_PAGE = 20
+
+
+def _api_404(msg="Not found"):
+    return jsonify({"error": msg}), 404
+
+
+@app.route("/api/v1/")
+@limiter.limit("100 per hour")
+def api_root():
+    return jsonify({
+        "name": "MoviWebApp API",
+        "version": "1.0",
+        "endpoints": [
+            "/api/v1/films", "/api/v1/films/<id>",
+            "/api/v1/users/<username>", "/api/v1/users/<username>/films",
+            "/api/v1/trending",
+        ],
+    })
+
+
+@app.route("/api/v1/films")
+@limiter.limit("100 per hour")
+def api_films():
+    from sqlalchemy import func as sqlfunc
+    q    = request.args.get("q", "").strip()
+    page = request.args.get("page", 1, type=int)
+    fq   = Film.query
+    if q:
+        fq = fq.filter(Film.title.ilike(f"%{q}%"))
+    pag = fq.order_by(Film.title).paginate(page=page, per_page=_API_PER_PAGE, error_out=False)
+    return jsonify({
+        "page": page, "total": pag.total, "pages": pag.pages,
+        "films": [{"id": f.id, "title": f.title, "year": f.year,
+                   "director": f.director, "genre": f.genre,
+                   "poster_url": f.poster_url} for f in pag.items],
+    })
+
+
+@app.route("/api/v1/films/<int:film_id>")
+@limiter.limit("100 per hour")
+def api_film_detail(film_id):
+    film = db.session.get(Film, film_id)
+    if not film:
+        return _api_404("Film not found")
+    ratings = [m.rating for m in Movie.query.filter_by(film_id=film_id) if m.rating]
+    avg = round(sum(ratings) / len(ratings), 2) if ratings else None
+    return jsonify({
+        "id": film.id, "title": film.title, "year": film.year,
+        "director": film.director, "genre": film.genre,
+        "plot": film.plot, "poster_url": film.poster_url,
+        "avg_rating": avg, "rating_count": len(ratings),
+    })
+
+
+@app.route("/api/v1/users/<username>")
+@limiter.limit("100 per hour")
+def api_user(username):
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return _api_404("User not found")
+    movies = Movie.query.filter_by(user_id=user.id).all()
+    watched  = sum(1 for m in movies if m.status == "watched")
+    ratings  = [m.rating for m in movies if m.rating]
+    avg      = round(sum(ratings) / len(ratings), 2) if ratings else None
+    return jsonify({
+        "username": user.username,
+        "watched_count": watched,
+        "avg_rating": avg,
+        "followers": len(user.followers),
+        "following": len(user.following),
+    })
+
+
+@app.route("/api/v1/users/<username>/films")
+@limiter.limit("100 per hour")
+def api_user_films(username):
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return _api_404("User not found")
+    page = request.args.get("page", 1, type=int)
+    pag  = (Movie.query.filter_by(user_id=user.id)
+            .order_by(Movie.date_added.desc())
+            .paginate(page=page, per_page=_API_PER_PAGE, error_out=False))
+    return jsonify({
+        "page": page, "total": pag.total, "pages": pag.pages,
+        "films": [{"id": m.id, "title": m.title, "year": m.year,
+                   "rating": m.rating, "status": m.status,
+                   "poster_url": m.poster_url} for m in pag.items],
+    })
+
+
+@app.route("/api/v1/trending")
+@limiter.limit("100 per hour")
+def api_trending():
+    from datetime import datetime as dt, timedelta
+    from sqlalchemy import func as sqlfunc
+    cutoff = dt.utcnow() - timedelta(days=14)
+    rows   = (db.session.query(Movie.title, sqlfunc.count(Movie.id).label("c"))
+              .filter(Movie.date_added >= cutoff, Movie.status == "watched")
+              .group_by(Movie.title)
+              .order_by(sqlfunc.count(Movie.id).desc())
+              .limit(20).all())
+    result = []
+    for row in rows:
+        f = Film.query.filter_by(title=row.title).first()
+        if f:
+            result.append({"id": f.id, "title": f.title, "year": f.year,
+                           "poster_url": f.poster_url, "watches_14d": row.c})
+    return jsonify({"trending": result})
+
+
+# ── REVIEW COMMENTS ───────────────────────────────────────────────────────────
+
+@app.route("/reviews/<int:review_id>/comment", methods=["POST"])
+@login_required
+def add_comment(review_id):
+    review = db.session.get(Review, review_id)
+    if not review:
+        if request.headers.get("HX-Request"):
+            return "", 204
+        flash("Review not found.", "error")
+        return redirect(request.referrer or url_for("index"))
+    body = request.form.get("body", "").strip()
+    if not body or len(body) > 500:
+        if request.headers.get("HX-Request"):
+            return "", 400
+        flash("Comment must be 1–500 characters.", "error")
+        return redirect(request.referrer or url_for("index"))
+    comment = ReviewComment(review_id=review_id, user_id=current_user.id, body=body)
+    db.session.add(comment)
+    db.session.commit()
+    if request.headers.get("HX-Request"):
+        return render_template("_review_comments.html", review=review)
+    return redirect(request.referrer or url_for("index"))
+
+
+@app.route("/reviews/<int:review_id>/comment/<int:comment_id>/delete", methods=["POST"])
+@login_required
+def delete_comment(review_id, comment_id):
+    comment = db.session.get(ReviewComment, comment_id)
+    if not comment or comment.review_id != review_id:
+        flash("Comment not found.", "error")
+        return redirect(request.referrer or url_for("index"))
+    if comment.user_id != current_user.id:
+        flash("You can only delete your own comments.", "error")
+        return redirect(request.referrer or url_for("index"))
+    db.session.delete(comment)
+    db.session.commit()
+    if request.headers.get("HX-Request"):
+        review = db.session.get(Review, review_id)
+        return render_template("_review_comments.html", review=review)
+    return redirect(request.referrer or url_for("index"))
+
+
 # ── ERROR HANDLERS ───────────────────────────────────────────────────────────
 
 @app.errorhandler(404)
@@ -1688,4 +2126,5 @@ if __name__ == "__main__":
         db.create_all()
         migrate_db()
         populate_films()
+        _seed_cinemas()
     app.run(debug=True)

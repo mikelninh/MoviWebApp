@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}{{ cinema.name }} · MoviWebApp{% endblock %}
+
+{% block content %}
+<div class="cinema-detail-header mt-2">
+    <h2 class="section-title">{{ cinema.name }}</h2>
+    {% if cinema.neighbourhood or cinema.city %}
+    <p class="cinema-location-line">📍 {{ cinema.neighbourhood }}{% if cinema.city %}, {{ cinema.city }}{% endif %}</p>
+    {% endif %}
+    {% if cinema.description %}
+    <p class="cinema-detail-desc mt-half">{{ cinema.description }}</p>
+    {% endif %}
+    {% if cinema.website %}
+    <a href="{{ cinema.website }}" class="btn btn-sm mt-1" target="_blank" rel="noopener">Visit website ↗</a>
+    {% endif %}
+</div>
+
+<!-- Now Showing -->
+{% if now_showing %}
+<section class="cinema-section mt-3">
+    <h3 class="section-title-sm">Now Showing</h3>
+    <ul class="cinema-film-list">
+        {% for cf in now_showing %}
+        <li class="cinema-film-item">
+            <span class="cinema-film-title">{{ cf.film_title }}</span>
+            <span class="cinema-film-badge badge-showing">Now Showing</span>
+        </li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+
+<!-- Staff Picks -->
+{% if staff_picks %}
+<section class="cinema-section mt-2">
+    <h3 class="section-title-sm">Staff Picks</h3>
+    <ul class="cinema-film-list">
+        {% for cf in staff_picks %}
+        <li class="cinema-film-item">
+            <span class="cinema-film-title">{{ cf.film_title }}</span>
+            <span class="cinema-film-badge badge-pick">Staff Pick</span>
+        </li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+
+<!-- Screening Requests -->
+<section class="cinema-section mt-2">
+    <h3 class="section-title-sm">Screening Requests
+        <span class="tab-count">{{ requests_list | length }}</span>
+    </h3>
+    {% if requests_list %}
+    <ul class="cinema-film-list">
+        {% for cf in requests_list %}
+        <li class="cinema-film-item cinema-request-item">
+            <span class="cinema-film-title">{{ cf.film_title }}</span>
+            <span class="cinema-votes">▲ {{ cf.votes or 0 }}</span>
+            {% if current_user.is_authenticated %}
+            <form action="{{ url_for('cinema_vote', slug=cinema.slug, film_id=cf.id) }}" method="post" class="inline-form">
+                <button type="submit" class="btn btn-sm btn-vote">Vote</button>
+            </form>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-muted" style="font-size:0.85rem;margin-top:0.5rem;">No screening requests yet. Be the first!</p>
+    {% endif %}
+
+    {% if current_user.is_authenticated %}
+    <form action="{{ url_for('cinema_request', slug=cinema.slug) }}" method="post" class="cinema-request-form mt-2">
+        <input type="text" name="title" placeholder="Request a film…" maxlength="120" required>
+        <button type="submit" class="btn btn-sm">Request</button>
+    </form>
+    {% else %}
+    <p class="text-muted mt-1" style="font-size:0.85rem;"><a href="{{ url_for('login') }}" style="color:#3b82f6">Log in</a> to request screenings.</p>
+    {% endif %}
+</section>
+{% endblock %}

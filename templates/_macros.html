@@ -1,17 +1,56 @@
 {% macro stars(rating) %}{% if rating %}{% set full = rating | int %}{% set half = (rating % 1) >= 0.5 %}<span class="stars">{% for i in range(1, 6) %}{% if i <= full %}<span class="star filled">★</span>{% elif i == full + 1 and half %}<span class="star half">★</span>{% else %}<span class="star">★</span>{% endif %}{% endfor %}</span>{% endif %}{% endmacro %}
 
 {% macro rating_select(current=None, name="rating") %}
-<select name="{{ name }}" id="{{ name }}">
-    <option value="">— none —</option>
-    <option value="0.5"  {{ 'selected' if current == 0.5  }}>½★</option>
-    <option value="1"    {{ 'selected' if current == 1.0  }}>★</option>
-    <option value="1.5"  {{ 'selected' if current == 1.5  }}>★½</option>
-    <option value="2"    {{ 'selected' if current == 2.0  }}>★★</option>
-    <option value="2.5"  {{ 'selected' if current == 2.5  }}>★★½</option>
-    <option value="3"    {{ 'selected' if current == 3.0  }}>★★★</option>
-    <option value="3.5"  {{ 'selected' if current == 3.5  }}>★★★½</option>
-    <option value="4"    {{ 'selected' if current == 4.0  }}>★★★★</option>
-    <option value="4.5"  {{ 'selected' if current == 4.5  }}>★★★★½</option>
-    <option value="5"    {{ 'selected' if current == 5.0  }}>★★★★★</option>
-</select>
+{% set uid = name ~ "_star_" ~ range(100000)|random %}
+<div class="star-picker" id="{{ uid }}" data-value="{{ current or '' }}">
+  {% for i in range(1, 6) %}
+  <span class="star-pick-wrap" data-full="{{ i }}" data-half="{{ i - 0.5 }}">
+    <span class="star-half-left"  data-val="{{ i - 0.5 }}">◐</span><span class="star-half-right" data-val="{{ i }}">◑</span>
+  </span>
+  {% endfor %}
+  <span class="star-pick-label"></span>
+</div>
+<input type="hidden" name="{{ name }}" id="{{ uid }}_val" value="{{ current or '' }}">
+<script>
+(function(){
+  var picker = document.getElementById('{{ uid }}');
+  var inp    = document.getElementById('{{ uid }}_val');
+  var label  = picker.querySelector('.star-pick-label');
+  var current = {{ current or 'null' }};
+
+  function render(val) {
+    picker.querySelectorAll('.star-pick-wrap').forEach(function(wrap) {
+      var full = parseFloat(wrap.dataset.full);
+      var half = parseFloat(wrap.dataset.half);
+      var lh = wrap.querySelector('.star-half-left');
+      var rh = wrap.querySelector('.star-half-right');
+      lh.classList.remove('lit');
+      rh.classList.remove('lit');
+      if (val === null) return;
+      if (val >= full)       { lh.classList.add('lit'); rh.classList.add('lit'); }
+      else if (val >= half)  { lh.classList.add('lit'); }
+    });
+    label.textContent = val !== null ? val + '★' : '';
+  }
+
+  render(current);
+
+  picker.addEventListener('mouseover', function(e) {
+    var t = e.target;
+    if (t.dataset.val) render(parseFloat(t.dataset.val));
+  });
+  picker.addEventListener('mouseleave', function() {
+    render(inp.value !== '' ? parseFloat(inp.value) : null);
+  });
+  picker.addEventListener('click', function(e) {
+    var t = e.target;
+    if (t.dataset.val) {
+      var v = parseFloat(t.dataset.val);
+      inp.value = v;
+      current   = v;
+      render(v);
+    }
+  });
+})();
+</script>
 {% endmacro %}
