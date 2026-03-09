@@ -1059,13 +1059,17 @@ def film_detail(film_id):
         ai_why = ai_why_love(user_movies, film)
     ai_synthesis = ai_review_synthesis(film.title, reviews)
     streaming = get_streaming(film)
+    current_user_lists = []
+    if current_user.is_authenticated:
+        current_user_lists = UserList.query.filter_by(user_id=current_user.id).all()
     return render_template("film_detail.html", film=film,
                            users_with_movie=users_with_movie,
                            friends_with_movie=friends_with_movie,
                            similar=similar_films,
                            reviews=reviews, user_review=user_review,
                            ai_synthesis=ai_synthesis, ai_why=ai_why,
-                           streaming=streaming)
+                           streaming=streaming,
+                           current_user_lists=current_user_lists)
 
 
 @app.route("/search")
@@ -1132,6 +1136,15 @@ def year_in_review(username, year):
     rated    = [m for m in movies if m.rating]
     avg_rating = round(sum(m.rating for m in rated) / len(rated), 1) if rated else None
     rating_dist = {i: sum(1 for m in rated if m.rating == i) for i in range(1, 6)}
+    # Highest-rated film (prefer highest rating, then most recent)
+    top_film = max(rated, key=lambda m: (m.rating, m.date_added or 0)) if rated else None
+    # Monthly breakdown: {month_num: [movie, ...]}
+    from collections import defaultdict
+    monthly_raw = defaultdict(list)
+    for m in movies:
+        if m.date_added:
+            monthly_raw[m.date_added.month].append(m)
+    monthly = [(mo, monthly_raw[mo]) for mo in sorted(monthly_raw)]
     contrarian = None
     biggest_diff = 0
     for m in rated:
@@ -1157,6 +1170,7 @@ def year_in_review(username, year):
         top_genres=top_genres, top_directors=top_directors,
         avg_rating=avg_rating, rating_dist=rating_dist,
         contrarian=contrarian, first_film=movies[0], last_film=movies[-1],
+        top_film=top_film, monthly=monthly,
         badge=badge, rated_count=len(rated), ai_summary=ai_summary,
         prev_year=year - 1, next_year=year + 1,
         current_year=date.today().year)
@@ -1578,7 +1592,11 @@ def view_list(list_id):
     if not lst:
         flash("List not found.", "error")
         return redirect(url_for("index"))
-    return render_template("user_list.html", lst=lst)
+    enriched_items = []
+    for item in lst.items:
+        film = Film.query.filter(db.func.lower(Film.title) == item.movie_title.lower()).first()
+        enriched_items.append({"item": item, "film": film})
+    return render_template("user_list.html", lst=lst, enriched_items=enriched_items)
 
 
 @app.route("/lists/<int:list_id>/add", methods=["POST"])
@@ -1598,6 +1616,29 @@ def add_to_list(list_id):
     db.session.commit()
     flash(f"'{title}' added to list.", "success")
     return redirect(url_for("view_list", list_id=list_id))
+
+
+@app.route("/list/add-film", methods=["POST"])
+@login_required
+def add_to_list_by_name():
+    list_id    = request.form.get("list_id", type=int)
+    film_title = request.form.get("film_title", "").strip()
+    poster_url = request.form.get("poster_url", "").strip()
+    if not list_id or not film_title:
+        flash("Invalid request.", "error")
+        return redirect(request.referrer or url_for("index"))
+    ul = UserList.query.filter_by(id=list_id, user_id=current_user.id).first()
+    if not ul:
+        flash("List not found.", "error")
+        return redirect(request.referrer or url_for("index"))
+    existing = UserListItem.query.filter_by(list_id=list_id, movie_title=film_title).first()
+    if not existing:
+        db.session.add(UserListItem(list_id=list_id, movie_title=film_title, poster_url=poster_url))
+        db.session.commit()
+        flash(f"Added to \u201c{ul.name}\u201d.", "success")
+    else:
+        flash("Already in that list.", "info")
+    return redirect(request.referrer or url_for("index"))
 
 
 @app.route("/lists/<int:list_id>/remove/<int:item_id>", methods=["POST"])

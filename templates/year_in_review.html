@@ -5,6 +5,7 @@
 <div class="yir-hero">
     <div class="yir-eyebrow">Year in Review</div>
     <div class="yir-year">{{ year }}</div>
+    <div class="yir-hero-total">{{ total }} film{{ 's' if total != 1 }} watched</div>
     <div class="yir-username">{{ user.username }}</div>
     <div class="yir-badge">{{ badge[1] }} {{ badge[0] }}</div>
     {% if ai_summary %}
@@ -85,6 +86,33 @@
     </div>
     {% endif %}
 
+    <!-- Highest-rated film of the year -->
+    {% if top_film %}
+    <div class="yir-card yir-highlight-card">
+        <h3 class="yir-card-title">Pick of the Year</h3>
+        <div class="yir-highlight-body">
+            {% if top_film.poster_url %}
+            <a href="{{ url_for('film_detail', film_id=top_film.film_id) if top_film.film_id else url_for('movie_detail', movie_id=top_film.id) }}">
+                <img src="{{ top_film.poster_url }}" alt="{{ top_film.title }}" class="yir-highlight-poster" loading="lazy">
+            </a>
+            {% endif %}
+            <div class="yir-highlight-info">
+                <a href="{{ url_for('film_detail', film_id=top_film.film_id) if top_film.film_id else url_for('movie_detail', movie_id=top_film.id) }}" class="yir-highlight-title">{{ top_film.title }}</a>
+                {% if top_film.year %}<div class="yir-highlight-meta">{{ top_film.year }}</div>{% endif %}
+                {% if top_film.director %}<div class="yir-highlight-meta">{{ top_film.director }}</div>{% endif %}
+                <div class="yir-highlight-stars">{{ '★' * (top_film.rating | int) }}{% if top_film.rating != (top_film.rating | int) %}½{% endif %}</div>
+                {% if top_film.genre %}
+                <div class="yir-highlight-genres">
+                    {% for g in top_film.genre.split(', ')[:3] %}
+                    <span class="genre-tag" data-genre="{{ g }}">{{ g }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- First & Last -->
     <div class="yir-card yir-bookends">
         <div class="yir-bookend">
@@ -115,7 +143,7 @@
             <div>
                 <div class="yir-contrarian-title">{{ m.title }}</div>
                 <div class="yir-contrarian-ratings">
-                    <span>You rated: <strong>{{ '★' * m.rating }}</strong></span>
+                    <span>You rated: <strong>{{ '★' * (m.rating | int) }}</strong></span>
                     <span>Community: <strong>{{ comm_avg }}/5</strong></span>
                 </div>
             </div>
@@ -124,6 +152,36 @@
     {% endif %}
 
 </div>
+
+<!-- Monthly breakdown strip -->
+{% if monthly %}
+<div class="yir-monthly-section mt-3">
+    <h3 class="yir-section-heading">Month by Month</h3>
+    <div class="yir-monthly-scroll">
+        {% set month_names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] %}
+        {% for mo, films in monthly %}
+        <div class="yir-month-block">
+            <div class="yir-month-label">{{ month_names[mo - 1] }}</div>
+            <div class="yir-month-posters">
+                {% for film in films[:6] %}
+                <a href="{{ url_for('film_detail', film_id=film.film_id) if film.film_id else url_for('movie_detail', movie_id=film.id) }}" class="yir-month-poster-wrap" title="{{ film.title }}">
+                    {% if film.poster_url %}
+                    <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="yir-month-poster" loading="lazy">
+                    {% else %}
+                    <div class="yir-month-poster-placeholder">{{ film.title[:2] }}</div>
+                    {% endif %}
+                </a>
+                {% endfor %}
+                {% if films | length > 6 %}
+                <div class="yir-month-overflow">+{{ films | length - 6 }}</div>
+                {% endif %}
+            </div>
+            <div class="yir-month-count">{{ films | length }} film{{ 's' if films | length != 1 }}</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
 
 <!-- Navigation -->
 <div class="yir-nav mt-3">

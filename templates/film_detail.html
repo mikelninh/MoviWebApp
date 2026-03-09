@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import stars %}
+{% from "_macros.html" import stars, rating_select %}
 {% block title %}{{ film.title }} · MoviWebApp{% endblock %}
 
 {% block og_tags %}
@@ -141,22 +141,39 @@
         {% if current_user.is_authenticated %}
         {% set already_have = users_with_movie | selectattr('0.id', 'equalto', current_user.id) | list %}
         {% if not already_have %}
-        <form action="{{ url_for('add_movie', user_id=current_user.id) }}" method="post" class="detail-add-form mt-2">
-            <input type="hidden" name="title" value="{{ film.title }}">
-            <select name="rating">
-                <option value="">No rating</option>
-                <option value="1">★ Poor</option>
-                <option value="2">★★ Fair</option>
-                <option value="3">★★★ Good</option>
-                <option value="4">★★★★ Great</option>
-                <option value="5">★★★★★ Excellent</option>
-            </select>
-            <select name="status">
-                <option value="watched">✓ Watched</option>
-                <option value="watchlist">☐ Watchlist</option>
-            </select>
-            <button type="submit" class="btn">+ Add to my list</button>
-        </form>
+        <div class="detail-add-widget mt-2">
+            <button class="detail-add-toggle btn" id="detailAddToggle" onclick="this.nextElementSibling.style.display='flex'; this.style.display='none'">
+                ＋ Add to my list
+            </button>
+            <form action="{{ url_for('add_movie', user_id=current_user.id) }}" method="post"
+                  class="detail-add-form" style="display:none">
+                <input type="hidden" name="title" value="{{ film.title }}">
+                <div class="detail-add-row">
+                    {{ rating_select() }}
+                    <div class="status-radio-group">
+                        <label class="status-radio"><input type="radio" name="status" value="watched" checked> Watched</label>
+                        <label class="status-radio"><input type="radio" name="status" value="watchlist"> Watchlist</label>
+                    </div>
+                    <button type="submit" class="btn">Add</button>
+                    <button type="button" class="btn btn-ghost" onclick="this.closest('.detail-add-form').style.display='none'; document.getElementById('detailAddToggle').style.display=''">Cancel</button>
+                </div>
+            </form>
+
+            {% if current_user_lists %}
+            <div class="detail-list-add mt-1">
+                <form action="{{ url_for('add_to_list_by_name') }}" method="post" class="detail-list-form">
+                    <input type="hidden" name="film_title" value="{{ film.title }}">
+                    <input type="hidden" name="poster_url" value="{{ film.poster_url or '' }}">
+                    <select name="list_id" class="detail-list-select">
+                        {% for ul in current_user_lists %}
+                        <option value="{{ ul.id }}">{{ ul.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-sm">＋ Add to list</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
         {% else %}
         {% set my_instance = already_have[0][1] %}
         <div class="already-in-list mt-2">

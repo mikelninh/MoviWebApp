@@ -3,111 +3,157 @@
 {% block title %}Feed · MoviWebApp{% endblock %}
 
 {% block content %}
-<h2 class="section-title">Your Feed</h2>
+<div class="feed-page container">
 
-{% if suggested %}
-<section class="suggest-section mt-2">
-    <h3 class="section-title-sm">
-        {% if following_count == 0 %}
-        People to follow — find your people
-        {% else %}
-        You might also enjoy
-        {% endif %}
-    </h3>
-    <ul class="suggest-grid">
-        {% for u in suggested %}
-        <li class="suggest-card">
-            <a href="{{ url_for('user_profile', username=u.username) }}" class="suggest-avatar-link">
-                <img src="{{ avatar_url(u.username) }}" class="suggest-avatar" alt="{{ u.username }}">
-            </a>
-            <div class="suggest-info">
-                <a href="{{ url_for('user_profile', username=u.username) }}" class="suggest-name">{{ u.username }}</a>
-                <span class="suggest-count">{{ u.movies | length }} films</span>
-            </div>
-            <form action="{{ url_for('follow_user', user_id=u.id) }}" method="post">
-                <button type="submit" class="btn btn-sm">+ Follow</button>
-            </form>
-        </li>
-        {% endfor %}
-    </ul>
-</section>
-{% endif %}
+    <header class="feed-header">
+        <h1 class="feed-title-h1">Feed</h1>
+        <p class="feed-sub">Films from people you follow.</p>
+    </header>
 
-{% if following_count == 0 %}
-<div class="empty-state mt-3" style="text-align:left; padding: 1.5rem 0;">
-    <p style="color:var(--text-muted); font-size:0.9rem">Follow someone above and their movies and reviews will show up here.</p>
-</div>
-{% elif not movies and not reviews %}
-<div class="empty-state mt-3">
-    <p>Nothing from the people you follow yet.</p>
-</div>
-{% else %}
-<div class="feed-layout mt-2">
-    <section class="feed-movies">
-        <h3 class="section-title-sm">Recently Added</h3>
-        {% if movies %}
-        <ul class="activity-feed">
-            {% for movie in movies %}
-            <li class="activity-item">
-                <a href="{{ url_for('film_detail', film_id=movie.film_id) if movie.film_id else url_for('movie_detail', movie_id=movie.id) }}" class="activity-poster-link">
-                    {% if movie.poster_url %}
-                        <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="activity-poster">
-                    {% else %}
-                        <div class="activity-poster activity-poster-empty">🎬</div>
-                    {% endif %}
+    {% if suggested %}
+    <section class="suggest-section" style="margin-bottom:2rem;">
+        <h3 class="section-title-sm">
+            {% if following_count == 0 %}
+            People to follow — find your people
+            {% else %}
+            You might also enjoy
+            {% endif %}
+        </h3>
+        <ul class="suggest-grid">
+            {% for u in suggested %}
+            <li class="suggest-card">
+                <a href="{{ url_for('user_profile', username=u.username) }}" class="suggest-avatar-link">
+                    <img src="{{ avatar_url(u.username) }}" class="suggest-avatar" alt="{{ u.username }}">
                 </a>
-                <div class="activity-info">
-                    <a href="{{ url_for('film_detail', film_id=movie.film_id) if movie.film_id else url_for('movie_detail', movie_id=movie.id) }}" class="activity-title">{{ movie.title }}</a>
-                    {% if movie.year %}<span class="activity-year">{{ movie.year }}</span>{% endif %}
+                <div class="suggest-info">
+                    <a href="{{ url_for('user_profile', username=u.username) }}" class="suggest-name">{{ u.username }}</a>
+                    <span class="suggest-count">{{ u.movies | length }} films</span>
+                </div>
+                <form action="{{ url_for('follow_user', user_id=u.id) }}" method="post">
+                    <button type="submit" class="btn btn-sm">+ Follow</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+
+    {% if following_count == 0 %}
+    <div class="feed-empty">
+        <div class="feed-empty-title">Nothing here yet.</div>
+        <p>Follow someone above and their films and reviews will show up here.</p>
+    </div>
+
+    {% elif not movies and not reviews %}
+    <div class="feed-empty">
+        <div class="feed-empty-title">All quiet on the reel front.</div>
+        <p>The people you follow haven't logged anything recently.</p>
+    </div>
+
+    {% else %}
+
+    {#
+        Merge movies and reviews into a single chronological stream.
+        Movies use date_added; reviews use created_at.
+        We tag each item with a type so the template knows how to render it.
+    #}
+    {% set items = [] %}
+    {% for movie in movies %}
+        {% if items.append({'type': 'movie', 'obj': movie, 'ts': movie.date_added}) %}{% endif %}
+    {% endfor %}
+    {% for review in reviews %}
+        {% if items.append({'type': 'review', 'obj': review, 'ts': review.created_at}) %}{% endif %}
+    {% endfor %}
+    {# Sort descending by timestamp — Jinja's sort is stable and works on datetime #}
+    {% set items = items | sort(attribute='ts', reverse=True) %}
+
+    <ul class="feed-list">
+        {% for item in items %}
+
+        {# ── MOVIE ITEM ───────────────────────────────────────── #}
+        {% if item.type == 'movie' %}
+        {% set movie = item.obj %}
+        {% set film_link = url_for('film_detail', film_id=movie.film_id) if movie.film_id else url_for('movie_detail', movie_id=movie.id) %}
+
+        {# Determine action label #}
+        {% if movie.status == 'watchlist' %}
+            {% set action = 'added to watchlist' %}
+        {% elif movie.status == 'watching' %}
+            {% set action = 'is watching' %}
+        {% elif movie.rating %}
+            {% set action = 'rated' %}
+        {% else %}
+            {% set action = 'watched' %}
+        {% endif %}
+
+        <li class="feed-item">
+            <a href="{{ film_link }}" class="feed-poster-link">
+                {% if movie.poster_url %}
+                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="feed-poster">
+                {% else %}
+                    <div class="feed-poster-empty">🎬</div>
+                {% endif %}
+            </a>
+            <div class="feed-body">
+                <div class="feed-who">
+                    <img src="{{ avatar_url(movie.user.username) }}" class="feed-avatar" alt="{{ movie.user.username }}">
+                    <a href="{{ url_for('user_profile', username=movie.user.username) }}" class="feed-username">{{ movie.user.username }}</a>
+                    <span class="feed-action">{{ action }}</span>
+                    {% if movie.rating %}
+                        {{ stars(movie.rating) }}
+                    {% endif %}
+                </div>
+                <a href="{{ film_link }}" class="feed-film-title">{{ movie.title }}</a>
+                <div class="feed-meta">
+                    {% if movie.year %}
+                        <span class="feed-year">{{ movie.year }}</span>
+                    {% endif %}
                     {% if movie.genre %}
-                    <div class="genre-tags">
                         {% for g in movie.genre.split(', ')[:2] %}
                             <a href="{{ url_for('genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
                         {% endfor %}
-                    </div>
                     {% endif %}
-                    <span class="activity-user">
-                        {% if movie.status == 'watching' %}is watching{% else %}added by{% endif %}
-                        <a href="{{ url_for('user_profile', username=movie.user.username) }}">{{ movie.user.username }}</a>
-                    </span>
                 </div>
-                {% if movie.rating %}
-                <div class="activity-rating">{{ stars(movie.rating) }}</div>
+                {% if movie.review %}
+                    <p class="feed-review-snippet">{{ movie.review }}</p>
                 {% endif %}
-            </li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        <p class="text-muted">No recent movies.</p>
-        {% endif %}
-    </section>
+                {% if movie.date_added %}
+                    <span class="feed-date">{{ movie.date_added.strftime('%b %d, %Y') }}</span>
+                {% endif %}
+            </div>
+        </li>
 
-    <section class="feed-reviews">
-        <h3 class="section-title-sm">Recent Reviews</h3>
-        {% if reviews %}
-        <ul class="review-list">
-            {% for review in reviews %}
-            <li class="review-card">
-                <div class="review-header">
-                    <a href="{{ url_for('user_profile', username=review.user.username) }}" class="review-author">
-                        <img src="{{ avatar_url(review.user.username) }}" class="chip-avatar" alt="{{ review.user.username }}">
-                        {{ review.user.username }}
-                    </a>
-                    <span class="review-date">{{ review.created_at.strftime('%b %d') }}</span>
+        {# ── REVIEW ITEM ──────────────────────────────────────── #}
+        {% elif item.type == 'review' %}
+        {% set review = item.obj %}
+        {% set fid = film_map.get(review.movie_title) %}
+        {% set film_link = url_for('film_detail', film_id=fid) if fid else url_for('search', q=review.movie_title) %}
+
+        <li class="feed-item">
+            <a href="{{ film_link }}" class="feed-poster-link">
+                <div class="feed-poster-empty">🎬</div>
+            </a>
+            <div class="feed-body">
+                <div class="feed-who">
+                    <img src="{{ avatar_url(review.user.username) }}" class="feed-avatar" alt="{{ review.user.username }}">
+                    <a href="{{ url_for('user_profile', username=review.user.username) }}" class="feed-username">{{ review.user.username }}</a>
+                    <span class="feed-action">reviewed</span>
                 </div>
-                <p class="review-movie-link">
-                    {% set fid = film_map.get(review.movie_title) %}
-                    <a href="{{ url_for('film_detail', film_id=fid) if fid else url_for('search', q=review.movie_title) }}" style="color:var(--accent)">{{ review.movie_title }}</a>
-                </p>
-                <p class="review-body">{{ review.body | truncate(200) }}</p>
-                {% include "_review_comments.html" with context %}
-            </li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        <p class="text-muted">No recent reviews.</p>
+                <a href="{{ film_link }}" class="feed-film-title">{{ review.movie_title }}</a>
+                <div class="feed-meta"></div>
+                {% if review.body %}
+                    <p class="feed-review-snippet">{{ review.body }}</p>
+                {% endif %}
+                {% if review.created_at %}
+                    <span class="feed-date">{{ review.created_at.strftime('%b %d, %Y') }}</span>
+                {% endif %}
+            </div>
+        </li>
+
         {% endif %}
-    </section>
+        {% endfor %}
+    </ul>
+
+    {% endif %}
 </div>
-{% endif %}
 {% endblock %}
