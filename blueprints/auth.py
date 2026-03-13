@@ -140,6 +140,43 @@ def settings():
     return render_template("settings.html")
 
 
+@auth_bp.route("/settings/verify-email", methods=["POST"])
+@login_required
+def verify_email():
+    if not current_user.email:
+        flash("Please set an email address first.", "error")
+        return redirect(url_for("auth.settings"))
+    token = secrets.token_urlsafe(32)
+    current_user.reset_token = token
+    current_user.reset_token_expires = datetime.utcnow() + timedelta(hours=24)
+    db.session.commit()
+    verify_url = url_for("auth.confirm_email", token=token, _external=True)
+    send_notification_email(
+        current_user.email,
+        "MoviWebApp — Verify Your Email",
+        f"Hi {current_user.username},\n\nClick this link to verify your email "
+        f"address (valid for 24 hours):\n\n{verify_url}\n\n"
+        f"If you didn't request this, ignore this email.\n",
+    )
+    flash("Verification email sent.", "success")
+    return redirect(url_for("auth.settings"))
+
+
+@auth_bp.route("/verify-email/<token>")
+def confirm_email(token):
+    user = User.query.filter_by(reset_token=token).first()
+    if not user or not user.reset_token_expires or \
+       user.reset_token_expires < datetime.utcnow():
+        flash("Invalid or expired verification link.", "error")
+        return redirect(url_for("pages.index"))
+    user.email_verified = True
+    user.reset_token = None
+    user.reset_token_expires = None
+    db.session.commit()
+    flash("Email verified successfully!", "success")
+    return redirect(url_for("auth.settings"))
+
+
 @auth_bp.route("/settings/delete-account", methods=["POST"])
 @login_required
 def delete_account():

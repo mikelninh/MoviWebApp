@@ -11,7 +11,7 @@ import secrets
 from dotenv import load_dotenv
 load_dotenv()
 
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 from flask_login import current_user
 from sqlalchemy import text
 
@@ -85,6 +85,15 @@ app.register_blueprint(nights_bp)
 app.register_blueprint(cinemas_bp)
 app.register_blueprint(api_bp)
 app.register_blueprint(pages_bp)
+
+# ── STATIC FILE CACHE HEADERS ────────────────────────────────────────────────
+
+@app.after_request
+def add_cache_headers(response):
+    if request.path.startswith("/static/"):
+        response.headers["Cache-Control"] = "public, max-age=86400"
+    return response
+
 
 # ── TEMPLATE GLOBALS ─────────────────────────────────────────────────────────
 
@@ -207,6 +216,9 @@ def migrate_db():
         if "reset_token_expires" not in existing_user:
             conn.execute(text(
                 "ALTER TABLE user ADD COLUMN reset_token_expires DATETIME"))
+        if "email_verified" not in existing_user:
+            conn.execute(text(
+                "ALTER TABLE user ADD COLUMN email_verified BOOLEAN DEFAULT 0"))
 
         existing_movie = {row[1] for row in
                           conn.execute(text("PRAGMA table_info(movie)"))}

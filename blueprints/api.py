@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, render_template, request
 from sqlalchemy import func
 
 from extensions import csrf, limiter
@@ -103,6 +103,12 @@ def api_user_films(username):
                    "rating": m.rating, "status": m.status,
                    "poster_url": m.poster_url} for m in pag.items],
     })
+
+
+@api_bp.route("/docs")
+@csrf.exempt
+def api_docs():
+    return render_template("api_docs.html")
 
 
 @api_bp.route("/trending")

@@ -1,0 +1,305 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "MoviWebApp API",
+    "version": "1.0",
+    "description": "Public REST API for MoviWebApp — search films, view user profiles, and discover trending movies."
+  },
+  "servers": [
+    {
+      "url": "/api/v1",
+      "description": "API v1"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "apiRoot",
+        "summary": "API root",
+        "description": "Returns API metadata and a list of available endpoints.",
+        "responses": {
+          "200": {
+            "description": "API info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": { "type": "string", "example": "MoviWebApp API" },
+                    "version": { "type": "string", "example": "1.0" },
+                    "endpoints": {
+                      "type": "array",
+                      "items": { "type": "string" },
+                      "example": [
+                        "/api/v1/films",
+                        "/api/v1/films/<id>",
+                        "/api/v1/users/<username>",
+                        "/api/v1/users/<username>/films",
+                        "/api/v1/trending"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/films": {
+      "get": {
+        "operationId": "listFilms",
+        "summary": "List or search films",
+        "description": "Returns a paginated list of films. Optionally filter by a search query.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "description": "Search query (case-insensitive substring match on title).",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number (defaults to 1, 20 results per page).",
+            "schema": { "type": "integer", "default": 1, "minimum": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated film list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "page": { "type": "integer", "example": 1 },
+                    "total": { "type": "integer", "example": 142 },
+                    "pages": { "type": "integer", "example": 8 },
+                    "films": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/FilmSummary" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/films/{film_id}": {
+      "get": {
+        "operationId": "getFilm",
+        "summary": "Film detail",
+        "description": "Returns full details for a single film, including community rating stats.",
+        "parameters": [
+          {
+            "name": "film_id",
+            "in": "path",
+            "required": true,
+            "description": "Numeric film ID.",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Film detail",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FilmDetail" }
+              }
+            }
+          },
+          "404": {
+            "description": "Film not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{username}": {
+      "get": {
+        "operationId": "getUser",
+        "summary": "User profile",
+        "description": "Returns public profile stats for a user.",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "description": "Username.",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UserProfile" }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{username}/films": {
+      "get": {
+        "operationId": "getUserFilms",
+        "summary": "User's films",
+        "description": "Returns a paginated list of films in the user's collection, newest first.",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "description": "Username.",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number (defaults to 1, 20 results per page).",
+            "schema": { "type": "integer", "default": 1, "minimum": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated user film list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "page": { "type": "integer", "example": 1 },
+                    "total": { "type": "integer", "example": 57 },
+                    "pages": { "type": "integer", "example": 3 },
+                    "films": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/UserFilm" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trending": {
+      "get": {
+        "operationId": "getTrending",
+        "summary": "Trending films",
+        "description": "Returns the top 20 most-watched films in the last 14 days.",
+        "responses": {
+          "200": {
+            "description": "Trending film list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "trending": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/TrendingFilm" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "FilmSummary": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "title": { "type": "string", "example": "Spirited Away" },
+          "year": { "type": "integer", "example": 2001, "nullable": true },
+          "director": { "type": "string", "example": "Hayao Miyazaki", "nullable": true },
+          "genre": { "type": "string", "example": "Animation, Adventure, Family", "nullable": true },
+          "poster_url": { "type": "string", "example": "https://image.tmdb.org/t/p/w500/xxx.jpg", "nullable": true }
+        }
+      },
+      "FilmDetail": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "title": { "type": "string", "example": "Spirited Away" },
+          "year": { "type": "integer", "example": 2001, "nullable": true },
+          "director": { "type": "string", "example": "Hayao Miyazaki", "nullable": true },
+          "genre": { "type": "string", "example": "Animation, Adventure, Family", "nullable": true },
+          "plot": { "type": "string", "nullable": true },
+          "poster_url": { "type": "string", "nullable": true },
+          "avg_rating": { "type": "number", "example": 4.35, "nullable": true },
+          "rating_count": { "type": "integer", "example": 28 }
+        }
+      },
+      "UserProfile": {
+        "type": "object",
+        "properties": {
+          "username": { "type": "string", "example": "cinephile42" },
+          "watched_count": { "type": "integer", "example": 215 },
+          "avg_rating": { "type": "number", "example": 3.78, "nullable": true },
+          "followers": { "type": "integer", "example": 12 },
+          "following": { "type": "integer", "example": 8 }
+        }
+      },
+      "UserFilm": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 99 },
+          "title": { "type": "string", "example": "Parasite" },
+          "year": { "type": "integer", "example": 2019, "nullable": true },
+          "rating": { "type": "number", "example": 5.0, "nullable": true },
+          "status": { "type": "string", "example": "watched" },
+          "poster_url": { "type": "string", "nullable": true }
+        }
+      },
+      "TrendingFilm": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "title": { "type": "string", "example": "Spirited Away" },
+          "year": { "type": "integer", "example": 2001, "nullable": true },
+          "poster_url": { "type": "string", "nullable": true },
+          "watches_14d": { "type": "integer", "example": 34 }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string", "example": "Not found" }
+        }
+      }
+    }
+  }
+}

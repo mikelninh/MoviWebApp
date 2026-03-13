@@ -13,6 +13,7 @@ class User(UserMixin, db.Model):
     password_hash         = db.Column(db.String(256), nullable=True)
     email                 = db.Column(db.String(120), nullable=True)
     email_notifications   = db.Column(db.Boolean, default=False)
+    email_verified        = db.Column(db.Boolean, default=False)
     reset_token           = db.Column(db.String(64), nullable=True)
     reset_token_expires   = db.Column(db.DateTime, nullable=True)
 
