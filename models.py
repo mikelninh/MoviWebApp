@@ -16,10 +16,10 @@ class User(UserMixin, db.Model):
     reset_token           = db.Column(db.String(64), nullable=True)
     reset_token_expires   = db.Column(db.DateTime, nullable=True)
 
-    def set_password(self, password):
+    def set_password(self, password: str) -> None:
         self.password_hash = generate_password_hash(password)
 
-    def check_password(self, password):
+    def check_password(self, password: str) -> bool:
         if not self.password_hash:
             return False
         return check_password_hash(self.password_hash, password)

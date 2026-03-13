@@ -16,7 +16,7 @@ from flask_login import current_user
 from sqlalchemy import text
 
 from data_manager import DataManager
-from extensions import csrf, limiter, login_manager, mail
+from extensions import csrf, limiter, login_manager, mail, migrate
 from helpers import _t, get_inspiration_with_posters
 from models import (Cinema, CinemaFilm, Film, Movie, Notification, User, db)
 
@@ -51,6 +51,7 @@ db.init_app(app)
 csrf.init_app(app)
 login_manager.init_app(app)
 mail.init_app(app)
+migrate.init_app(app, db)
 limiter.init_app(app)
 
 data_manager = DataManager()

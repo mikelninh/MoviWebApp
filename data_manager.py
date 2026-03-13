@@ -15,7 +15,7 @@ class DataManager:
 
     # ── USERS ────────────────────────────────────────────────────────────────
 
-    def create_user(self, name, password):
+    def create_user(self, name: str, password: str) -> tuple[User, bool]:
         existing = User.query.filter_by(username=name).first()
         if existing:
             return existing, False
@@ -25,13 +25,13 @@ class DataManager:
         db.session.commit()
         return user, True
 
-    def get_user_by_username(self, username):
+    def get_user_by_username(self, username: str) -> User | None:
         return User.query.filter_by(username=username).first()
 
-    def get_users(self):
+    def get_users(self) -> list[User]:
         return User.query.all()
 
-    def delete_user(self, user_id):
+    def delete_user(self, user_id: int) -> bool:
         user = db.session.get(User, user_id)
         if not user:
             return False
@@ -42,23 +42,22 @@ class DataManager:
 
     # ── MOVIES ───────────────────────────────────────────────────────────────
 
-    def get_movies(self, user_id, sort="title", status=""):
+    def get_movies(self, user_id: int, sort: str = "title", status: str = "") -> list[Movie]:
         query = Movie.query.filter_by(user_id=user_id)
         if status in ("watched", "watchlist"):
             query = query.filter(Movie.status == status)
-        movies = query.all()
         if sort == "rating":
-            movies.sort(key=lambda m: m.rating or 0, reverse=True)
+            query = query.order_by(db.func.coalesce(Movie.rating, 0).desc())
         elif sort == "year":
-            movies.sort(key=lambda m: m.year or "", reverse=True)
+            query = query.order_by(db.func.coalesce(Movie.year, "").desc())
         else:
-            movies.sort(key=lambda m: m.title.lower())
-        return movies
+            query = query.order_by(db.func.lower(Movie.title))
+        return query.all()
 
-    def get_recent_activity(self, limit=10):
+    def get_recent_activity(self, limit: int = 10) -> list[Movie]:
         return Movie.query.order_by(Movie.id.desc()).limit(limit).all()
 
-    def fetch_omdb_data(self, title):
+    def fetch_omdb_data(self, title: str) -> dict:
         """Return metadata dict from OMDb, or {} if unavailable."""
         if not self.OMDB_API_KEY:
             return {}
@@ -82,14 +81,14 @@ class DataManager:
             logger.exception("OMDb fetch failed for '%s'", title)
         return {}
 
-    def add_movie(self, movie):
+    def add_movie(self, movie: Movie) -> Movie:
         if not movie.date_added:
             movie.date_added = datetime.utcnow()
         db.session.add(movie)
         db.session.commit()
         return movie
 
-    def update_movie(self, movie_id, new_title, new_rating=None, new_status=None):
+    def update_movie(self, movie_id: int, new_title: str, new_rating: float | None = None, new_status: str | None = None) -> Movie | None:
         movie = db.session.get(Movie, movie_id)
         if not movie:
             return None
@@ -107,7 +106,7 @@ class DataManager:
         db.session.commit()
         return movie
 
-    def toggle_status(self, movie_id):
+    def toggle_status(self, movie_id: int) -> Movie | None:
         movie = db.session.get(Movie, movie_id)
         if not movie:
             return None
@@ -115,7 +114,7 @@ class DataManager:
         db.session.commit()
         return movie
 
-    def delete_movie(self, movie_id):
+    def delete_movie(self, movie_id: int) -> bool:
         movie = db.session.get(Movie, movie_id)
         if not movie:
             return False
@@ -125,50 +124,59 @@ class DataManager:
 
     # ── RECOMMENDATIONS ──────────────────────────────────────────────────────
 
-    def get_recommendations(self, user_id, limit=6):
+    def get_recommendations(self, user_id: int, limit: int = 6) -> list[Movie]:
         """Movies liked by users with overlapping taste that this user hasn't added."""
-        my_titles  = {m.title.lower() for m in Movie.query.filter_by(user_id=user_id).all()}
-        my_liked   = {m.title for m in Movie.query.filter_by(user_id=user_id)
-                      .filter(Movie.rating >= 4).all()}
+        my_titles = {m.title.lower() for m in Movie.query.filter_by(user_id=user_id).all()}
+        my_liked = {m.title for m in Movie.query.filter_by(user_id=user_id)
+                    .filter(Movie.rating >= 4).all()}
         if not my_liked:
             return []
 
-        similar_uids = set()
-        for title in my_liked:
-            for m in Movie.query.filter(
-                Movie.title == title, Movie.user_id != user_id, Movie.rating >= 4
-            ).all():
-                similar_uids.add(m.user_id)
+        # Single bulk query: find all user_ids who also rated >= 4 on any of my liked titles
+        similar_uids = {
+            m.user_id for m in Movie.query.filter(
+                Movie.title.in_(my_liked),
+                Movie.user_id != user_id,
+                Movie.rating >= 4,
+            ).all()
+        }
 
         if not similar_uids:
             return []
 
+        # Single bulk query: get all highly-rated movies from similar users
         candidates = Counter()
         best = {}
-        for uid in similar_uids:
-            for m in Movie.query.filter(Movie.user_id == uid, Movie.rating >= 4).all():
-                if m.title.lower() not in my_titles:
-                    candidates[m.title] += 1
-                    if m.title not in best:
-                        best[m.title] = m
+        for m in Movie.query.filter(
+            Movie.user_id.in_(similar_uids),
+            Movie.rating >= 4,
+        ).all():
+            if m.title.lower() not in my_titles:
+                candidates[m.title] += 1
+                if m.title not in best:
+                    best[m.title] = m
 
         return [best[t] for t, _ in candidates.most_common(limit)]
 
-    def get_similar_movies(self, movie_id, limit=6):
+    def get_similar_movies(self, movie_id: int, limit: int = 6) -> list[Movie]:
         """Movies that frequently co-appear with this one in users' lists."""
         movie = db.session.get(Movie, movie_id)
         if not movie:
             return []
         user_ids = [m.user_id for m in Movie.query.filter_by(title=movie.title).all()]
 
+        if not user_ids:
+            return []
+
+        # Single bulk query: get all movies from those users except the source title
         candidates = Counter()
         best = {}
-        for uid in user_ids:
-            for m in Movie.query.filter(
-                Movie.user_id == uid, Movie.title != movie.title
-            ).all():
-                candidates[m.title] += 1
-                if m.title not in best:
-                    best[m.title] = m
+        for m in Movie.query.filter(
+            Movie.user_id.in_(user_ids),
+            Movie.title != movie.title,
+        ).all():
+            candidates[m.title] += 1
+            if m.title not in best:
+                best[m.title] = m
 
         return [best[t] for t, _ in candidates.most_common(limit)]
