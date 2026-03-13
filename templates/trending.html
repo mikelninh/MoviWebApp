@@ -13,10 +13,10 @@
     {% if films %}
     <div class="trending-grid">
         {% for film, count, avg_rating in films %}
-        <a href="{{ url_for('film_detail', film_id=film.id) }}" class="trending-card">
+        <a href="{{ url_for('films.film_detail', film_id=film.id) }}" class="trending-card">
             <div class="trending-rank">{{ loop.index }}</div>
             {% if film.poster_url %}
-                <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="trending-poster" loading="lazy">
+                <img src="{{ film.poster_url }}" alt="{{ film.title }} poster" class="trending-poster" loading="lazy">
             {% else %}
                 <div class="trending-poster trending-poster-empty">🎬</div>
             {% endif %}

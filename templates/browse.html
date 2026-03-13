@@ -4,14 +4,14 @@
 {% block content %}
 <div class="page-header">
     <div>
-        <h2 style="font-size:1.5rem; font-weight:800; color:#fff">Browse by Genre</h2>
+        <h1 style="font-size:1.5rem; font-weight:800; color:#fff">Browse by Genre</h1>
         <p style="font-size:0.82rem; color:var(--text-muted); margin-top:0.2rem">{{ genres | length }} genres across the community</p>
     </div>
 </div>
 
 <div class="genre-browse-grid mt-2">
     {% for genre, count in genres %}
-    <a href="{{ url_for('genre_page', genre=genre) }}" class="genre-browse-card" data-genre="{{ genre }}">
+    <a href="{{ url_for('discovery.genre_page', genre=genre) }}" class="genre-browse-card" data-genre="{{ genre }}">
         <span class="genre-browse-name">{{ genre }}</span>
         <span class="genre-browse-count">{{ count }} film{{ 's' if count != 1 }}</span>
     </a>

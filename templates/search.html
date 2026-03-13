@@ -3,8 +3,8 @@
 
 {% block content %}
 <div class="search-header">
-    <h2>{{ 'Results for "' + q + '"' if q else 'Search' }}</h2>
-    <form action="{{ url_for('search') }}" method="get" class="search-form-big">
+    <h1>{{ 'Results for "' + q + '"' if q else 'Search' }}</h1>
+    <form action="{{ url_for('films.search') }}" method="get" class="search-form-big">
         <input type="search" name="q" value="{{ q }}" placeholder="Search movies…" autofocus>
         <input type="text" name="year" value="{{ year_filter }}" placeholder="Year" class="filter-input">
         <input type="text" name="genre" value="{{ genre_filter }}" placeholder="Genre" class="filter-input">
@@ -20,9 +20,9 @@
     <ul class="movie-grid mt-2">
         {% for film, count in results %}
         <li class="movie-card">
-            <a href="{{ url_for('film_detail', film_id=film.id) }}" class="card-poster-link">
+            <a href="{{ url_for('films.film_detail', film_id=film.id) }}" class="card-poster-link">
                 {% if film.poster_url %}
-                    <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="card-poster">
+                    <img src="{{ film.poster_url }}" alt="{{ film.title }} poster" class="card-poster">
                 {% else %}
                     <div class="card-poster card-poster-empty">🎬</div>
                 {% endif %}
@@ -41,7 +41,7 @@
                 {% if film.genre %}
                 <div class="genre-tags">
                     {% for g in film.genre.split(', ')[:2] %}
-                        <a href="{{ url_for('genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
+                        <a href="{{ url_for('discovery.genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
                     {% endfor %}
                 </div>
                 {% endif %}
@@ -53,7 +53,7 @@
                     {% endif %}
                 </div>
                 {% if current_user.is_authenticated %}
-                <form action="{{ url_for('add_movie', user_id=current_user.id) }}" method="post" class="card-quick-add">
+                <form action="{{ url_for('films.add_movie', user_id=current_user.id) }}" method="post" class="card-quick-add">
                     <input type="hidden" name="title" value="{{ film.title }}">
                     <input type="hidden" name="status" value="watchlist">
                     <button type="submit" class="btn btn-xs quick-add-btn">☐ Watchlist</button>
@@ -67,13 +67,13 @@
     {% if pagination and pagination.pages > 1 %}
     <div class="pagination mt-2">
         {% if pagination.has_prev %}
-        <a href="{{ url_for('search', q=q, page=pagination.prev_num) }}" class="page-btn">← Prev</a>
+        <a href="{{ url_for('films.search', q=q, page=pagination.prev_num) }}" class="page-btn">← Prev</a>
         {% else %}
         <span class="page-btn page-btn-disabled">← Prev</span>
         {% endif %}
         <span class="page-info">{{ pagination.page }} / {{ pagination.pages }}</span>
         {% if pagination.has_next %}
-        <a href="{{ url_for('search', q=q, page=pagination.next_num) }}" class="page-btn">Next →</a>
+        <a href="{{ url_for('films.search', q=q, page=pagination.next_num) }}" class="page-btn">Next →</a>
         {% else %}
         <span class="page-btn page-btn-disabled">Next →</span>
         {% endif %}
@@ -85,7 +85,7 @@
         <p class="search-count">Not in our database yet — here's what we found:</p>
         <div class="omdb-result mt-2">
             {% if omdb_film.poster_url %}
-            <img src="{{ omdb_film.poster_url }}" alt="{{ q }}" class="omdb-poster">
+            <img src="{{ omdb_film.poster_url }}" alt="{{ q }} poster" class="omdb-poster">
             {% endif %}
             <div class="omdb-info">
                 <h3 class="omdb-title">{{ q }}</h3>
@@ -94,17 +94,17 @@
                 {% if omdb_film.genre %}
                 <div class="genre-tags">
                     {% for g in omdb_film.genre.split(', ')[:4] %}
-                        <a href="{{ url_for('genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
+                        <a href="{{ url_for('discovery.genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
                     {% endfor %}
                 </div>
                 {% endif %}
                 {% if omdb_film.plot %}<p class="omdb-plot">{{ omdb_film.plot }}</p>{% endif %}
                 {% if current_user.is_authenticated %}
-                <a href="{{ url_for('get_movies', user_id=current_user.id) }}" class="btn mt-1">
+                <a href="{{ url_for('profiles.get_movies', user_id=current_user.id) }}" class="btn mt-1">
                     Add to my list →
                 </a>
                 {% else %}
-                <a href="{{ url_for('login') }}" class="btn mt-1">Log in to add this →</a>
+                <a href="{{ url_for('auth.login') }}" class="btn mt-1">Log in to add this →</a>
                 {% endif %}
             </div>
         </div>

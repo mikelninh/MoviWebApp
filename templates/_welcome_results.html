@@ -5,7 +5,7 @@
         data-film-id="{{ film.id }}"
         onclick="toggleFilm('{{ film.id }}', {{ film.title | tojson }}, {{ film.poster_url | tojson }})">
         <div class="welcome-film-poster-wrap">
-            <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="welcome-film-poster">
+            <img src="{{ film.poster_url }}" alt="{{ film.title }} poster" class="welcome-film-poster">
             <div class="welcome-film-check">✓</div>
         </div>
         <div class="welcome-film-title">{{ film.title }}</div>

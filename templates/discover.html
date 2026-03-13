@@ -14,7 +14,7 @@
     <div class="discover-hero">
         <h1 class="discover-hero-title">Discover</h1>
         <p class="discover-hero-sub">Curated just for you — from people you trust and films the crowd hasn't found yet.</p>
-        <a href="{{ url_for('pick_tonight') }}" class="btn btn-ghost discover-pick-cta">🎲 Pick one for tonight</a>
+        <a href="{{ url_for('discovery.pick_tonight') }}" class="btn btn-ghost discover-pick-cta">🎲 Pick one for tonight</a>
     </div>
 
     {# ── Section 1: From Your People ── #}
@@ -29,10 +29,10 @@
         <ul class="inspo-scroll">
             {% for film, recommender, rating in network_films %}
             <li class="inspo-poster-card">
-                <a href="{{ url_for('film_detail', film_id=film.id) }}">
+                <a href="{{ url_for('films.film_detail', film_id=film.id) }}">
                     <div class="inspo-poster-wrap">
                         {% if film.poster_url %}
-                        <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="inspo-poster-img" loading="lazy">
+                        <img src="{{ film.poster_url }}" alt="{{ film.title }} poster" class="inspo-poster-img" loading="lazy">
                         {% else %}
                         <div class="inspo-poster-empty">🎬</div>
                         {% endif %}
@@ -52,7 +52,7 @@
         <div class="discover-empty">
             {% if followed_count == 0 %}
             <span>Follow some film lovers to see their picks here.</span>
-            <a href="{{ url_for('index') }}" class="discover-empty-link">Find people →</a>
+            <a href="{{ url_for('pages.index') }}" class="discover-empty-link">Find people →</a>
             {% else %}
             <span>The people you follow haven't added any highly-rated films you haven't seen yet.</span>
             {% endif %}
@@ -74,10 +74,10 @@
         <ul class="inspo-scroll">
             {% for film in because_films %}
             <li class="inspo-poster-card">
-                <a href="{{ url_for('film_detail', film_id=film.id) }}">
+                <a href="{{ url_for('films.film_detail', film_id=film.id) }}">
                     <div class="inspo-poster-wrap">
                         {% if film.poster_url %}
-                        <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="inspo-poster-img" loading="lazy">
+                        <img src="{{ film.poster_url }}" alt="{{ film.title }} poster" class="inspo-poster-img" loading="lazy">
                         {% else %}
                         <div class="inspo-poster-empty">🎬</div>
                         {% endif %}
@@ -110,10 +110,10 @@
         <ul class="inspo-scroll">
             {% for film, avg_rating in hidden_gems %}
             <li class="inspo-poster-card">
-                <a href="{{ url_for('film_detail', film_id=film.id) }}">
+                <a href="{{ url_for('films.film_detail', film_id=film.id) }}">
                     <div class="inspo-poster-wrap">
                         {% if film.poster_url %}
-                        <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="inspo-poster-img" loading="lazy">
+                        <img src="{{ film.poster_url }}" alt="{{ film.title }} poster" class="inspo-poster-img" loading="lazy">
                         {% else %}
                         <div class="inspo-poster-empty">🎬</div>
                         {% endif %}
@@ -146,10 +146,10 @@
         <ul class="inspo-scroll">
             {% for film in watchlist_films %}
             <li class="inspo-poster-card">
-                <a href="{{ url_for('film_detail', film_id=film.id) }}">
+                <a href="{{ url_for('films.film_detail', film_id=film.id) }}">
                     <div class="inspo-poster-wrap">
                         {% if film.poster_url %}
-                        <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="inspo-poster-img" loading="lazy">
+                        <img src="{{ film.poster_url }}" alt="{{ film.title }} poster" class="inspo-poster-img" loading="lazy">
                         {% else %}
                         <div class="inspo-poster-empty">🎬</div>
                         {% endif %}
@@ -165,7 +165,7 @@
         </div>
         {% else %}
         <div class="discover-empty">
-            <span>Your watchlist is empty. <a href="{{ url_for('browse') }}" class="discover-empty-link">Browse films →</a></span>
+            <span>Your watchlist is empty. <a href="{{ url_for('discovery.browse') }}" class="discover-empty-link">Browse films →</a></span>
         </div>
         {% endif %}
     </section>
@@ -182,10 +182,10 @@
         <ul class="inspo-scroll">
             {% for film in fresh_films %}
             <li class="inspo-poster-card">
-                <a href="{{ url_for('film_detail', film_id=film.id) }}">
+                <a href="{{ url_for('films.film_detail', film_id=film.id) }}">
                     <div class="inspo-poster-wrap">
                         {% if film.poster_url %}
-                        <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="inspo-poster-img" loading="lazy">
+                        <img src="{{ film.poster_url }}" alt="{{ film.title }} poster" class="inspo-poster-img" loading="lazy">
                         {% else %}
                         <div class="inspo-poster-empty">🎬</div>
                         {% endif %}

@@ -92,12 +92,12 @@
         <h3 class="yir-card-title">Pick of the Year</h3>
         <div class="yir-highlight-body">
             {% if top_film.poster_url %}
-            <a href="{{ url_for('film_detail', film_id=top_film.film_id) if top_film.film_id else url_for('movie_detail', movie_id=top_film.id) }}">
-                <img src="{{ top_film.poster_url }}" alt="{{ top_film.title }}" class="yir-highlight-poster" loading="lazy">
+            <a href="{{ url_for('films.film_detail', film_id=top_film.film_id) if top_film.film_id else url_for('films.movie_detail', movie_id=top_film.id) }}">
+                <img src="{{ top_film.poster_url }}" alt="{{ top_film.title }} poster" class="yir-highlight-poster" loading="lazy">
             </a>
             {% endif %}
             <div class="yir-highlight-info">
-                <a href="{{ url_for('film_detail', film_id=top_film.film_id) if top_film.film_id else url_for('movie_detail', movie_id=top_film.id) }}" class="yir-highlight-title">{{ top_film.title }}</a>
+                <a href="{{ url_for('films.film_detail', film_id=top_film.film_id) if top_film.film_id else url_for('films.movie_detail', movie_id=top_film.id) }}" class="yir-highlight-title">{{ top_film.title }}</a>
                 {% if top_film.year %}<div class="yir-highlight-meta">{{ top_film.year }}</div>{% endif %}
                 {% if top_film.director %}<div class="yir-highlight-meta">{{ top_film.director }}</div>{% endif %}
                 <div class="yir-highlight-stars">{{ '★' * (top_film.rating | int) }}{% if top_film.rating != (top_film.rating | int) %}½{% endif %}</div>
@@ -118,16 +118,16 @@
         <div class="yir-bookend">
             <div class="yir-bookend-label">First watch of {{ year }}</div>
             {% if first_film.poster_url %}
-            <img src="{{ first_film.poster_url }}" alt="{{ first_film.title }}" class="yir-bookend-poster" loading="lazy">
+            <img src="{{ first_film.poster_url }}" alt="{{ first_film.title }} poster" class="yir-bookend-poster" loading="lazy">
             {% endif %}
-            <a href="{{ url_for('film_detail', film_id=first_film.film_id) if first_film.film_id else url_for('movie_detail', movie_id=first_film.id) }}" class="yir-bookend-title">{{ first_film.title }}</a>
+            <a href="{{ url_for('films.film_detail', film_id=first_film.film_id) if first_film.film_id else url_for('films.movie_detail', movie_id=first_film.id) }}" class="yir-bookend-title">{{ first_film.title }}</a>
         </div>
         <div class="yir-bookend">
             <div class="yir-bookend-label">Last watch of {{ year }}</div>
             {% if last_film.poster_url %}
-            <img src="{{ last_film.poster_url }}" alt="{{ last_film.title }}" class="yir-bookend-poster" loading="lazy">
+            <img src="{{ last_film.poster_url }}" alt="{{ last_film.title }} poster" class="yir-bookend-poster" loading="lazy">
             {% endif %}
-            <a href="{{ url_for('film_detail', film_id=last_film.film_id) if last_film.film_id else url_for('movie_detail', movie_id=last_film.id) }}" class="yir-bookend-title">{{ last_film.title }}</a>
+            <a href="{{ url_for('films.film_detail', film_id=last_film.film_id) if last_film.film_id else url_for('films.movie_detail', movie_id=last_film.id) }}" class="yir-bookend-title">{{ last_film.title }}</a>
         </div>
     </div>
 
@@ -138,7 +138,7 @@
         <h3 class="yir-card-title">Most Contrarian Take</h3>
         <div class="yir-contrarian-body">
             {% if m.poster_url %}
-            <img src="{{ m.poster_url }}" alt="{{ m.title }}" class="yir-contrarian-poster" loading="lazy">
+            <img src="{{ m.poster_url }}" alt="{{ m.title }} poster" class="yir-contrarian-poster" loading="lazy">
             {% endif %}
             <div>
                 <div class="yir-contrarian-title">{{ m.title }}</div>
@@ -164,9 +164,9 @@
             <div class="yir-month-label">{{ month_names[mo - 1] }}</div>
             <div class="yir-month-posters">
                 {% for film in films[:6] %}
-                <a href="{{ url_for('film_detail', film_id=film.film_id) if film.film_id else url_for('movie_detail', movie_id=film.id) }}" class="yir-month-poster-wrap" title="{{ film.title }}">
+                <a href="{{ url_for('films.film_detail', film_id=film.film_id) if film.film_id else url_for('films.movie_detail', movie_id=film.id) }}" class="yir-month-poster-wrap" title="{{ film.title }}">
                     {% if film.poster_url %}
-                    <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="yir-month-poster" loading="lazy">
+                    <img src="{{ film.poster_url }}" alt="{{ film.title }} poster" class="yir-month-poster" loading="lazy">
                     {% else %}
                     <div class="yir-month-poster-placeholder">{{ film.title[:2] }}</div>
                     {% endif %}
@@ -186,11 +186,11 @@
 <!-- Navigation -->
 <div class="yir-nav mt-3">
     {% if prev_year >= 2015 %}
-    <a href="{{ url_for('year_in_review', username=user.username, year=prev_year) }}" class="btn btn-sm">← {{ prev_year }}</a>
+    <a href="{{ url_for('discovery.year_in_review', username=user.username, year=prev_year) }}" class="btn btn-sm">← {{ prev_year }}</a>
     {% endif %}
-    <a href="{{ url_for('user_profile', username=user.username) }}" class="btn btn-sm">Back to profile</a>
+    <a href="{{ url_for('profiles.user_profile', username=user.username) }}" class="btn btn-sm">Back to profile</a>
     {% if next_year <= current_year %}
-    <a href="{{ url_for('year_in_review', username=user.username, year=next_year) }}" class="btn btn-sm">{{ next_year }} →</a>
+    <a href="{{ url_for('discovery.year_in_review', username=user.username, year=next_year) }}" class="btn btn-sm">{{ next_year }} →</a>
     {% endif %}
 </div>
 {% endblock %}

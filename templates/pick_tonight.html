@@ -24,8 +24,8 @@
     <div class="pick-card">
         <div class="pick-poster-col">
             {% if film.poster_url %}
-            <a href="{{ url_for('film_detail', film_id=film.id) }}">
-                <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="pick-poster">
+            <a href="{{ url_for('films.film_detail', film_id=film.id) }}">
+                <img src="{{ film.poster_url }}" alt="{{ film.title }} poster" class="pick-poster">
             </a>
             {% else %}
             <div class="pick-poster-empty">🎬</div>
@@ -46,7 +46,7 @@
             {% if film.genre %}
             <div class="genre-tags pick-genres">
                 {% for g in film.genre.split(', ')[:3] %}
-                    <a href="{{ url_for('genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
+                    <a href="{{ url_for('discovery.genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
                 {% endfor %}
             </div>
             {% endif %}
@@ -60,7 +60,7 @@
             <div class="pick-recommender">
                 <img src="{{ avatar_url(recommender.username) }}" class="pick-rec-avatar" alt="{{ recommender.username }}">
                 <span>Recommended by
-                    <a href="{{ url_for('user_profile', username=recommender.username) }}" class="pick-rec-link">{{ recommender.username }}</a>
+                    <a href="{{ url_for('profiles.user_profile', username=recommender.username) }}" class="pick-rec-link">{{ recommender.username }}</a>
                 </span>
             </div>
             {% endif %}
@@ -70,16 +70,16 @@
             {% endif %}
 
             <div class="pick-actions">
-                <a href="{{ url_for('film_detail', film_id=film.id) }}" class="btn pick-btn-yes">
+                <a href="{{ url_for('films.film_detail', film_id=film.id) }}" class="btn pick-btn-yes">
                     Yes, let's watch this! →
                 </a>
-                <a href="{{ url_for('pick_tonight', exclude=film.id) }}" class="btn btn-ghost pick-btn-another">
+                <a href="{{ url_for('discovery.pick_tonight', exclude=film.id) }}" class="btn btn-ghost pick-btn-another">
                     🎲 Try another
                 </a>
             </div>
 
             <div class="pick-mark-watched">
-                <a href="{{ url_for('film_detail', film_id=film.id) }}" class="pick-watched-link">
+                <a href="{{ url_for('films.film_detail', film_id=film.id) }}" class="pick-watched-link">
                     + Add to watched after
                 </a>
             </div>
@@ -94,8 +94,8 @@
     <h2 class="pick-empty-title">Nothing to pick from yet</h2>
     <p class="pick-empty-sub">Add films to your watchlist, or follow people to get recommendations.</p>
     <div class="pick-empty-actions">
-        <a href="{{ url_for('browse') }}" class="btn">Browse films</a>
-        <a href="{{ url_for('index') }}" class="btn btn-ghost">Go home</a>
+        <a href="{{ url_for('discovery.browse') }}" class="btn">Browse films</a>
+        <a href="{{ url_for('pages.index') }}" class="btn btn-ghost">Go home</a>
     </div>
 </div>
 {% endif %}

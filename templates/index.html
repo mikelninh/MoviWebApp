@@ -11,7 +11,7 @@
             <div class="hero-backdrop"></div>
             <div class="hero-content">
                 <div class="hero-poster-wrap">
-                    <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="hero-poster">
+                    <img src="{{ film.poster_url }}" alt="{{ film.title }} poster" class="hero-poster">
                 </div>
                 <div class="hero-info">
                     <div class="hero-eyebrow">{{ slide.avg_rating }}★ community rating</div>
@@ -26,7 +26,7 @@
                     {% if film.genre %}
                     <div class="genre-tags hero-genres">
                         {% for g in film.genre.split(', ')[:3] %}
-                            <a href="{{ url_for('genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
+                            <a href="{{ url_for('discovery.genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
                         {% endfor %}
                     </div>
                     {% endif %}
@@ -34,7 +34,7 @@
                     <p class="hero-plot">{{ film.plot | truncate(180) }}</p>
                     {% endif %}
                     <div class="hero-actions">
-                        <a href="{{ url_for('film_detail', film_id=film.id) }}" class="btn hero-btn">View Film</a>
+                        <a href="{{ url_for('films.film_detail', film_id=film.id) }}" class="btn hero-btn">View Film</a>
                     </div>
                 </div>
             </div>
@@ -76,10 +76,10 @@
         <ul class="inspo-scroll">
             {% for movie in lst.movies %}
             <li class="inspo-poster-card">
-                <a href="{{ url_for('film_detail', film_id=movie.film_id) if movie.film_id else url_for('search', q=movie.title) }}">
+                <a href="{{ url_for('films.film_detail', film_id=movie.film_id) if movie.film_id else url_for('films.search', q=movie.title) }}">
                     <div class="inspo-poster-wrap">
                         {% if movie.poster_url %}
-                        <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="inspo-poster-img" loading="lazy">
+                        <img src="{{ movie.poster_url }}" alt="{{ movie.title }} poster" class="inspo-poster-img" loading="lazy">
                         {% else %}
                         <div class="inspo-poster-empty">🎬</div>
                         {% endif %}
@@ -123,22 +123,22 @@
             {% set film = entry.film %}
             {% set rating = entry.rating %}
             <li class="review-feed-item">
-                <a href="{{ url_for('film_detail', film_id=film.id) if film else url_for('search', q=review.movie_title) }}" class="review-feed-poster-link">
+                <a href="{{ url_for('films.film_detail', film_id=film.id) if film else url_for('films.search', q=review.movie_title) }}" class="review-feed-poster-link">
                     {% if film and film.poster_url %}
-                        <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="review-feed-poster">
+                        <img src="{{ film.poster_url }}" alt="{{ film.title }} poster" class="review-feed-poster">
                     {% else %}
                         <div class="review-feed-poster review-feed-poster-empty">🎬</div>
                     {% endif %}
                 </a>
                 <div class="review-feed-body">
                     <div class="review-feed-top">
-                        <a href="{{ url_for('user_profile', username=review.user.username) }}" class="review-feed-user">
+                        <a href="{{ url_for('profiles.user_profile', username=review.user.username) }}" class="review-feed-user">
                             <img src="{{ avatar_url(review.user.username) }}" class="review-feed-avatar" alt="{{ review.user.username }}">
                             {{ review.user.username }}
                         </a>
                         <span class="review-feed-sep">on</span>
                         {% if film %}
-                        <a href="{{ url_for('film_detail', film_id=film.id) }}" class="review-feed-film">{{ film.title }}</a>
+                        <a href="{{ url_for('films.film_detail', film_id=film.id) }}" class="review-feed-film">{{ film.title }}</a>
                         {% if film.year %}<span class="review-feed-year">{{ film.year }}</span>{% endif %}
                         {% else %}
                         <span class="review-feed-film">{{ review.movie_title }}</span>
@@ -165,28 +165,28 @@
         <ul class="activity-feed">
             {% for movie in activity %}
             <li class="activity-item">
-                <a href="{{ url_for('film_detail', film_id=movie.film_id) if movie.film_id else url_for('movie_detail', movie_id=movie.id) }}" class="activity-poster-link">
+                <a href="{{ url_for('films.film_detail', film_id=movie.film_id) if movie.film_id else url_for('films.movie_detail', movie_id=movie.id) }}" class="activity-poster-link">
                     {% if movie.poster_url %}
-                        <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="activity-poster">
+                        <img src="{{ movie.poster_url }}" alt="{{ movie.title }} poster" class="activity-poster">
                     {% else %}
                         <div class="activity-poster activity-poster-empty">🎬</div>
                     {% endif %}
                 </a>
                 <div class="activity-info">
-                    <a href="{{ url_for('film_detail', film_id=movie.film_id) if movie.film_id else url_for('movie_detail', movie_id=movie.id) }}" class="activity-title">
+                    <a href="{{ url_for('films.film_detail', film_id=movie.film_id) if movie.film_id else url_for('films.movie_detail', movie_id=movie.id) }}" class="activity-title">
                         {{ movie.title }}
                     </a>
                     {% if movie.year %}<span class="activity-year">{{ movie.year }}</span>{% endif %}
                     {% if movie.genre %}
                     <div class="genre-tags">
                         {% for g in movie.genre.split(', ')[:2] %}
-                            <a href="{{ url_for('genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
+                            <a href="{{ url_for('discovery.genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
                         {% endfor %}
                     </div>
                     {% endif %}
                     <span class="activity-user">
                         added by
-                        <a href="{{ url_for('user_profile', username=movie.user.username) }}">{{ movie.user.username }}</a>
+                        <a href="{{ url_for('profiles.user_profile', username=movie.user.username) }}">{{ movie.user.username }}</a>
                     </span>
                 </div>
                 {% if movie.rating %}

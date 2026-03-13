@@ -13,7 +13,7 @@
     <!-- Header -->
     <div class="diary-header">
         <div class="diary-header-left">
-            <a href="{{ url_for('user_profile', username=user.username) }}" class="diary-back">← {{ user.username }}</a>
+            <a href="{{ url_for('profiles.user_profile', username=user.username) }}" class="diary-back">← {{ user.username }}</a>
             <h1 class="diary-title">Film Diary</h1>
         </div>
         <div class="diary-stats">
@@ -51,10 +51,10 @@
         </div>
         <div class="diary-grid">
             {% for movie in movies %}
-            <a href="{{ url_for('film_detail', film_id=movie.film_id) if movie.film_id else url_for('movie_detail', movie_id=movie.id) }}"
+            <a href="{{ url_for('films.film_detail', film_id=movie.film_id) if movie.film_id else url_for('films.movie_detail', movie_id=movie.id) }}"
                class="diary-card" title="{{ movie.title }}{% if movie.year %} ({{ movie.year }}){% endif %}">
                 {% if movie.poster_url %}
-                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="diary-card-poster" loading="lazy">
+                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }} poster" class="diary-card-poster" loading="lazy">
                 {% else %}
                     <div class="diary-card-poster diary-card-empty">🎬</div>
                 {% endif %}
@@ -75,7 +75,7 @@
     {% else %}
     <div class="empty-state mt-3">
         <p>No watched films yet.</p>
-        <a href="{{ url_for('browse') }}" class="btn mt-1">Browse films →</a>
+        <a href="{{ url_for('discovery.browse') }}" class="btn mt-1">Browse films →</a>
     </div>
     {% endif %}
 

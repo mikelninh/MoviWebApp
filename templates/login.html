@@ -4,29 +4,30 @@
 {% block content %}
 <div class="auth-box mt-2">
     <h2>Login</h2>
-    <form action="{{ url_for('login') }}" method="post">
+    <form action="{{ url_for('auth.login') }}" method="post">
         <label for="name">Username</label>
         <input type="text" id="name" name="name" required maxlength="80" autofocus>
         <label for="password">Password</label>
         <input type="password" id="password" name="password" required>
         <input type="submit" value="Login">
+        <p class="mt-half"><a href="{{ url_for('auth.forgot_password') }}">Forgot password?</a></p>
     </form>
-    <p class="mt-1 text-muted">Don't have an account? <a href="{{ url_for('register') }}">Register</a></p>
+    <p class="mt-1 text-muted">Don't have an account? <a href="{{ url_for('auth.register') }}">Register</a></p>
 
     <div class="demo-login">
         <p class="demo-label">Just exploring? Try a demo account:</p>
         <div class="demo-btns">
-            <form action="{{ url_for('login') }}" method="post">
+            <form action="{{ url_for('auth.login') }}" method="post">
                 <input type="hidden" name="name" value="ninh">
                 <input type="hidden" name="password" value="password123">
                 <button type="submit" class="btn btn-ghost btn-sm">🎬 ninh</button>
             </form>
-            <form action="{{ url_for('login') }}" method="post">
+            <form action="{{ url_for('auth.login') }}" method="post">
                 <input type="hidden" name="name" value="voidpilot">
                 <input type="hidden" name="password" value="password123">
                 <button type="submit" class="btn btn-ghost btn-sm">🚀 voidpilot</button>
             </form>
-            <form action="{{ url_for('login') }}" method="post">
+            <form action="{{ url_for('auth.login') }}" method="post">
                 <input type="hidden" name="name" value="nolancore">
                 <input type="hidden" name="password" value="password123">
                 <button type="submit" class="btn btn-ghost btn-sm">🎥 nolancore</button>

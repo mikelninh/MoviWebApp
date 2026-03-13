@@ -1,4 +1,4 @@
-<form hx-post="{{ url_for('follow_user', user_id=target_user_id) }}"
+<form hx-post="{{ url_for('social.follow_user', user_id=target_user_id) }}"
       hx-swap="outerHTML"
       hx-target="closest form"
       style="display:inline">

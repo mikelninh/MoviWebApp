@@ -14,10 +14,10 @@
         <p class="welcome-sub">Pick a few films — we'll find people who share your taste.</p>
     </div>
 
-    <form action="{{ url_for('welcome_pick') }}" method="post" id="pick-form">
+    <form action="{{ url_for('auth.welcome_pick') }}" method="post" id="pick-form">
         <div class="welcome-search-wrap">
             <input type="search" id="welcome-search" placeholder="Search any film…"
-                   hx-get="{{ url_for('welcome_search') }}"
+                   hx-get="{{ url_for('auth.welcome_search') }}"
                    hx-trigger="input changed delay:250ms"
                    hx-target="#welcome-results"
                    hx-include="[name='q']"
@@ -38,7 +38,7 @@
             <button type="submit" class="btn welcome-continue-btn" id="continue-btn" disabled>
                 Continue →
             </button>
-            <a href="{{ url_for('feed') }}" class="welcome-skip">Skip for now</a>
+            <a href="{{ url_for('social.feed') }}" class="welcome-skip">Skip for now</a>
         </div>
     </form>
 
@@ -80,7 +80,7 @@ function renderSelected() {
     // Rebuild selected poster strip
     grid.innerHTML = ids.map(id => `
         <div class="welcome-selected-card" onclick="toggleFilm('${id}','','')">
-            <img src="${selected[id].poster}" class="welcome-selected-poster" title="${selected[id].title}">
+            <img src="${selected[id].poster}" class="welcome-selected-poster" alt="${selected[id].title} poster" title="${selected[id].title}">
             <div class="welcome-selected-remove">✕</div>
         </div>
     `).join('');

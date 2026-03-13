@@ -9,7 +9,7 @@
 <div class="movie-detail">
     <div class="detail-poster-col">
         {% if movie.poster_url %}
-            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="detail-poster">
+            <img src="{{ movie.poster_url }}" alt="{{ movie.title }} poster" class="detail-poster">
         {% else %}
             <div class="detail-poster detail-poster-empty">🎬</div>
         {% endif %}
@@ -52,7 +52,7 @@
             <h3 class="section-title-sm">In {{ users_with_movie | length }} list{{ 's' if users_with_movie | length != 1 }}</h3>
             <div class="list-users">
                 {% for user, instance in users_with_movie %}
-                <a href="{{ url_for('user_profile', username=user.username) }}" class="list-user-chip">
+                <a href="{{ url_for('profiles.user_profile', username=user.username) }}" class="list-user-chip">
                     <img src="{{ avatar_url(user.username) }}" class="chip-avatar" alt="{{ user.username }}">
                     {{ user.username }}
                     {% if instance.rating %}
@@ -66,7 +66,7 @@
         {% if current_user.is_authenticated %}
         {% set already_have = users_with_movie | selectattr('0.id', 'equalto', current_user.id) | list %}
         {% if not already_have %}
-        <form action="{{ url_for('add_movie', user_id=current_user.id) }}" method="post" class="detail-add-form mt-2">
+        <form action="{{ url_for('films.add_movie', user_id=current_user.id) }}" method="post" class="detail-add-form mt-2">
             <input type="hidden" name="title" value="{{ movie.title }}">
             <select name="rating">
                 <option value="">No rating</option>
@@ -95,9 +95,9 @@
     <ul class="rec-grid">
         {% for m in similar %}
         <li class="rec-card">
-            <a href="{{ url_for('movie_detail', movie_id=m.id) }}">
+            <a href="{{ url_for('films.movie_detail', movie_id=m.id) }}">
                 {% if m.poster_url %}
-                    <img src="{{ m.poster_url }}" alt="{{ m.title }}" class="rec-poster">
+                    <img src="{{ m.poster_url }}" alt="{{ m.title }} poster" class="rec-poster">
                 {% else %}
                     <div class="rec-poster rec-poster-empty">🎬</div>
                 {% endif %}
@@ -118,7 +118,7 @@
     </h3>
 
     {% if current_user.is_authenticated %}
-    <form action="{{ url_for('add_review', movie_id=movie.id) }}" method="post" class="review-form">
+    <form action="{{ url_for('films.add_review', movie_id=movie.id) }}" method="post" class="review-form">
         <textarea name="body" rows="3" maxlength="1000"
             placeholder="What did you think?…">{{ user_review.body if user_review else '' }}</textarea>
         <button type="submit" class="btn btn-sm">
@@ -133,7 +133,7 @@
         {% set liked = current_user.is_authenticated and review.likes | selectattr('user_id','equalto',current_user.id) | list | length > 0 %}
         <li class="review-card">
             <div class="review-header">
-                <a href="{{ url_for('user_profile', username=review.user.username) }}" class="review-author">
+                <a href="{{ url_for('profiles.user_profile', username=review.user.username) }}" class="review-author">
                     <img src="{{ avatar_url(review.user.username) }}" class="chip-avatar" alt="{{ review.user.username }}">
                     {{ review.user.username }}
                 </a>

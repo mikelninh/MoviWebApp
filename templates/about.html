@@ -63,10 +63,10 @@
 
     <div class="about-cta">
         {% if not current_user.is_authenticated %}
-        <a href="{{ url_for('register') }}" class="btn about-join-btn">Create your free account →</a>
-        <a href="{{ url_for('login') }}" class="about-login-link">Already a member? Log in</a>
+        <a href="{{ url_for('auth.register') }}" class="btn about-join-btn">Create your free account →</a>
+        <a href="{{ url_for('auth.login') }}" class="about-login-link">Already a member? Log in</a>
         {% else %}
-        <a href="{{ url_for('user_profile', username=current_user.username) }}" class="btn about-join-btn">Go to your list →</a>
+        <a href="{{ url_for('profiles.user_profile', username=current_user.username) }}" class="btn about-join-btn">Go to your list →</a>
         {% endif %}
     </div>
 
@@ -75,7 +75,7 @@
         <span class="about-sep">·</span>
         <a href="https://ko-fi.com/mikel777" target="_blank" rel="noopener">Ko-fi</a>
         <span class="about-sep">·</span>
-        <a href="{{ url_for('privacy') }}">Privacy</a>
+        <a href="{{ url_for('pages.privacy') }}">Privacy</a>
     </div>
 
 </div>

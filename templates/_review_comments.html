@@ -4,16 +4,16 @@
   <ul class="comment-list">
     {% for comment in review.comments %}
     <li class="comment-item">
-      <a href="{{ url_for('user_profile', username=comment.user.username) }}" class="comment-author">
+      <a href="{{ url_for('profiles.user_profile', username=comment.user.username) }}" class="comment-author">
         <img src="{{ avatar_url(comment.user.username) }}" class="comment-avatar" alt="{{ comment.user.username }}">
         {{ comment.user.username }}
       </a>
       <span class="comment-body">{{ comment.body }}</span>
       <span class="comment-date">{{ comment.created_at.strftime('%b %d') }}</span>
       {% if current_user.is_authenticated and current_user.id == comment.user_id %}
-      <form action="{{ url_for('delete_comment', review_id=review.id, comment_id=comment.id) }}" method="post"
+      <form action="{{ url_for('social.delete_comment', review_id=review.id, comment_id=comment.id) }}" method="post"
             class="inline-form"
-            hx-post="{{ url_for('delete_comment', review_id=review.id, comment_id=comment.id) }}"
+            hx-post="{{ url_for('social.delete_comment', review_id=review.id, comment_id=comment.id) }}"
             hx-target="#comments-{{ review.id }}"
             hx-swap="outerHTML">
         <button type="submit" class="btn-link comment-delete" title="Delete">✕</button>
@@ -26,7 +26,7 @@
 
   {% if current_user.is_authenticated %}
   <form class="comment-form mt-half"
-        hx-post="{{ url_for('add_comment', review_id=review.id) }}"
+        hx-post="{{ url_for('social.add_comment', review_id=review.id) }}"
         hx-target="#comments-{{ review.id }}"
         hx-swap="outerHTML"
         hx-on::after-request="this.reset()">

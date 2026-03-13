@@ -16,7 +16,7 @@
     <div class="winner-confetti"></div>
     <div class="winner-inner">
         {% if night.winner.poster_url %}
-        <img src="{{ night.winner.poster_url }}" alt="{{ night.winner.movie_title }}" class="winner-poster">
+        <img src="{{ night.winner.poster_url }}" alt="{{ night.winner.movie_title }} poster" class="winner-poster">
         {% endif %}
         <div class="winner-text">
             <div class="winner-label">🏆 Tonight's Pick</div>
@@ -26,7 +26,7 @@
         <div class="winner-share">
             <button class="btn btn-sm" onclick="copyLink('{{ request.url }}')">📋 Share result</button>
             {% if current_user.is_authenticated and current_user.id == night.creator_id %}
-            <form action="{{ url_for('clear_winner', night_id=night.id) }}" method="post" style="display:inline">
+            <form action="{{ url_for('nights.clear_winner', night_id=night.id) }}" method="post" style="display:inline">
                 <button type="submit" class="btn btn-sm btn-ghost" title="Change winner">↩ Undo</button>
             </form>
             {% endif %}
@@ -37,12 +37,12 @@
 
 <div class="night-detail-header">
     <div>
-        <h2>{{ night.name }}</h2>
+        <h1>{{ night.name }}</h1>
         {% if night.date %}<p class="night-date">📅 {{ night.date }}</p>{% endif %}
         {% if night.description %}<p class="night-desc mt-1">{{ night.description }}</p>{% endif %}
-        <p class="night-by mt-half">Planned by <a href="{{ url_for('user_profile', username=night.creator.username) }}">{{ night.creator.username }}</a></p>
+        <p class="night-by mt-half">Planned by <a href="{{ url_for('profiles.user_profile', username=night.creator.username) }}">{{ night.creator.username }}</a></p>
     </div>
-    <a href="{{ url_for('movie_nights') }}" class="btn btn-sm btn-ghost">← All nights</a>
+    <a href="{{ url_for('nights.movie_nights') }}" class="btn btn-sm btn-ghost">← All nights</a>
 </div>
 
 <!-- Invite link -->
@@ -57,7 +57,7 @@
 <!-- Suggest a film -->
 {% if current_user.is_authenticated and not night.winner %}
 <div class="suggest-form mt-2">
-    <form action="{{ url_for('suggest_film', night_id=night.id) }}" method="post" class="form-row">
+    <form action="{{ url_for('nights.suggest_film', night_id=night.id) }}" method="post" class="form-row">
         <div class="form-group" style="flex:2">
             <input type="text" name="title" placeholder="Suggest a film…" required maxlength="120" autofocus>
         </div>
@@ -73,7 +73,7 @@
     <p class="night-vote-hint text-muted">
         {% if night.winner %}The votes are in — winner declared above.
         {% elif current_user.is_authenticated %}Vote for the film you want to watch — one vote per person.
-        {% else %}<a href="{{ url_for('login') }}">Log in</a> to vote.{% endif %}
+        {% else %}<a href="{{ url_for('auth.login') }}">Log in</a> to vote.{% endif %}
     </p>
     <ul class="night-films-list mt-1">
         {% for film in sorted_films %}
@@ -86,14 +86,14 @@
             <div class="night-leading-badge">🏆 Leading</div>
             {% endif %}
             {% if film.poster_url %}
-            <img src="{{ film.poster_url }}" alt="{{ film.movie_title }}" class="night-film-poster">
+            <img src="{{ film.poster_url }}" alt="{{ film.movie_title }} poster" class="night-film-poster">
             {% else %}
             <div class="night-film-poster night-film-poster-empty">🎬</div>
             {% endif %}
             <div class="night-film-info">
                 <span class="night-film-title">{{ film.movie_title }}</span>
                 {% if film.suggester %}
-                <span class="night-film-by">suggested by <a href="{{ url_for('user_profile', username=film.suggester.username) }}">{{ film.suggester.username }}</a></span>
+                <span class="night-film-by">suggested by <a href="{{ url_for('profiles.user_profile', username=film.suggester.username) }}">{{ film.suggester.username }}</a></span>
                 {% endif %}
                 {% if vote_count > 0 %}
                 <span class="night-voter-list">
@@ -112,12 +112,12 @@
                 {% endif %}
             </div>
             {% if current_user.is_authenticated and night.creator_id == current_user.id and not night.winner %}
-            <form action="{{ url_for('declare_winner', night_id=night.id, film_id=film.id) }}" method="post" style="display:inline">
+            <form action="{{ url_for('nights.declare_winner', night_id=night.id, film_id=film.id) }}" method="post" style="display:inline">
                 <button type="submit" class="btn btn-xs btn-winner" title="Declare this the winner">🏆</button>
             </form>
             {% endif %}
             {% if current_user.is_authenticated and (film.suggested_by == current_user.id or night.creator_id == current_user.id) and not night.winner %}
-            <form action="{{ url_for('delete_suggestion', night_id=night.id, film_id=film.id) }}" method="post"
+            <form action="{{ url_for('nights.delete_suggestion', night_id=night.id, film_id=film.id) }}" method="post"
                   onsubmit="return confirm('Remove this suggestion?')">
                 <button type="submit" class="btn btn-xs btn-danger night-delete-btn" title="Remove suggestion">✕</button>
             </form>
@@ -127,7 +127,7 @@
     </ul>
     {% else %}
     <div class="empty-state">
-        <p>🎬 No films suggested yet.{% if current_user.is_authenticated %} Be the first to suggest one above!{% else %} <a href="{{ url_for('login') }}">Log in</a> to suggest.{% endif %}</p>
+        <p>🎬 No films suggested yet.{% if current_user.is_authenticated %} Be the first to suggest one above!{% else %} <a href="{{ url_for('auth.login') }}">Log in</a> to suggest.{% endif %}</p>
     </div>
     {% endif %}
 </section>

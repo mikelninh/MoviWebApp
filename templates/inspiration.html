@@ -30,7 +30,7 @@
             </li>
             {% endfor %}
         </ol>
-        <a href="{{ url_for('search') }}?q={{ lst.movies[0].title | urlencode }}"
+        <a href="{{ url_for('films.search') }}?q={{ lst.movies[0].title | urlencode }}"
            class="inspo-search-link">Search on MoviWebApp &rarr;</a>
     </div>
     {% endfor %}

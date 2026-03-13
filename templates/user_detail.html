@@ -21,7 +21,7 @@
 <div class="profile-header">
     <img src="{{ avatar_url(user.username) }}" class="profile-avatar" alt="{{ user.username }}">
     <div class="profile-meta">
-        <h2 class="profile-name">{{ user.username }}</h2>
+        <h1 class="profile-name">{{ user.username }}</h1>
         <div class="profile-sub">
             <span>{{ followers_count }} follower{{ 's' if followers_count != 1 }}</span>
             <span class="stats-sep">·</span>
@@ -36,7 +36,7 @@
         {% if profile_stats.top_genres %}
         <div class="genre-tags mt-half">
             {% for g, _ in profile_stats.top_genres %}
-                <a href="{{ url_for('genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
+                <a href="{{ url_for('discovery.genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
             {% endfor %}
         </div>
         {% endif %}
@@ -57,8 +57,8 @@
         </span>
         {% endif %}
         {% endif %}
-        <a href="{{ url_for('diary', user_id=user.id) }}" class="btn btn-sm">Diary</a>
-        <a href="{{ url_for('year_in_review', username=user.username, year=current_year) }}" class="btn btn-sm">{{ current_year }} Recap</a>
+        <a href="{{ url_for('profiles.diary', user_id=user.id) }}" class="btn btn-sm">Diary</a>
+        <a href="{{ url_for('discovery.year_in_review', username=user.username, year=current_year) }}" class="btn btn-sm">{{ current_year }} Recap</a>
     </div>
 </div>
 
@@ -70,8 +70,8 @@
             <span class="loggedout-cta-sub">Track your own films, find your people, and see how your taste compares.</span>
         </div>
         <div class="loggedout-cta-btns">
-            <a href="{{ url_for('register') }}" class="btn loggedout-join-btn">Join free →</a>
-            <a href="{{ url_for('login') }}" class="loggedout-login-link">Already have an account?</a>
+            <a href="{{ url_for('auth.register') }}" class="btn loggedout-join-btn">Join free →</a>
+            <a href="{{ url_for('auth.login') }}" class="loggedout-login-link">Already have an account?</a>
         </div>
     </div>
 </div>
@@ -94,20 +94,20 @@
 
 <!-- Status tabs -->
 <div class="tab-bar mt-1">
-    <a href="{{ url_for('user_profile', username=user.username, sort=sort) }}"
+    <a href="{{ url_for('profiles.user_profile', username=user.username, sort=sort) }}"
        class="tab {{ 'active' if not status_filter }}">
         All <span class="tab-count">{{ all_count }}</span>
     </a>
-    <a href="{{ url_for('user_profile', username=user.username, sort=sort, status='watched') }}"
+    <a href="{{ url_for('profiles.user_profile', username=user.username, sort=sort, status='watched') }}"
        class="tab {{ 'active' if status_filter == 'watched' }}">
         ✓ Watched <span class="tab-count">{{ watched_count }}</span>
     </a>
-    <a href="{{ url_for('user_profile', username=user.username, sort=sort, status='watchlist') }}"
+    <a href="{{ url_for('profiles.user_profile', username=user.username, sort=sort, status='watchlist') }}"
        class="tab {{ 'active' if status_filter == 'watchlist' }}">
         ☐ Watchlist <span class="tab-count">{{ watchlist_count }}</span>
     </a>
     {% if watching_count > 0 or status_filter == 'watching' %}
-    <a href="{{ url_for('user_profile', username=user.username, sort=sort, status='watching') }}"
+    <a href="{{ url_for('profiles.user_profile', username=user.username, sort=sort, status='watching') }}"
        class="tab tab-watching {{ 'active' if status_filter == 'watching' }}">
         📺 Watching <span class="tab-count">{{ watching_count }}</span>
     </a>
@@ -117,8 +117,8 @@
 <!-- Add movie form (owner only) -->
 {% if current_user.is_authenticated and current_user.id == user.id %}
 <div class="add-movie-form mt-2">
-    <a href="{{ url_for('import_letterboxd') }}" class="import-shortcut">📥 Import from Letterboxd</a>
-    <form action="{{ url_for('add_movie', user_id=user.id) }}" method="post">
+    <a href="{{ url_for('pages.import_letterboxd') }}" class="import-shortcut">📥 Import from Letterboxd</a>
+    <form action="{{ url_for('films.add_movie', user_id=user.id) }}" method="post">
         <div class="form-row">
             <div class="form-group" style="flex:2">
                 <label for="title">Movie title</label>
@@ -147,9 +147,9 @@
 <ul class="movie-grid mt-2" id="movie-grid">
     {% for movie in favorites %}
     <li class="movie-card {{ movie.status or 'watched' }}" data-title="{{ movie.title }}">
-        <a href="{{ url_for('film_detail', film_id=movie.film_id) if movie.film_id else url_for('movie_detail', movie_id=movie.id) }}" class="card-poster-link">
+        <a href="{{ url_for('films.film_detail', film_id=movie.film_id) if movie.film_id else url_for('films.movie_detail', movie_id=movie.id) }}" class="card-poster-link">
             {% if movie.poster_url %}
-                <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="card-poster">
+                <img src="{{ movie.poster_url }}" alt="{{ movie.title }} poster" class="card-poster">
             {% else %}
                 <div class="card-poster card-poster-empty">🎬</div>
             {% endif %}
@@ -164,8 +164,8 @@
             {% if movie.rating %}<div class="stars">{{ stars(movie.rating) }}</div>{% endif %}
             {% if current_user.is_authenticated and current_user.id == user.id %}
             <div class="card-actions">
-                <a href="{{ url_for('edit_movie', user_id=user.id, movie_id=movie.id) }}" class="btn btn-sm">Edit</a>
-                <form action="{{ url_for('delete_movie', user_id=user.id, movie_id=movie.id) }}" method="post"
+                <a href="{{ url_for('films.edit_movie', user_id=user.id, movie_id=movie.id) }}" class="btn btn-sm">Edit</a>
+                <form action="{{ url_for('films.delete_movie', user_id=user.id, movie_id=movie.id) }}" method="post"
                       onsubmit="return confirm('Remove this movie?')">
                     <button type="submit" class="btn btn-sm btn-danger">✕</button>
                 </form>
@@ -189,13 +189,13 @@
 {% if total_pages > 1 %}
 <div class="pagination mt-2">
     {% if page > 1 %}
-    <a href="{{ url_for('user_profile', username=user.username, sort=sort, status=status_filter, page=page-1) }}" class="page-btn">← Prev</a>
+    <a href="{{ url_for('profiles.user_profile', username=user.username, sort=sort, status=status_filter, page=page-1) }}" class="page-btn">← Prev</a>
     {% else %}
     <span class="page-btn page-btn-disabled">← Prev</span>
     {% endif %}
     <span class="page-info">{{ page }} / {{ total_pages }}</span>
     {% if page < total_pages %}
-    <a href="{{ url_for('user_profile', username=user.username, sort=sort, status=status_filter, page=page+1) }}" class="page-btn">Next →</a>
+    <a href="{{ url_for('profiles.user_profile', username=user.username, sort=sort, status=status_filter, page=page+1) }}" class="page-btn">Next →</a>
     {% else %}
     <span class="page-btn page-btn-disabled">Next →</span>
     {% endif %}
@@ -207,7 +207,7 @@
 <section class="lists-section mt-3">
     <h3 class="section-title">Lists</h3>
     {% if current_user.is_authenticated and current_user.id == user.id %}
-    <form action="{{ url_for('create_list', user_id=user.id) }}" method="post" class="create-list-form">
+    <form action="{{ url_for('lists.create_list', user_id=user.id) }}" method="post" class="create-list-form">
         <input type="text" name="name" placeholder="New list name…" maxlength="120" required>
         <button type="submit" class="btn btn-sm">+ Create</button>
     </form>
@@ -215,7 +215,7 @@
     {% if user_lists %}
     <div class="lists-grid mt-1">
         {% for lst in user_lists %}
-        <a href="{{ url_for('view_list', list_id=lst.id) }}" class="list-card">
+        <a href="{{ url_for('lists.view_list', list_id=lst.id) }}" class="list-card">
             <span class="list-card-name">{{ lst.name }}</span>
             <span class="list-card-count">{{ lst.items | length }} film{{ 's' if lst.items | length != 1 }}</span>
         </a>
@@ -232,9 +232,9 @@
     <ul class="rec-grid">
         {% for movie in recommendations %}
         <li class="rec-card">
-            <a href="{{ url_for('film_detail', film_id=movie.film_id) if movie.film_id else url_for('movie_detail', movie_id=movie.id) }}">
+            <a href="{{ url_for('films.film_detail', film_id=movie.film_id) if movie.film_id else url_for('films.movie_detail', movie_id=movie.id) }}">
                 {% if movie.poster_url %}
-                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="rec-poster">
+                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }} poster" class="rec-poster">
                 {% else %}
                     <div class="rec-poster rec-poster-empty">🎬</div>
                 {% endif %}

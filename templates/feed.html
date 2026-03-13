@@ -22,14 +22,14 @@
         <ul class="suggest-grid">
             {% for u in suggested %}
             <li class="suggest-card">
-                <a href="{{ url_for('user_profile', username=u.username) }}" class="suggest-avatar-link">
+                <a href="{{ url_for('profiles.user_profile', username=u.username) }}" class="suggest-avatar-link">
                     <img src="{{ avatar_url(u.username) }}" class="suggest-avatar" alt="{{ u.username }}">
                 </a>
                 <div class="suggest-info">
-                    <a href="{{ url_for('user_profile', username=u.username) }}" class="suggest-name">{{ u.username }}</a>
+                    <a href="{{ url_for('profiles.user_profile', username=u.username) }}" class="suggest-name">{{ u.username }}</a>
                     <span class="suggest-count">{{ u.movies | length }} films</span>
                 </div>
-                <form action="{{ url_for('follow_user', user_id=u.id) }}" method="post">
+                <form action="{{ url_for('social.follow_user', user_id=u.id) }}" method="post">
                     <button type="submit" class="btn btn-sm">+ Follow</button>
                 </form>
             </li>
@@ -73,7 +73,7 @@
         {# ── MOVIE ITEM ───────────────────────────────────────── #}
         {% if item.type == 'movie' %}
         {% set movie = item.obj %}
-        {% set film_link = url_for('film_detail', film_id=movie.film_id) if movie.film_id else url_for('movie_detail', movie_id=movie.id) %}
+        {% set film_link = url_for('films.film_detail', film_id=movie.film_id) if movie.film_id else url_for('films.movie_detail', movie_id=movie.id) %}
 
         {# Determine action label #}
         {% if movie.status == 'watchlist' %}
@@ -89,7 +89,7 @@
         <li class="feed-item">
             <a href="{{ film_link }}" class="feed-poster-link">
                 {% if movie.poster_url %}
-                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="feed-poster">
+                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }} poster" class="feed-poster">
                 {% else %}
                     <div class="feed-poster-empty">🎬</div>
                 {% endif %}
@@ -97,7 +97,7 @@
             <div class="feed-body">
                 <div class="feed-who">
                     <img src="{{ avatar_url(movie.user.username) }}" class="feed-avatar" alt="{{ movie.user.username }}">
-                    <a href="{{ url_for('user_profile', username=movie.user.username) }}" class="feed-username">{{ movie.user.username }}</a>
+                    <a href="{{ url_for('profiles.user_profile', username=movie.user.username) }}" class="feed-username">{{ movie.user.username }}</a>
                     <span class="feed-action">{{ action }}</span>
                     {% if movie.rating %}
                         {{ stars(movie.rating) }}
@@ -110,7 +110,7 @@
                     {% endif %}
                     {% if movie.genre %}
                         {% for g in movie.genre.split(', ')[:2] %}
-                            <a href="{{ url_for('genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
+                            <a href="{{ url_for('discovery.genre_page', genre=g) }}" class="genre-tag" data-genre="{{ g }}">{{ g }}</a>
                         {% endfor %}
                     {% endif %}
                 </div>
@@ -127,7 +127,7 @@
         {% elif item.type == 'review' %}
         {% set review = item.obj %}
         {% set fid = film_map.get(review.movie_title) %}
-        {% set film_link = url_for('film_detail', film_id=fid) if fid else url_for('search', q=review.movie_title) %}
+        {% set film_link = url_for('films.film_detail', film_id=fid) if fid else url_for('films.search', q=review.movie_title) %}
 
         <li class="feed-item">
             <a href="{{ film_link }}" class="feed-poster-link">
@@ -136,7 +136,7 @@
             <div class="feed-body">
                 <div class="feed-who">
                     <img src="{{ avatar_url(review.user.username) }}" class="feed-avatar" alt="{{ review.user.username }}">
-                    <a href="{{ url_for('user_profile', username=review.user.username) }}" class="feed-username">{{ review.user.username }}</a>
+                    <a href="{{ url_for('profiles.user_profile', username=review.user.username) }}" class="feed-username">{{ review.user.username }}</a>
                     <span class="feed-action">reviewed</span>
                 </div>
                 <a href="{{ film_link }}" class="feed-film-title">{{ review.movie_title }}</a>

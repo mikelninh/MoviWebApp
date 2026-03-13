@@ -76,3 +76,22 @@ def test_logout(client, test_user):
     resp = client.get("/logout", follow_redirects=True)
     assert resp.status_code == 200
     assert b"logged out" in resp.data
+
+
+def test_forgot_password_page(client):
+    resp = client.get("/forgot-password")
+    assert resp.status_code == 200
+
+
+def test_forgot_password_submit(client, test_user):
+    """Submitting forgot-password always shows success (no email enumeration)."""
+    resp = client.post("/forgot-password", data={
+        "email": "nonexistent@example.com"
+    }, follow_redirects=True)
+    assert resp.status_code == 200
+    assert b"reset link" in resp.data
+
+
+def test_reset_password_invalid_token(client):
+    resp = client.get("/reset-password/invalidtoken", follow_redirects=True)
+    assert b"Invalid or expired" in resp.data

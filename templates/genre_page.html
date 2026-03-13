@@ -4,21 +4,21 @@
 {% block content %}
 <div class="page-header">
     <div>
-        <h2 style="font-size:1.5rem; font-weight:800; color:#fff">
+        <h1 style="font-size:1.5rem; font-weight:800; color:#fff">
             <span class="genre-tag" data-genre="{{ genre }}" style="font-size:0.9rem; margin-right:0.5rem">{{ genre }}</span>
-        </h2>
+        </h1>
         <p style="font-size:0.82rem; color:var(--text-muted); margin-top:0.4rem">{{ total }} film{{ 's' if total != 1 }} logged by the community</p>
     </div>
-    <a href="{{ url_for('browse') }}" class="btn btn-sm btn-ghost">All genres</a>
+    <a href="{{ url_for('discovery.browse') }}" class="btn btn-sm btn-ghost">All genres</a>
 </div>
 
 {% if films %}
 <ul class="movie-grid mt-2">
     {% for film, count in films %}
     <li class="movie-card">
-        <a href="{{ url_for('film_detail', film_id=film.id) }}" class="card-poster-link">
+        <a href="{{ url_for('films.film_detail', film_id=film.id) }}" class="card-poster-link">
             {% if film.poster_url %}
-                <img src="{{ film.poster_url }}" alt="{{ film.title }}" class="card-poster">
+                <img src="{{ film.poster_url }}" alt="{{ film.title }} poster" class="card-poster">
             {% else %}
                 <div class="card-poster card-poster-empty">🎬</div>
             {% endif %}
@@ -40,13 +40,13 @@
 {% if total_pages > 1 %}
 <div class="pagination mt-2">
     {% if page > 1 %}
-    <a href="{{ url_for('genre_page', genre=genre, page=page-1) }}" class="page-btn">← Prev</a>
+    <a href="{{ url_for('discovery.genre_page', genre=genre, page=page-1) }}" class="page-btn">← Prev</a>
     {% else %}
     <span class="page-btn page-btn-disabled">← Prev</span>
     {% endif %}
     <span class="page-info">{{ page }} / {{ total_pages }}</span>
     {% if page < total_pages %}
-    <a href="{{ url_for('genre_page', genre=genre, page=page+1) }}" class="page-btn">Next →</a>
+    <a href="{{ url_for('discovery.genre_page', genre=genre, page=page+1) }}" class="page-btn">Next →</a>
     {% else %}
     <span class="page-btn page-btn-disabled">Next →</span>
     {% endif %}

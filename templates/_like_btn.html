@@ -1,4 +1,4 @@
-<form hx-post="{{ url_for('like_review', review_id=review.id) }}"
+<form hx-post="{{ url_for('social.like_review', review_id=review.id) }}"
       hx-swap="outerHTML"
       hx-target="closest form"
       class="like-form">

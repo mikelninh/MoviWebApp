@@ -14,7 +14,7 @@
         <p class="welcome-sub">Follow them and your feed comes alive instantly.</p>
     </div>
 
-    <form action="{{ url_for('welcome_done') }}" method="post">
+    <form action="{{ url_for('auth.welcome_done') }}" method="post">
 
         {% if suggestions %}
         <ul class="welcome-follow-list">
@@ -22,7 +22,7 @@
             <li class="welcome-follow-card" id="wf-{{ user.id }}">
                 <img src="{{ avatar_url(user.username) }}" class="welcome-follow-avatar" alt="{{ user.username }}">
                 <div class="welcome-follow-info">
-                    <a href="{{ url_for('user_profile', username=user.username) }}" class="welcome-follow-name" target="_blank">
+                    <a href="{{ url_for('profiles.user_profile', username=user.username) }}" class="welcome-follow-name" target="_blank">
                         {{ user.username }}
                     </a>
                     <span class="welcome-follow-meta">{{ user.movies | length }} films</span>
@@ -39,7 +39,7 @@
         </ul>
         {% else %}
         <div class="empty-state mt-2">
-            <p>No matches yet — your taste is delightfully unique. You can find people to follow on the <a href="{{ url_for('index') }}">homepage</a>.</p>
+            <p>No matches yet — your taste is delightfully unique. You can find people to follow on the <a href="{{ url_for('pages.index') }}">homepage</a>.</p>
         </div>
         {% endif %}
 
@@ -47,7 +47,7 @@
             <button type="submit" class="btn welcome-continue-btn">
                 {% if suggestions %}Follow selected & go to feed →{% else %}Go to feed →{% endif %}
             </button>
-            <a href="{{ url_for('feed') }}" class="welcome-skip">Skip</a>
+            <a href="{{ url_for('social.feed') }}" class="welcome-skip">Skip</a>
         </div>
     </form>
 

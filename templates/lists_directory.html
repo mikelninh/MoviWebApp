@@ -13,7 +13,7 @@
     <div class="lists-dir-grid">
         {% for lst in all_lists %}
         {% if lst.items | length > 0 %}
-        <a href="{{ url_for('view_list', list_id=lst.id) }}" class="list-dir-card">
+        <a href="{{ url_for('lists.view_list', list_id=lst.id) }}" class="list-dir-card">
             <!-- Poster mosaic: up to 4 -->
             <div class="list-dir-mosaic">
                 {% set posters = [] %}
@@ -25,11 +25,11 @@
                 {% if posters | length == 0 %}
                 <div class="list-dir-mosaic-empty">🎬</div>
                 {% elif posters | length == 1 %}
-                <img src="{{ posters[0] }}" class="list-dir-mosaic-single" alt="">
+                <img src="{{ posters[0] }}" class="list-dir-mosaic-single" alt="{{ lst.name }} list poster">
                 {% else %}
                 <div class="list-dir-mosaic-grid list-dir-mosaic-{{ posters | length }}">
                     {% for p in posters %}
-                    <img src="{{ p }}" alt="" loading="lazy">
+                    <img src="{{ p }}" alt="{{ lst.name }} list poster" loading="lazy">
                     {% endfor %}
                 </div>
                 {% endif %}
@@ -48,7 +48,7 @@
     </div>
     {% else %}
     <div class="empty-state mt-3">
-        <p>No lists yet. <a href="{{ url_for('register') }}">Join and create the first one →</a></p>
+        <p>No lists yet. <a href="{{ url_for('auth.register') }}">Join and create the first one →</a></p>
     </div>
     {% endif %}
 

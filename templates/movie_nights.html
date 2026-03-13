@@ -9,7 +9,7 @@
 {% if current_user.is_authenticated %}
 <div class="create-night-form mt-2">
     <h3 class="section-title-sm">Plan a night</h3>
-    <form action="{{ url_for('create_movie_night') }}" method="post" class="night-create-form">
+    <form action="{{ url_for('nights.create_movie_night') }}" method="post" class="night-create-form">
         <div class="form-row">
             <div class="form-group" style="flex:2">
                 <label>Name</label>
@@ -34,7 +34,7 @@
     <ul class="nights-list">
         {% for night in nights %}
         <li class="night-card">
-            <a href="{{ url_for('movie_night_detail', night_id=night.id) }}" class="night-card-link">
+            <a href="{{ url_for('nights.movie_night_detail', night_id=night.id) }}" class="night-card-link">
                 <div class="night-card-header">
                     <span class="night-name">{{ night.name }}</span>
                     {% if night.date %}<span class="night-date">{{ night.date }}</span>{% endif %}

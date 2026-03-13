@@ -57,7 +57,7 @@
             <span class="cinema-film-title">{{ cf.film_title }}</span>
             <span class="cinema-votes">▲ {{ cf.votes or 0 }}</span>
             {% if current_user.is_authenticated %}
-            <form action="{{ url_for('cinema_vote', slug=cinema.slug, film_id=cf.id) }}" method="post" class="inline-form">
+            <form action="{{ url_for('cinemas.cinema_vote', slug=cinema.slug, film_id=cf.id) }}" method="post" class="inline-form">
                 <button type="submit" class="btn btn-sm btn-vote">Vote</button>
             </form>
             {% endif %}
@@ -69,12 +69,12 @@
     {% endif %}
 
     {% if current_user.is_authenticated %}
-    <form action="{{ url_for('cinema_request', slug=cinema.slug) }}" method="post" class="cinema-request-form mt-2">
+    <form action="{{ url_for('cinemas.cinema_request', slug=cinema.slug) }}" method="post" class="cinema-request-form mt-2">
         <input type="text" name="title" placeholder="Request a film…" maxlength="120" required>
         <button type="submit" class="btn btn-sm">Request</button>
     </form>
     {% else %}
-    <p class="text-muted mt-1" style="font-size:0.85rem;"><a href="{{ url_for('login') }}" style="color:var(--accent)">Log in</a> to request screenings.</p>
+    <p class="text-muted mt-1" style="font-size:0.85rem;"><a href="{{ url_for('auth.login') }}" style="color:var(--accent)">Log in</a> to request screenings.</p>
     {% endif %}
 </section>
 {% endblock %}

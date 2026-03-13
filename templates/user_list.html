@@ -7,7 +7,7 @@
 
     <div class="list-detail-header">
         <div class="list-detail-header-left">
-            <a href="{{ url_for('user_profile', username=lst.user.username) }}" class="list-detail-back">
+            <a href="{{ url_for('profiles.user_profile', username=lst.user.username) }}" class="list-detail-back">
                 ← {{ lst.user.username }}
             </a>
             <h1 class="list-detail-title">{{ lst.name }}</h1>
@@ -19,7 +19,7 @@
             </div>
         </div>
         {% if current_user.is_authenticated and current_user.id == lst.user_id %}
-        <form action="{{ url_for('add_to_list', list_id=lst.id) }}" method="post" class="list-detail-add-form">
+        <form action="{{ url_for('lists.add_to_list', list_id=lst.id) }}" method="post" class="list-detail-add-form">
             <input type="text" name="title" placeholder="Add a film…" maxlength="120" required autocomplete="off">
             <button type="submit" class="btn btn-sm">+ Add</button>
         </form>
@@ -31,12 +31,12 @@
         {% for entry in enriched_items %}
         {% set item = entry.item %}
         {% set film = entry.film %}
-        <a href="{{ url_for('film_detail', film_id=film.id) if film else url_for('search', q=item.movie_title) }}"
+        <a href="{{ url_for('films.film_detail', film_id=film.id) if film else url_for('films.search', q=item.movie_title) }}"
            class="list-detail-card" title="{{ item.movie_title }}">
             {% if item.poster_url %}
-                <img src="{{ item.poster_url }}" alt="{{ item.movie_title }}" class="list-detail-poster" loading="lazy">
+                <img src="{{ item.poster_url }}" alt="{{ item.movie_title }} poster" class="list-detail-poster" loading="lazy">
             {% elif film and film.poster_url %}
-                <img src="{{ film.poster_url }}" alt="{{ item.movie_title }}" class="list-detail-poster" loading="lazy">
+                <img src="{{ film.poster_url }}" alt="{{ item.movie_title }} poster" class="list-detail-poster" loading="lazy">
             {% else %}
                 <div class="list-detail-poster list-detail-poster-empty">🎬</div>
             {% endif %}
@@ -44,7 +44,7 @@
                 <span class="list-detail-card-title">{{ item.movie_title }}</span>
                 {% if film and film.year %}<span class="list-detail-card-year">{{ film.year }}</span>{% endif %}
                 {% if current_user.is_authenticated and current_user.id == lst.user_id %}
-                <form action="{{ url_for('remove_from_list', list_id=lst.id, item_id=item.id) }}" method="post"
+                <form action="{{ url_for('lists.remove_from_list', list_id=lst.id, item_id=item.id) }}" method="post"
                       onclick="event.stopPropagation()" onsubmit="event.stopPropagation()">
                     <button type="submit" class="list-detail-remove" title="Remove">✕</button>
                 </form>

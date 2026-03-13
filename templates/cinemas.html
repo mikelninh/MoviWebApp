@@ -10,7 +10,7 @@
 {% if cinemas %}
 <div class="cinemas-grid mt-3">
     {% for cinema in cinemas %}
-    <a href="{{ url_for('cinema_detail', slug=cinema.slug) }}" class="cinema-card">
+    <a href="{{ url_for('cinemas.cinema_detail', slug=cinema.slug) }}" class="cinema-card">
         <div class="cinema-card-header">
             <h3 class="cinema-name">{{ cinema.name }}</h3>
             {% if cinema.neighbourhood %}
