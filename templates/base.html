@@ -20,6 +20,9 @@
     <meta property="og:description" content="A free, open-source film tracking app for people who actually care about movies.">
     {% endblock %}
 
+    <!-- CSRF -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <!-- View Transitions -->
     <style>
       @view-transition { navigation: auto; }
@@ -35,6 +38,34 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='features.css') }}">
     <script src="https://unpkg.com/htmx.org@2.0.3" defer></script>
+
+    <!-- Auto-inject CSRF token into HTMX requests and all forms -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        // HTMX: send CSRF token with every request
+        document.body.addEventListener('htmx:configRequest', function(e) {
+          e.detail.headers['X-CSRFToken'] = token;
+        });
+        // Regular forms: inject hidden field
+        function injectCSRF(form) {
+          if (form.method && form.method.toLowerCase() === 'get') return;
+          if (form.querySelector('input[name="csrf_token"]')) return;
+          var input = document.createElement('input');
+          input.type = 'hidden'; input.name = 'csrf_token'; input.value = token;
+          form.appendChild(input);
+        }
+        document.querySelectorAll('form').forEach(injectCSRF);
+        new MutationObserver(function(mutations) {
+          mutations.forEach(function(m) {
+            m.addedNodes.forEach(function(n) {
+              if (n.tagName === 'FORM') injectCSRF(n);
+              if (n.querySelectorAll) n.querySelectorAll('form').forEach(injectCSRF);
+            });
+          });
+        }).observe(document.body, {childList: true, subtree: true});
+      });
+    </script>
 
     <!-- Theme: read from localStorage before first paint to avoid flash -->
     <script>
@@ -192,7 +223,7 @@
             <span class="footer-sep">·</span>
             <a href="{{ url_for('privacy') }}" class="footer-link">{{ _('Privacy') }}</a>
             <span class="footer-sep">·</span>
-            <a href="https://github.com/hallochupi-sketch/MoviWebApp" class="footer-link" target="_blank" rel="noopener">GitHub</a>
+            <a href="https://github.com/mikelninh/MoviWebApp" class="footer-link" target="_blank" rel="noopener">GitHub</a>
             <span class="footer-sep">·</span>
             <a href="https://ko-fi.com/mikel777" class="footer-kofi" target="_blank" rel="noopener">☕ Ko-fi</a>
             {% if current_user.is_authenticated %}

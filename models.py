@@ -90,8 +90,8 @@ class MovieNightVote(db.Model):
 
 class Review(db.Model):
     id          = db.Column(db.Integer, primary_key=True)
-    user_id     = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    movie_title = db.Column(db.String(120), nullable=False)
+    user_id     = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    movie_title = db.Column(db.String(120), nullable=False, index=True)
     body        = db.Column(db.Text, nullable=False)
     created_at  = db.Column(db.DateTime, default=datetime.utcnow)
     user        = db.relationship("User", backref="reviews")
@@ -133,7 +133,7 @@ class FilmStreaming(db.Model):
 
 class Notification(db.Model):
     id           = db.Column(db.Integer, primary_key=True)
-    user_id      = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    user_id      = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
     from_user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
     type         = db.Column(db.String(30), nullable=False)   # follow | like | review
     message      = db.Column(db.String(300), nullable=False)
@@ -146,17 +146,17 @@ class Notification(db.Model):
 
 class Movie(db.Model):
     id         = db.Column(db.Integer, primary_key=True)
-    title      = db.Column(db.String(120), nullable=False)
-    user_id    = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    film_id    = db.Column(db.Integer, db.ForeignKey("film.id"), nullable=True)
+    title      = db.Column(db.String(120), nullable=False, index=True)
+    user_id    = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    film_id    = db.Column(db.Integer, db.ForeignKey("film.id"), nullable=True, index=True)
     rating     = db.Column(db.Float, nullable=True)
     year       = db.Column(db.String(10), nullable=True)
     director   = db.Column(db.String(120), nullable=True)
     plot       = db.Column(db.Text, nullable=True)
     poster_url = db.Column(db.String(300), nullable=True)
     genre      = db.Column(db.String(200), nullable=True)
-    status     = db.Column(db.String(20), default='watched')
-    date_added = db.Column(db.DateTime, nullable=True, default=datetime.utcnow)
+    status     = db.Column(db.String(20), default='watched', index=True)
+    date_added = db.Column(db.DateTime, nullable=True, default=datetime.utcnow, index=True)
     user       = db.relationship("User", backref="movies")
     film       = db.relationship("Film", backref="user_movies")
 

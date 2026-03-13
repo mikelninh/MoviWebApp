@@ -2,6 +2,7 @@ import copy
 import csv
 import io
 import json
+import logging
 import os
 import re
 import secrets
@@ -10,6 +11,7 @@ import urllib.request as _urllib_req
 import xml.etree.ElementTree as ET
 import zipfile
 from collections import Counter
+from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -19,7 +21,15 @@ import anthropic as _anthropic_sdk
 from flask import Flask, flash, redirect, render_template, request, url_for
 from flask_login import (LoginManager, current_user, login_required,
                          login_user, logout_user)
+from flask_wtf.csrf import CSRFProtect
 from sqlalchemy import text
+
+# ── LOGGING ──────────────────────────────────────────────────────────────────
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger("moviwebapp")
 
 # ── AI HELPERS ────────────────────────────────────────────────────────────────
 _ai_cache  = {}
@@ -53,6 +63,7 @@ def ai_review_synthesis(film_title, reviews):
         _ai_cache[cache_key] = result
         return result
     except Exception:
+        logger.exception("AI review synthesis failed for '%s'", film_title)
         return None
 
 
@@ -78,6 +89,7 @@ def ai_why_love(user_movies, film):
         _ai_cache[cache_key] = result
         return result
     except Exception:
+        logger.exception("AI why_love failed for film %s", film.title)
         return None
 
 
@@ -104,6 +116,7 @@ def ai_taste_report(user_movies):
         _ai_cache[cache_key] = result
         return result
     except Exception:
+        logger.exception("AI taste report failed")
         return None
 
 
@@ -126,6 +139,7 @@ def ai_year_summary(total, top_genres, top_directors, avg_rating, year):
         _ai_cache[cache_key] = result
         return result
     except Exception:
+        logger.exception("AI year summary failed for %s", year)
         return None
 
 from data_manager import DataManager
@@ -139,7 +153,10 @@ app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(basedir, 'data/movies.db')}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "change-me-in-production")
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
+
+# ── CSRF PROTECTION ──────────────────────────────────────────────────────────
+csrf = CSRFProtect(app)
 
 # ── FLASK-MAIL ─────────────────────────────────────────────────────────────────
 app.config["MAIL_SERVER"]   = os.environ.get("MAIL_SERVER", "")
@@ -162,7 +179,7 @@ def send_notification_email(to_email, subject, body):
                 msg = MailMessage(subject, recipients=[to_email], body=body)
                 mail.send(msg)
             except Exception:
-                pass
+                logger.exception("Failed to send email to %s", to_email)
     threading.Thread(target=_send, daemon=True).start()
 
 # ── FLASK-LIMITER ──────────────────────────────────────────────────────────────
@@ -592,7 +609,7 @@ def fetch_film_news(limit=18):
                         "img":    img,
                     })
         except Exception:
-            pass
+            logger.exception("Failed to fetch news from %s", source_name)
     articles = articles[:limit]
     _news_cache["data"]       = articles
     _news_cache["fetched_at"] = now
@@ -791,6 +808,7 @@ def welcome_done():
 # ── AUTH ──────────────────────────────────────────────────────────────────────
 
 @app.route("/register", methods=["GET", "POST"])
+@limiter.limit("10 per minute")
 def register():
     if current_user.is_authenticated:
         return redirect(url_for("index"))
@@ -803,6 +821,9 @@ def register():
         if len(name) > 80:
             flash("Username too long (max 80 characters).", "error")
             return render_template("register.html")
+        if len(password) < 8:
+            flash("Password must be at least 8 characters.", "error")
+            return render_template("register.html")
         user, created = data_manager.create_user(name, password)
         if not created:
             flash("Username already taken.", "error")
@@ -812,7 +833,16 @@ def register():
     return render_template("register.html")
 
 
+def _is_safe_redirect_url(target):
+    """Validate that redirect target is a relative URL on the same host."""
+    if not target:
+        return False
+    parsed = urlparse(target)
+    return parsed.scheme == "" and parsed.netloc == "" and target.startswith("/")
+
+
 @app.route("/login", methods=["GET", "POST"])
+@limiter.limit("10 per minute")
 def login():
     if current_user.is_authenticated:
         return redirect(url_for("index"))
@@ -826,7 +856,9 @@ def login():
         login_user(user)
         flash(f"Welcome back, {user.username}!", "success")
         next_page = request.args.get("next")
-        return redirect(next_page or url_for("get_movies", user_id=user.id))
+        if next_page and _is_safe_redirect_url(next_page):
+            return redirect(next_page)
+        return redirect(url_for("get_movies", user_id=user.id))
     return render_template("login.html")
 
 
@@ -1964,9 +1996,10 @@ def get_streaming(film):
         if cache and (now - cache.fetched_at) < timedelta(days=7):
             return json.loads(cache.data_json or "[]")
         # Query JustWatch GraphQL
+        jw_country = os.environ.get("JUSTWATCH_COUNTRY", "DE")
         payload = json.dumps({
             "query": _JUSTWATCH_GQL,
-            "variables": {"title": film.title, "country": "DE"},
+            "variables": {"title": film.title, "country": jw_country},
         }).encode("utf-8")
         req = _urllib_req.Request(
             "https://apis.justwatch.com/graphql",
@@ -2000,6 +2033,7 @@ def get_streaming(film):
         db.session.commit()
         return offers
     except Exception:
+        logger.exception("JustWatch lookup failed for '%s'", film.title)
         return []
 
 
@@ -2147,6 +2181,7 @@ def _api_404(msg="Not found"):
 
 
 @app.route("/api/v1/")
+@csrf.exempt
 @limiter.limit("100 per hour")
 def api_root():
     return jsonify({
@@ -2161,6 +2196,7 @@ def api_root():
 
 
 @app.route("/api/v1/films")
+@csrf.exempt
 @limiter.limit("100 per hour")
 def api_films():
     from sqlalchemy import func as sqlfunc
@@ -2179,6 +2215,7 @@ def api_films():
 
 
 @app.route("/api/v1/films/<int:film_id>")
+@csrf.exempt
 @limiter.limit("100 per hour")
 def api_film_detail(film_id):
     film = db.session.get(Film, film_id)
@@ -2195,6 +2232,7 @@ def api_film_detail(film_id):
 
 
 @app.route("/api/v1/users/<username>")
+@csrf.exempt
 @limiter.limit("100 per hour")
 def api_user(username):
     user = User.query.filter_by(username=username).first()
@@ -2214,6 +2252,7 @@ def api_user(username):
 
 
 @app.route("/api/v1/users/<username>/films")
+@csrf.exempt
 @limiter.limit("100 per hour")
 def api_user_films(username):
     user = User.query.filter_by(username=username).first()
@@ -2232,6 +2271,7 @@ def api_user_films(username):
 
 
 @app.route("/api/v1/trending")
+@csrf.exempt
 @limiter.limit("100 per hour")
 def api_trending():
     from datetime import datetime as dt, timedelta
@@ -2580,6 +2620,14 @@ def forbidden(e):
                            ]), 403
 
 
+# ── HEALTH CHECK ─────────────────────────────────────────────────────────────
+
+@app.route("/health")
+@csrf.exempt
+def health_check():
+    return jsonify({"status": "ok"}), 200
+
+
 # ── STARTUP ──────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -2590,4 +2638,4 @@ if __name__ == "__main__":
         migrate_db()
         populate_films()
         _seed_cinemas()
-    app.run(debug=True)
+    app.run(debug=os.environ.get("FLASK_DEBUG", "").lower() in ("1", "true"))

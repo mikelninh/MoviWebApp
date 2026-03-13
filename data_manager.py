@@ -1,3 +1,4 @@
+import logging
 import os
 from collections import Counter
 from datetime import datetime
@@ -5,6 +6,8 @@ from datetime import datetime
 import requests
 
 from models import Movie, User, db
+
+logger = logging.getLogger("moviwebapp")
 
 
 class DataManager:
@@ -76,7 +79,7 @@ class DataManager:
                     "genre":      data.get("Genre", "")[:200],
                 }
         except Exception:
-            pass
+            logger.exception("OMDb fetch failed for '%s'", title)
         return {}
 
     def add_movie(self, movie):
