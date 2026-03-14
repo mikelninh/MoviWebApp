@@ -94,7 +94,7 @@
         <!-- Community rating -->
         {% set rated = users_with_movie | selectattr('1.rating') | list %}
         {% if rated %}
-        {% set avg = (rated | map(attribute='1') | map(attribute='rating') | sum) / rated | length %}
+        {% set avg = (rated | map(attribute='1') | map(attribute='rating') | sum) / (rated | length) %}
         <div class="detail-rating mt-1">
             {{ stars(avg) }}
             <span class="detail-rating-text">{{ "%.1f"|format(avg) }} avg · {{ rated | length }} rating{{ 's' if rated | length != 1 }}</span>
@@ -111,7 +111,7 @@
                     <img src="{{ avatar_url(user.username) }}" class="chip-avatar" alt="{{ user.username }}">
                     {{ user.username }}
                     {% if instance.rating %}
-                    <span class="chip-rating">{{ '★' * instance.rating }}</span>
+                    <span class="chip-rating">{{ '★' * (instance.rating | int) }}</span>
                     {% endif %}
                 </a>
                 {% endfor %}
@@ -129,7 +129,7 @@
                     <img src="{{ avatar_url(user.username) }}" class="chip-avatar" alt="{{ user.username }}">
                     {{ user.username }}
                     {% if instance.rating %}
-                    <span class="chip-rating">{{ '★' * instance.rating }}</span>
+                    <span class="chip-rating">{{ '★' * (instance.rating | int) }}</span>
                     {% endif %}
                 </a>
                 {% endfor %}

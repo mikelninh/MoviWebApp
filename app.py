@@ -257,14 +257,34 @@ def _seed_cinemas():
     intimes = Cinema(
         name="Intimes", slug="intimes", city="Berlin",
         neighbourhood="Friedrichshain",
-        website="https://www.intimes-kino.de",
+        website="https://kino-intimes.de/",
         description="Tiny 90-seat cinema on Boxhagener Platz.")
     bware = Cinema(
         name="B-ware! Ladenkino", slug="b-ware-ladenkino", city="Berlin",
         neighbourhood="Friedrichshain",
-        website="https://b-ware-ladenkino.de",
+        website="https://ladenkino.de/",
         description="Neighbourhood arthouse cinema on Frankfurter Allee.")
-    db.session.add_all([intimes, bware])
+    kino_intl = Cinema(
+        name="Kino International", slug="kino-international", city="Berlin",
+        neighbourhood="Mitte",
+        website="https://www.kino-international.com/",
+        description="Iconic 1960s GDR cinema on Karl-Marx-Allee.")
+    delphi_lux = Cinema(
+        name="Delphi LUX", slug="delphi-lux", city="Berlin",
+        neighbourhood="Charlottenburg",
+        website="https://www.yorck.de/kinos/delphi-lux",
+        description="Modern arthouse cinema at Kantstrasse by Yorck Kinos.")
+    arsenal = Cinema(
+        name="Arsenal \u2013 Institut f\u00fcr Film und Videokunst", slug="arsenal", city="Berlin",
+        neighbourhood="Kreuzberg",
+        website="https://www.arsenal-berlin.de/",
+        description="Film institute and cinema at Potsdamer Platz, specialising in rare and experimental film.")
+    il_kino = Cinema(
+        name="Il Kino", slug="il-kino", city="Berlin",
+        neighbourhood="Neuk\u00f6lln",
+        website="https://ilkino.de/",
+        description="Micro-cinema in Neuk\u00f6lln showing independent and international film.")
+    db.session.add_all([intimes, bware, kino_intl, delphi_lux, arsenal, il_kino])
     db.session.flush()
     for title in ["Nausicaa of the Valley of the Wind",
                   "The Tale of Princess Kaguya", "Spirited Away"]:
@@ -273,6 +293,22 @@ def _seed_cinemas():
     for title in ["Grave of the Fireflies", "Perfect Blue"]:
         db.session.add(CinemaFilm(cinema_id=intimes.id, film_title=title,
                                    show_type="staff_pick"))
+    for title in ["The Lives of Others", "Wings of Desire",
+                  "Good Bye, Lenin!"]:
+        db.session.add(CinemaFilm(cinema_id=kino_intl.id, film_title=title,
+                                   show_type="now_showing"))
+    for title in ["Das Cabinet des Dr. Caligari", "Metropolis"]:
+        db.session.add(CinemaFilm(cinema_id=kino_intl.id, film_title=title,
+                                   show_type="staff_pick"))
+    for title in ["Close-Up", "Stalker", "Sans Soleil"]:
+        db.session.add(CinemaFilm(cinema_id=arsenal.id, film_title=title,
+                                   show_type="now_showing"))
+    for title in ["Paris, Texas", "In the Mood for Love"]:
+        db.session.add(CinemaFilm(cinema_id=delphi_lux.id, film_title=title,
+                                   show_type="now_showing"))
+    for title in ["Aftersun", "Past Lives"]:
+        db.session.add(CinemaFilm(cinema_id=il_kino.id, film_title=title,
+                                   show_type="now_showing"))
     db.session.commit()
 
 

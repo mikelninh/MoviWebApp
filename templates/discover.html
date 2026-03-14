@@ -39,7 +39,7 @@
                         <div class="inspo-poster-overlay">
                             <span class="inspo-overlay-title">{{ film.title }}</span>
                             {% if recommender %}
-                            <span class="inspo-overlay-year">{{ recommender.username }} · {{ '★' * rating }}</span>
+                            <span class="inspo-overlay-year">{{ recommender.username }} · {{ '★' * (rating | int) }}</span>
                             {% endif %}
                         </div>
                     </div>
