@@ -70,7 +70,7 @@ A social film tracking app built with Flask — think Letterboxd, but open-sourc
 
 ```bash
 # 1. Clone and create a virtual environment
-git clone https://github.com/hallochupi-sketch/MoviWebApp.git
+git clone https://github.com/mikelninh/MoviWebApp.git
 cd MoviWebApp
 python -m venv .venv
 .venv\Scripts\activate        # Windows
@@ -112,7 +112,7 @@ Open `http://127.0.0.1:5000` — log in with `ninh` / `nolancore` / `voidpilot`,
 | Reviews | ~215 |
 | Follows | ~90 |
 | Review likes | ~706 |
-| Cinemas | 2 (Berlin) |
+| Cinemas | 6 (Berlin) |
 
 ---
 
@@ -133,6 +133,7 @@ Open `http://127.0.0.1:5000` — log in with `ninh` / `nolancore` / `voidpilot`,
 | `/settings` | Email & notification settings |
 | `/about` | About page |
 | `/privacy` | Privacy policy |
+| `/inspiration` | Curated movie night inspiration lists |
 | `/api/v1/` | REST API root |
 
 ---
@@ -141,29 +142,44 @@ Open `http://127.0.0.1:5000` — log in with `ninh` / `nolancore` / `voidpilot`,
 
 ```
 MoviWebApp/
-├── app.py               # All routes, AI helpers, HTMX endpoints, REST API
-├── data_manager.py      # DB queries and OMDb fetching
-├── models.py            # SQLAlchemy models (16 tables)
-├── seed_all.py          # Run all seed scripts in order
-├── seed.py              # Base users and movie lists
-├── seed_social.py       # Follows, reviews, movie nights, custom lists
-├── seed_rich.py         # Extended movies, reviews, social graph
-├── seed_community.py    # Rich persona-matched reviews + likes
-├── enrich_films.py      # Batch OMDb enrichment for Film records
+├── app.py                   # App factory, extensions, error handlers, startup
+├── models.py                # SQLAlchemy models (16 tables)
+├── data_manager.py          # DB queries and OMDb fetching
+├── extensions.py            # Flask extensions (db, csrf, limiter, mail, migrate)
+├── helpers.py               # AI helpers, streaming, utilities
+├── blueprints/
+│   ├── auth.py              # Register, login, password reset, onboarding
+│   ├── profiles.py          # User profiles, diary, year in review
+│   ├── films.py             # Film detail, add/edit/delete, reviews
+│   ├── social.py            # Follow, likes, comments, feed, notifications
+│   ├── discovery.py         # Trending, browse, genre pages, discover
+│   ├── lists.py             # Custom user lists
+│   ├── nights.py            # Movie nights with voting
+│   ├── cinemas.py           # Partner cinema pages
+│   ├── api.py               # REST API v1
+│   └── pages.py             # Static pages, import/export, health check
+├── seed_all.py              # Run all seed scripts in order
+├── seed.py                  # Base users and movie lists
+├── seed_social.py           # Follows, reviews, movie nights, custom lists
+├── seed_rich.py             # Extended movies, reviews, social graph
+├── seed_community.py        # Persona-matched reviews + likes
+├── seed_cinema_content.py   # Cinema programme (now showing, staff picks)
+├── seed_comments.py         # Review comments
+├── enrich_films.py          # One-time OMDb enrichment utility
 ├── requirements.txt
 ├── static/
-│   ├── style.css        # Full design system (~3 000 lines)
-│   ├── manifest.json    # PWA manifest
-│   ├── icon-192.svg     # PWA icon
+│   ├── style.css            # Full design system (~3 000 lines)
+│   ├── manifest.json        # PWA manifest
+│   ├── icon-192.svg         # PWA icon
 │   └── icon-512.svg
 └── templates/
     ├── base.html                # Header, nav, theme toggle, PWA meta
     ├── _macros.html             # stars(), rating_select() macros
-    ├── _like_btn.html           # HTMX like button
-    ├── _follow_btn.html         # HTMX follow/unfollow
-    ├── _vote_btn.html           # HTMX movie night vote
+    ├── _like_btn.html           # HTMX like button partial
+    ├── _follow_btn.html         # HTMX follow/unfollow partial
+    ├── _vote_btn.html           # HTMX movie night vote partial
     ├── _review_comments.html    # HTMX review comments partial
-    ├── _welcome_results.html    # HTMX onboarding film search
+    ├── _welcome_results.html    # HTMX onboarding film search partial
     ├── index.html               # Homepage
     ├── film_detail.html         # Film page with streaming, AI, comments
     ├── user_detail.html         # Profile — movies, stats, taste blurb
@@ -172,6 +188,7 @@ MoviWebApp/
     ├── welcome_follow.html      # Onboarding step 2 — follow suggestions
     ├── cinemas.html             # Cinema partner directory
     ├── cinema_detail.html       # Cinema programme + requests
+    ├── inspiration.html         # Curated movie night inspiration lists
     ├── settings.html            # Email & notification preferences
     ├── import.html              # Letterboxd import
     ├── about.html               # About page
