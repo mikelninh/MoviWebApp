@@ -63,6 +63,12 @@ def privacy():
     return render_template("privacy.html")
 
 
+@pages_bp.route("/inspiration")
+def inspiration():
+    lists = get_inspiration_with_posters()
+    return render_template("inspiration.html", lists=lists)
+
+
 @pages_bp.route("/news")
 def news():
     articles = fetch_film_news(limit=18)

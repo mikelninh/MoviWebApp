@@ -94,6 +94,10 @@ def add_films(cinema, entries, show_type):
 
 def run():
     with app.app_context():
+        # Ensure base cinema records exist (idempotent)
+        from app import _seed_cinemas
+        _seed_cinemas()
+
         intimes = Cinema.query.filter_by(slug="intimes").first()
         bware   = Cinema.query.filter_by(slug="b-ware-ladenkino").first()
 
